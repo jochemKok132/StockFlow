@@ -1,4 +1,5 @@
-﻿using System;
+﻿using StockFlow.Application.DTOs.Stock.Product;
+using System;
 using System.Collections.Generic;
 using System.Text;
 
@@ -10,5 +11,6 @@ namespace StockFlow.Application.DTOs.Stock.Sales
         public required string SaleName { get; set; }
         public required string Description { get; set; }
         public int PercentageOff { get; set; }
+
     }
 }

@@ -23,10 +23,7 @@ namespace StockFlow.Application.DTOs.Stock.Product
         public byte[]? ProductImage { get; set; }
 
         public Guid BrandId { get; set; }
-        public ProductBrandDto? Brand { get; set; }
         public Guid ShelfId { get; set; }
-        public ShelfDto? Shelf { get; set; }
         public Guid SaleId { get; set; }
-        public SalesDto? Sale { get; set; }
     }
 }

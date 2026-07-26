@@ -4,7 +4,7 @@ using System.Text;
 
 namespace StockFlow.Application.DTOs.Stock.Product
 {
-    internal class CreateProductDto
+    public class CreateProductDto
     {
         public required string ProductName { get; set; }
         public required string Description { get; set; }

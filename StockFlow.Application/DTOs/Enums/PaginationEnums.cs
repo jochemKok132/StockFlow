@@ -11,12 +11,75 @@ namespace StockFlow.Application.DTOs.Enums
         Descending,
         Ascending
     }
-    public enum OrderByType
+
+    public enum ProductOrderBy
     {
-        SearchTerm,
         CreatedAt,
         UpdatedAt,
-        Priority,
-        LeadTime
+        ProductName,
+        Stock,
+    }
+
+    public enum ProductBrandOrderBy
+    {
+        CreatedAt,
+        UpdatedAt,
+        BrandName,
+        ProductAmount,
+    }
+
+    public enum SalesOrderBy 
+    {
+        CreatedAt,
+        UpdatedAt,
+        SaleName,
+        PercentageOff,
+        ProductAmount,
+    }
+    public enum ShelfOrderBy
+    {
+        CreatedAt,
+        UpdatedAt,
+        ShelfName,
+        ShelfLocation,
+    }
+
+    public enum CustomerOrderBy
+    {
+        CreatedAt,
+        UpdatedAt,
+        FullName,
+        SavedPoints
+    }
+
+    public enum EmployeeOrderBy
+    {
+        CreatedAt,
+        UpdatedAt,
+        EmployeeName,
+        EmployeeId,
+        Role
+    }
+
+    public enum CashRegisterLogsOrderBy
+    {
+        CreatedAt,
+        TotalPrice,
+        TotalOff,
+        TotalProducts,
+        EmployeeId,
+        CustomerName
+    }
+
+    public enum StockLogsOrderBy
+    {
+        CreatedAt,
+        StockLogType,
+        EmployeeId,
+    }
+    public enum CustomerLogsOrderBy 
+    {
+        CreatedAt,
+        CustomerName
     }
 }

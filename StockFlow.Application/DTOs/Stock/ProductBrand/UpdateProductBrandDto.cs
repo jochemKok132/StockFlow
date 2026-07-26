@@ -9,6 +9,5 @@ namespace StockFlow.Application.DTOs.Stock.ProductBrand
     {
         public Guid Id { get; set; }
         public required string BrandName { get; set; }
-        public IEnumerable<UpdateProductDto> Products { get; set; } = [];
     }
 }

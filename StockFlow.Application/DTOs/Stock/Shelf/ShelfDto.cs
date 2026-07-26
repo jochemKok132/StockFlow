@@ -1,11 +1,11 @@
-﻿using StockFlow.Domain.Entities.IEntities;
+﻿using StockFlow.Application.DTOs.Stock.Product;
 using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace StockFlow.Domain.Entities.Stock
+namespace StockFlow.Application.DTOs.Stock.Shelf
 {
-    public class Shelf : IEntity, ICreateable, IUpdatable, ISoftDeletable
+    public class ShelfDto
     {
         public Guid Id { get; set; }
         public DateTime CreatedAt { get; set; }
@@ -16,6 +16,6 @@ namespace StockFlow.Domain.Entities.Stock
         public required string ShelfName { get; set; }
         public string? ShelfDescription { get; set; }
         public required string ShelfLocation { get; set; }
-        public IEnumerable<Product> Products { get; set; } = [];
+        public IEnumerable<ProductDto> Products { get; set; } = [];
     }
 }
