@@ -1,11 +1,11 @@
-﻿using StockFlow.Domain.Entities.IEntities;
+﻿using StockFlow.Application.DTOs.Stock.Product;
 using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace StockFlow.Domain.Entities.Stock
+namespace StockFlow.Application.DTOs.Stock.ProductBrand
 {
-    public class ProductBrand : IEntity, ICreateable, IUpdatable, ISoftDeletable
+    public class ProductBrandDto
     {
         public Guid Id { get; set; }
         public DateTime CreatedAt { get; set; }
@@ -14,6 +14,6 @@ namespace StockFlow.Domain.Entities.Stock
         public DateTime SoftDeletedAt { get; set; }
 
         public required string BrandName { get; set; }
-        public IEnumerable<Product> Products { get; set; } = [];
+        public IEnumerable<ProductDto> Products { get; set; } = [];
     }
 }

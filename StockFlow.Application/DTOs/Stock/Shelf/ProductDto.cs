@@ -1,11 +1,10 @@
-﻿using StockFlow.Domain.Entities.IEntities;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace StockFlow.Domain.Entities.Stock
+namespace StockFlow.Application.DTOs.Stock.Shelf
 {
-    public class Shelf : IEntity, ICreateable, IUpdatable, ISoftDeletable
+    public class ShelfDto
     {
         public Guid Id { get; set; }
         public DateTime CreatedAt { get; set; }

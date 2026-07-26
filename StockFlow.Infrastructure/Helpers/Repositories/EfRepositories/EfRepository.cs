@@ -1,11 +1,12 @@
 ﻿using Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
+using StockFlow.Application.Interfaces.Repositories.EfRepositories;
 using StockFlow.Domain.Entities.IEntities;
 using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace StockFlow.Infrastructure.Repositories.EfRepositories
+namespace StockFlow.Infrastructure.Helpers.Repositories.EfRepositories
 {
     public class EfRepository<T> : IEfRepository<T> where T : class, IEntity
     {

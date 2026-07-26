@@ -2,7 +2,10 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using StockFlow.Infrastructure.Repositories.EfRepositories;
+using StockFlow.Application.Interfaces.Helpers;
+using StockFlow.Application.Interfaces.Repositories.EfRepositories;
+using StockFlow.Infrastructure.Helpers;
+using StockFlow.Infrastructure.Helpers.Repositories.EfRepositories;
 
 namespace StockFlow.Infrastructure
 {
@@ -12,6 +15,11 @@ namespace StockFlow.Infrastructure
         {
             services.RegisterDatabaseServices(configuration, root);
             services.AddScoped(typeof(IEfRepository<>), typeof(EfRepository<>));
+            services.AddScoped(typeof(IEfCreatableRepository<>), typeof(EfCreatableRepository<>));
+            services.AddScoped(typeof(IEfUpdatableRepository<>), typeof(EfUpdatableRepository<>));
+            services.AddScoped(typeof(IEfSoftDeletableRepository<>), typeof(EfSoftDeletableRepository<>));
+            services.AddScoped<IPassword, Password>();
+
 
             return services;
         }

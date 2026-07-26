@@ -1,11 +1,12 @@
 ﻿using Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
+using StockFlow.Application.Interfaces.Repositories.EfRepositories;
 using StockFlow.Domain.Entities.IEntities;
 using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace StockFlow.Infrastructure.Repositories.EfRepositories
+namespace StockFlow.Infrastructure.Helpers.Repositories.EfRepositories
 {
     public class EfSoftDeletableRepository<T> : IEfSoftDeletableRepository<T> where T : class, ISoftDeletable
     {
@@ -23,7 +24,5 @@ namespace StockFlow.Infrastructure.Repositories.EfRepositories
             _dbSet.Update(entity);
             await _context.SaveChangesAsync();
         }
-        public Task SaveChangesAsync() => _context.SaveChangesAsync();
-
     }
 }
