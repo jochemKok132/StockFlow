@@ -1,9 +1,9 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using StockFlow.Domain.Entities.People;
 using StockFlow.Domain.Entities.Stock;
-using StockFlow.Domain.Entities.Logs;
+using StockFlow.Domain.Entities.AuditLogs;
 
-namespace Infrastructure.Data
+namespace StockFlow.Infrastructure.Data
 {
     public class ApplicationDBContext(DbContextOptions<ApplicationDBContext> options) : DbContext(options)
     {

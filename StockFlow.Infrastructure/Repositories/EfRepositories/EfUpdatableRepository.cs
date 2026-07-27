@@ -1,12 +1,12 @@
-﻿using Infrastructure.Data;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using StockFlow.Application.Interfaces.Repositories.EfRepositories;
 using StockFlow.Domain.Entities.IEntities;
+using StockFlow.Infrastructure.Data;
 using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace StockFlow.Infrastructure.Helpers.Repositories.EfRepositories
+namespace StockFlow.Infrastructure.Repositories.EfRepositories
 {
     public class EfUpdatableRepository<T> : IEfUpdatableRepository<T> where T : class, IUpdatable
     {

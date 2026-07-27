@@ -1,11 +1,11 @@
-﻿using Infrastructure.Data;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using StockFlow.Application.Interfaces.Helpers;
 using StockFlow.Application.Interfaces.Repositories.EfRepositories;
+using StockFlow.Infrastructure.Data;
 using StockFlow.Infrastructure.Helpers;
-using StockFlow.Infrastructure.Helpers.Repositories.EfRepositories;
+using StockFlow.Infrastructure.Repositories.EfRepositories;
 
 namespace StockFlow.Infrastructure
 {

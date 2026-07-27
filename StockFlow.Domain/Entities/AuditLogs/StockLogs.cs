@@ -5,7 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace StockFlow.Domain.Entities.Logs
+namespace StockFlow.Domain.Entities.AuditLogs
 {
     public class StockLogs : IEntity, ICreateable
     {
