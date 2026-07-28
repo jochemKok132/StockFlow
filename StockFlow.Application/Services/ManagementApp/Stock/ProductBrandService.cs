@@ -34,16 +34,16 @@ namespace StockFlow.Application.Services.ManagementApp.Stock
 
         public async Task SoftDeleteProductBrandAsync(Guid id)
         {
-            var product = await productBrandRepository.GetByIdAsync(id);
-            if (product == null) throw new KeyNotFoundException($"ProductBrand with the id {id} not found.");
+            var productBrand = await productBrandRepository.GetByIdAsync(id);
+            if (productBrand == null) throw new KeyNotFoundException($"ProductBrand with the id {id} not found.");
 
-            await productBrandRepository.SoftDeleteAsync(product);
+            await productBrandRepository.SoftDeleteAsync(productBrand);
         }
 
         public async Task UpdateProductBrandAsync(UpdateProductBrandDto productBrandDto)
         {
             var productBrand = await productBrandRepository.GetByIdAsync(productBrandDto.Id);
-            if (productBrand == null) throw new KeyNotFoundException($"Product with the id {productBrandDto.Id} not found.");
+            if (productBrand == null) throw new KeyNotFoundException($"ProductBrand with the id {productBrandDto.Id} not found.");
 
             productBrand.ToProductBrandEntity(productBrandDto);
             await productBrandRepository.UpdateAsync(productBrand);

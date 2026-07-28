@@ -18,6 +18,9 @@ namespace StockFlow.Application.DTOs.Enums
         UpdatedAt,
         ProductName,
         Stock,
+        Shelf,
+        Brand,
+        Sales
     }
 
     public enum ProductBrandOrderBy
@@ -40,6 +43,7 @@ namespace StockFlow.Application.DTOs.Enums
     {
         CreatedAt,
         UpdatedAt,
+        ProductAmount,
         ShelfName,
         ShelfLocation,
     }

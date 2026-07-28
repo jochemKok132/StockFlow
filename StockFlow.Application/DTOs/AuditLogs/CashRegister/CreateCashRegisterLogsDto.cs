@@ -14,6 +14,6 @@ namespace StockFlow.Application.DTOs.AuditLogs.CashRegister
         public Guid? CustomerId { get; set; }
         public double TotalPrice { get; set; }
         public double TotalOff { get; set; }
-        public IEnumerable<ProductDto> ProductsSold { get; set; } = [];
+        public IEnumerable<Guid> ProductsSoldIds { get; set; } = [];
     }
 }

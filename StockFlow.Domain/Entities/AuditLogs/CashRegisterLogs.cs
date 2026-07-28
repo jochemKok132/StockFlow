@@ -12,9 +12,9 @@ namespace StockFlow.Domain.Entities.AuditLogs
         public Guid Id { get; set; }
         public DateTime CreatedAt { get; set; }
         public Guid EmployeeId { get; set; }
-        public required Employee Employee { get; set; }
+        public Employee? Employee { get; set; }
         public Guid? CustomerId { get; set; }
-        public required Customer Customer{ get; set; }
+        public Customer? Customer{ get; set; }
         public double TotalPrice { get; set; }
         public double TotalOff { get; set; }
         public IEnumerable<Product> ProductsSold { get; set; } = [];
