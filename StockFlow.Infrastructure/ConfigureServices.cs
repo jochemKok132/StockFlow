@@ -2,10 +2,16 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using StockFlow.Application.Interfaces.Helpers;
+using StockFlow.Application.Interfaces.ManagementApp.AuditLogs;
+using StockFlow.Application.Interfaces.ManagementApp.Stock;
 using StockFlow.Application.Interfaces.Repositories.EfRepositories;
+using StockFlow.Application.Interfaces.Repositories.ManagementApp.Stock;
+using StockFlow.Application.Services.ManagementApp.AuditLogs;
+using StockFlow.Application.Services.ManagementApp.Stock;
 using StockFlow.Infrastructure.Data;
 using StockFlow.Infrastructure.Helpers;
 using StockFlow.Infrastructure.Repositories.EfRepositories;
+using StockFlow.Infrastructure.Repositories.Stock;
 
 namespace StockFlow.Infrastructure
 {
@@ -19,7 +25,13 @@ namespace StockFlow.Infrastructure
             services.AddScoped(typeof(IEfUpdatableRepository<>), typeof(EfUpdatableRepository<>));
             services.AddScoped(typeof(IEfSoftDeletableRepository<>), typeof(EfSoftDeletableRepository<>));
             services.AddScoped<IPassword, Password>();
-
+            services.AddScoped<ICashRegisterLogsRepository, CashRegisterLogsRepository>();
+            services.AddScoped<ICustomerLogsRepository, CustomerLogsRepository>();
+            services.AddScoped<IStockLogsRepository, StockLogsRepository>();
+            services.AddScoped<IProductBrandRepository, ProductBrandRepository>();
+            services.AddScoped<IProductRepository, ProductRepository>();
+            services.AddScoped<IShelfRepository, ShelfRepository>();
+            services.AddScoped<ISalesRepository, SalesRepository>();
 
             return services;
         }

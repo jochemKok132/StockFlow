@@ -1,4 +1,10 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
+using StockFlow.Application.Interfaces;
+using StockFlow.Application.Interfaces.ManagementApp.AuditLogs;
+using StockFlow.Application.Interfaces.ManagementApp.Stock;
+using StockFlow.Application.Services;
+using StockFlow.Application.Services.ManagementApp.AuditLogs;
+using StockFlow.Application.Services.ManagementApp.Stock;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -18,7 +24,14 @@ namespace StockFlow.Application
 
         public static IServiceCollection RegisterScopedServices(this IServiceCollection services)
         {
-
+            services.AddScoped<ICashRegisterLogsService, CashRegisterLogsService>();
+            services.AddScoped<ICustomerLogsService, CustomerLogsService>();
+            services.AddScoped<IStockLogsService, StockLogsService>();
+            services.AddScoped<IProductBrandService, ProductBrandService>();
+            services.AddScoped<IProductService, ProductService>();
+            services.AddScoped<IShelfService, ShelfService>();
+            services.AddScoped<ISalesService, SalesService>();
+			services.AddScoped<IAuthenticationService, AuthenticationService>();
 
             return services;
         }

@@ -10,23 +10,23 @@ using System.Text;
 
 namespace StockFlow.Application.Services.ManagementApp.AuditLogs
 {
-    public class CashRegisterLogsService(ICashRegisterLogsRepository CashRegisterLogsRepository) : ICashRegisterLogsService
+    public class CashRegisterLogsService(ICashRegisterLogsRepository cashRegisterLogsRepository) : ICashRegisterLogsService
     {
         public async Task CreateCashRegisterLogsAsync(CreateCashRegisterLogsDto log)
         {
             if (log == null) throw new ArgumentNullException("CashRegisterLog cant be null.");
 
-            await CashRegisterLogsRepository.AddAsync(log.ToCashRegisterLogsEntity());
+            await cashRegisterLogsRepository.AddAsync(log.ToCashRegisterLogsEntity());
         }
 
         public async Task<List<CashRegisterLogsDto>> GetAllCashRegisterLogsAsync(CashRegisterLogsPaginationDto pagination)
         {
-            var CashRegisterLogss = await CashRegisterLogsRepository.GetAllCashRegisterLogsAsync(pagination);
+            var cashRegisterLogs = await cashRegisterLogsRepository.GetAllCashRegisterLogsAsync(pagination);
 
             var result = new List<CashRegisterLogsDto>();
-            foreach (var CashRegisterLogs in CashRegisterLogss)
+            foreach (var cashRegisterLog in cashRegisterLogs)
             {
-                result.Add(CashRegisterLogs.ToCashRegisterLogsDto());
+                result.Add(cashRegisterLog.ToCashRegisterLogsDto());
             }
             return result;
         }

@@ -14,6 +14,6 @@ namespace StockFlow.Domain.Entities.AuditLogs
         public StockLogType StockLogType { get; set; }
         public LogType LogType { get; set; }
         public Guid EmployeeId { get; set; }
-        public required Employee Employee { get; set; }
+        public Employee Employee { get; set; }
     }
 }
