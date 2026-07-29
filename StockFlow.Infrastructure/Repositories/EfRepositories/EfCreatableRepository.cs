@@ -19,6 +19,7 @@ namespace StockFlow.Infrastructure.Repositories.EfRepositories
         }
         public async Task AddAsync(T entity)
         {
+            entity.CreatedAt = DateTime.UtcNow;
             _dbSet.Add(entity);
             await _context.SaveChangesAsync();
         }

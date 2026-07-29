@@ -25,7 +25,8 @@ namespace StockFlow.Application.Mappings.People
         {
             return new Employee()
             {
-                EmployeeId = dto.EmployeeId,
+                Id = Guid.NewGuid(),
+                EmployeeId = null!,
                 FullName = dto.FullName,
                 Role = dto.Role.ToDomain(),
             };

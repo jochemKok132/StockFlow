@@ -1,8 +1,10 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using StockFlow.Application.Interfaces;
+using StockFlow.Application.Interfaces.ManagementApp;
 using StockFlow.Application.Interfaces.ManagementApp.AuditLogs;
 using StockFlow.Application.Interfaces.ManagementApp.Stock;
 using StockFlow.Application.Services;
+using StockFlow.Application.Services.ManagementApp;
 using StockFlow.Application.Services.ManagementApp.AuditLogs;
 using StockFlow.Application.Services.ManagementApp.Stock;
 using System;
@@ -32,6 +34,7 @@ namespace StockFlow.Application
             services.AddScoped<IShelfService, ShelfService>();
             services.AddScoped<ISalesService, SalesService>();
 			services.AddScoped<IAuthenticationService, AuthenticationService>();
+            services.AddScoped<IEmployeeService, EmployeeService>();
 
             return services;
         }

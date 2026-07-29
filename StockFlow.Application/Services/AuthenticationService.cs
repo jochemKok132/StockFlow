@@ -1,10 +1,8 @@
-using Application.DTOs.Authentication;
-using Application.Interfaces;
-using Domain.Entities;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.JsonWebTokens;
 using Microsoft.IdentityModel.Tokens;
 using StockFlow.Application.DTOs.Customer.CustomerAuthentication;
+using StockFlow.Application.DTOs.Employee.EmployeeAuthentication;
 using StockFlow.Application.Interfaces;
 using StockFlow.Domain.Entities.People;
 using System.Security.Claims;
@@ -14,7 +12,7 @@ namespace StockFlow.Application.Services
 {
     public class AuthenticationService(IConfiguration configuration) : IAuthenticationService
     {
-        public Token GenerateToken(Employee user)
+        public DTOs.Employee.EmployeeAuthentication.Token GenerateToken(Employee user)
         {
             ClaimsIdentity claims = new ClaimsIdentity(
                 new List<Claim>()
@@ -54,10 +52,10 @@ namespace StockFlow.Application.Services
             };
 
             string token = new JsonWebTokenHandler().CreateToken(descriptor);
-            return new Token() { JWT = token, ExpiresOn = expiresOn };
+            return new DTOs.Employee.EmployeeAuthentication.Token() { JWT = token, ExpiresOn = expiresOn };
         }
 
-        public Token GenerateToken(Customer user)
+        public DTOs.Customer.CustomerAuthentication.Token GenerateToken(Customer user)
         {
             throw new NotImplementedException();
         }
