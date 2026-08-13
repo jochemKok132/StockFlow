@@ -69,7 +69,7 @@ namespace StockFlow.Infrastructure.Data
         {
             optionsBuilder.UseSeeding((context, _) =>
             {
-
+              context.UseEmployeeSeeder(),
             });
 
             base.OnConfiguring(optionsBuilder);
