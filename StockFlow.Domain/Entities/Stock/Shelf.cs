@@ -14,7 +14,7 @@ namespace StockFlow.Domain.Entities.Stock
         public DateTime SoftDeletedAt { get; set; }
 
         public required string ShelfName { get; set; }
-        public string? ShelfDescription { get; set; }
+        public string? ShelfHallway { get; set; }
         public required string ShelfLocation { get; set; }
         public IEnumerable<Product> Products { get; set; } = [];
     }

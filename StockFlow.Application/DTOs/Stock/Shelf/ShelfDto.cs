@@ -14,7 +14,7 @@ namespace StockFlow.Application.DTOs.Stock.Shelf
         public DateTime SoftDeletedAt { get; set; }
 
         public required string ShelfName { get; set; }
-        public string? ShelfDescription { get; set; }
+        public string? ShelfHallway { get; set; }
         public required string ShelfLocation { get; set; }
         public IEnumerable<ProductDto> Products { get; set; } = [];
     }

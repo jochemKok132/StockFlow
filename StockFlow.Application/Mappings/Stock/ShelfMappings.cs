@@ -14,7 +14,7 @@ namespace StockFlow.Application.Mappings.Stock
             {
                 ShelfLocation = shelf.ShelfLocation,
                 ShelfName = shelf.ShelfName,
-                ShelfDescription = shelf.ShelfDescription,
+                ShelfHallway = shelf.ShelfHallway,
                 CreatedAt = shelf.CreatedAt,
                 SoftDeleted = shelf.SoftDeleted,
                 Id = shelf.Id,
@@ -30,12 +30,12 @@ namespace StockFlow.Application.Mappings.Stock
                 ShelfLocation = dto.ShelfLocation,
                 ShelfName = dto.ShelfName,
                 Id = Guid.NewGuid(),
-                ShelfDescription = dto.ShelfDescription,
+                ShelfHallway = dto.ShelfHallway,
             };
         }
         public static void ToShelfEntity(this Shelf entity, UpdateShelfDto dto)
         {
-            entity.ShelfDescription = dto.ShelfDescription;
+            entity.ShelfHallway = dto.ShelfHallway;
             entity.ShelfLocation = dto.ShelfLocation;
             entity.ShelfName = dto.ShelfName;
         }
