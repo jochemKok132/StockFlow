@@ -2,6 +2,7 @@
 using StockFlow.Domain.Entities.People;
 using StockFlow.Domain.Entities.Stock;
 using StockFlow.Domain.Entities.AuditLogs;
+using StockFlow.Infrastructure.Data.Seeders;
 
 namespace StockFlow.Infrastructure.Data
 {
@@ -27,16 +28,14 @@ namespace StockFlow.Infrastructure.Data
                    .HasForeignKey(p => p.BrandId)
                    .OnDelete(DeleteBehavior.Restrict);
 
+            builder.Entity<Product>()
+                   .HasMany(x => x.Sales)
+                   .WithMany(x => x.Products);
+
             builder.Entity<Shelf>()
                    .HasMany<Product>()
                    .WithOne(p => p.Shelf)
                    .HasForeignKey(p => p.ShelfId)
-                   .OnDelete(DeleteBehavior.Restrict);
-
-            builder.Entity<Sales>()
-                   .HasMany<Product>()
-                   .WithOne(p => p.Sale)
-                   .HasForeignKey(p => p.SaleId)
                    .OnDelete(DeleteBehavior.Restrict);
 
             builder.Entity<CashRegisterLogs>()
@@ -69,7 +68,7 @@ namespace StockFlow.Infrastructure.Data
         {
             optionsBuilder.UseSeeding((context, _) =>
             {
-              context.UseEmployeeSeeder(),
+                context.UseEmployeeSeeder();
             });
 
             base.OnConfiguring(optionsBuilder);

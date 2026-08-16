@@ -17,10 +17,11 @@ namespace StockFlow.Application.Mappings.Stock
                 CreatedAt = sales.CreatedAt,
                 Id = sales.Id,
                 PercentageOff = sales.PercentageOff,
-                Products = sales.Products.Select(p => p.ToProductDto()),
+                SalesTags = sales.SalesTags,
                 SoftDeleted = sales.SoftDeleted,
                 SoftDeletedAt = sales.SoftDeletedAt,
                 UpdatedAt = sales.UpdatedAt,
+                Products = sales.Products.Select(x => x.ToProductDto()),
             };
         }
         public static Sales ToSalesEntity(this CreateSalesDto dto)
@@ -30,6 +31,7 @@ namespace StockFlow.Application.Mappings.Stock
                 Description = dto.Description,
                 SaleName = dto.SaleName,
                 Id = Guid.NewGuid(),
+                SalesTags = dto.SalesTags,
                 PercentageOff = dto.PercentageOff,
             };
         }
@@ -38,6 +40,7 @@ namespace StockFlow.Application.Mappings.Stock
             entity.SaleName = dto.SaleName;
             entity.PercentageOff = dto.PercentageOff;
             entity.Description = dto.Description;
+            entity.SalesTags = dto.SalesTags;
         }
     }
 }

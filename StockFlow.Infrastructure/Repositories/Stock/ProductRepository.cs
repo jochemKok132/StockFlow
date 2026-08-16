@@ -53,7 +53,6 @@ namespace StockFlow.Infrastructure.Repositories.Stock
                     ProductOrderBy.Stock => query.OrderByDescending(p => p.Stock),
                     ProductOrderBy.Brand => query.OrderByDescending(p => p.Brand.BrandName),
                     ProductOrderBy.Shelf => query.OrderByDescending(p => p.Shelf.ShelfName),
-                    ProductOrderBy.Sales => query.OrderByDescending(p => p.Sale.SaleName),
                     ProductOrderBy.CreatedAt => query.OrderByDescending(p => p.CreatedAt),
                     ProductOrderBy.UpdatedAt => query.OrderByDescending(p => p.UpdatedAt),
                     _ => query.OrderByDescending(p => p.CreatedAt),
@@ -64,7 +63,6 @@ namespace StockFlow.Infrastructure.Repositories.Stock
                     ProductOrderBy.Stock => query.OrderBy(p => p.Stock),
                     ProductOrderBy.Brand => query.OrderBy(p => p.Brand.BrandName),
                     ProductOrderBy.Shelf => query.OrderBy(p => p.Shelf.ShelfName),
-                    ProductOrderBy.Sales => query.OrderBy(p => p.Sale.SaleName),
                     ProductOrderBy.CreatedAt => query.OrderBy(p => p.CreatedAt),
                     ProductOrderBy.UpdatedAt => query.OrderBy(p => p.UpdatedAt),
                     _ => query.OrderBy(p => p.CreatedAt),
@@ -73,6 +71,14 @@ namespace StockFlow.Infrastructure.Repositories.Stock
             return await query
                 .Skip((pagination.PageNumber - 1) * pagination.PageSize)
                 .Take(pagination.PageSize)
+                .ToListAsync();
+        }
+
+        public async Task<IEnumerable<Product>> GetAllProductsWithTags(List<string> tags)
+        {
+            return await _context.Products
+                .AsNoTracking()
+                .Where(p => tags.All(t => p.SalesTags.Contains(t)))
                 .ToListAsync();
         }
     }

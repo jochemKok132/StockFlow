@@ -12,6 +12,7 @@ namespace StockFlow.Application.Interfaces.ManagementApp
         Task CreateEmployeeAsync(CreateEmployeeDto dto);
         Task UpdateEmployeeAsync(UpdateEmployeeDto dto);
         Task<EmployeeDto> GetEmployeeByEmployeeIdAsync(string id);
+        Task<EmployeeDto> GetEmployeeByIdAsync(Guid id);
         Task<List<EmployeeDto>> GetAllEmployeesAsync();
     }
 }

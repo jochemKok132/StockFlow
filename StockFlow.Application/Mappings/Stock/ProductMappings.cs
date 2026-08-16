@@ -19,13 +19,14 @@ namespace StockFlow.Application.Mappings.Stock
                 BrandId = product.BrandId,
                 Location = product.Location,
                 ProductImage = product.ProductImage,
-                SaleId = product.SaleId,
+                Sales = product.Sales.Select(i => i.ToSalesDto()),
                 ShelfId = product.ShelfId,
                 CreatedAt = product.CreatedAt,
                 SoftDeletedAt = product.SoftDeletedAt,
                 SoftDeleted = product.SoftDeleted,
                 Stock = product.Stock,
                 UpdatedAt = product.UpdatedAt,
+                SalesTags = product.SalesTags,
             };
         }
         public static Product ToProductEntity(this CreateProductDto dto)
@@ -39,7 +40,7 @@ namespace StockFlow.Application.Mappings.Stock
                 BrandId = dto.BrandId,
                 Location = dto.Location,
                 ProductImage = dto.ProductImage,
-                SaleId = dto.SaleId,
+                SalesTags = dto.SalesTags,
                 ShelfId = dto.ShelfId,
                 Stock = dto.Stock,
             };
@@ -52,7 +53,7 @@ namespace StockFlow.Application.Mappings.Stock
             entity.Barcode = dto.Barcode;
             entity.BrandId = dto.BrandId;
             entity.ProductImage = dto.ProductImage;
-            entity.SaleId = dto.SaleId;
+            entity.SalesTags = dto.SalesTags;
             entity.ShelfId = dto.ShelfId;
             entity.Stock = dto.Stock;
         }

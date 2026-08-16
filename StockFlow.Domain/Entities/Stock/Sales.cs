@@ -16,6 +16,7 @@ namespace StockFlow.Domain.Entities.Stock
         public required string SaleName { get; set; }
         public required string Description { get; set; }
         public int PercentageOff { get; set; }
-        public IEnumerable<Product> Products { get; set; } = [];
+        public ICollection<Product> Products { get; set; } = [];
+        public IEnumerable<string> SalesTags { get; set; } = [];
     }
 }

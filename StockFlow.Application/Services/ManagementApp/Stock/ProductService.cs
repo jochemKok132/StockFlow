@@ -9,13 +9,22 @@ using System.Text;
 
 namespace StockFlow.Application.Services.ManagementApp.Stock
 {
-    public class ProductService(IProductRepository productRepository) : IProductService
+    public class ProductService(IProductRepository productRepository, ISalesRepository salesRepository) : IProductService
     {
         public async Task CreateProductAsync(CreateProductDto product)
         {
             if (product == null) throw new ArgumentNullException("Product cant be null.");
 
-            await productRepository.AddAsync(product.ToProductEntity());
+            var productEntity = product.ToProductEntity();
+
+            var matchingSales = await salesRepository.GetAllSalesForProductTags(product.SalesTags.ToList());
+
+            foreach (var sale in matchingSales)
+            {
+                productEntity.Sales.Add(sale);
+            }
+
+            await productRepository.AddAsync(productEntity);
         }
 
         public async Task<List<ProductDto>> GetAllProductsAsync(ProductPaginationDto pagination)
@@ -44,6 +53,16 @@ namespace StockFlow.Application.Services.ManagementApp.Stock
             if (product == null) throw new KeyNotFoundException($"Product with the id {productDto.Id} not found.");
 
             product.ToProductEntity(productDto);
+
+            product.Sales.Clear();
+
+            var matchingSales = await salesRepository.GetAllSalesForProductTags(product.SalesTags.ToList());
+
+            foreach (var sale in matchingSales)
+            {
+                product.Sales.Add(sale);
+            }
+
             await productRepository.UpdateAsync(product);
         }
     }

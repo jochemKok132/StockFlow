@@ -19,12 +19,12 @@ namespace StockFlow.Domain.Entities.Stock
         public int Stock { get; set; }
         public int Location { get; set; }
         public byte[]? ProductImage { get; set; }
+        public IEnumerable<string> SalesTags { get; set; } = [];
 
         public Guid BrandId { get; set; }
         public ProductBrand? Brand { get; set; }
         public Guid ShelfId { get; set; }
         public Shelf? Shelf { get; set; }
-        public Guid SaleId { get; set; }
-        public Sales? Sale { get; set; }
+        public ICollection<Sales> Sales { get; set; } = [];
     }
 }

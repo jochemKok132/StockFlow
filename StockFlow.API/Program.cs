@@ -57,7 +57,7 @@ namespace StockFlow.API
                 app.UseSwaggerUI(options =>
                 {
                     options.RoutePrefix = "api";
-                    options.SwaggerEndpoint("specifications.json", "api");
+                    options.SwaggerEndpoint("/v1/specifications.json", "api");
                 });
             }
 

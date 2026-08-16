@@ -36,6 +36,12 @@ namespace StockFlow.Application.Services.ManagementApp
             return employee.ToEmployeeDto();
         }
 
+        public async Task<EmployeeDto> GetEmployeeByIdAsync(Guid id)
+        {
+            var employee = await employeeRepository.GetByIdAsync(id);
+            return employee.ToEmployeeDto();
+        }
+
         public async Task<Token> LoginAsync(LoginRequest request)
         {
             Employee? employee = await employeeRepository.GetEmployeeByEmployeeIdAsync(request.EmployeeId);

@@ -69,5 +69,12 @@ namespace StockFlow.Infrastructure.Repositories.Stock
                 .Take(pagination.PageSize)
                 .ToListAsync();
         }
+        public async Task<IEnumerable<Sales>> GetAllSalesForProductTags(List<string> productTags)
+        {
+            return await _context.Sales
+                .AsNoTracking()
+                .Where(s => s.SalesTags.Any() && s.SalesTags.All(t => productTags.Contains(t)))
+                .ToListAsync();
+        }
     }
 }

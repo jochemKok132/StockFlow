@@ -1,4 +1,7 @@
-        
+
+using Microsoft.EntityFrameworkCore;
+using StockFlow.Domain.Entities.Stock;
+
 namespace StockFlow.Infrastructure.Data.Seeders
 {
     public static class ShelfSeeder
@@ -114,7 +117,7 @@ namespace StockFlow.Infrastructure.Data.Seeders
                         ShelfHallway = "Sanitary",
                         ShelfLocation = "015"
                     },
-                }
+                };
                 context.Set<Shelf>().AddRange(Shelfs);
                 context.SaveChanges();
             }
