@@ -1,4 +1,4 @@
-All employee passwords are "StrongPassword1!".
+All employee passwords are "001273".
 
 Employees with corresponding roles: 
     000001: Admin;
