@@ -13,7 +13,7 @@ namespace StockFlow.API.Controllers
     [Route("[controller]")]
     public class EmployeeController(IEmployeeService employeeService) : ControllerBase
     {
-        [Authorize(Roles = "Manager,Admin")]
+        [Authorize(Roles = "Manager,Admin,ShiftLeader")]
         [HttpGet("GetAll")]
         public async Task<IActionResult> GetAllEmployeesAsync()
         {

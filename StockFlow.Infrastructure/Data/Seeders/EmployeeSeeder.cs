@@ -76,7 +76,7 @@ namespace StockFlow.Infrastructure.Data.Seeders
                     },
                     new Employee()
                     {
-                        Id = new Guid("7be9b779-ac76-440f-ad76-1251ff1efb53"),
+                        Id = new Guid("7be9b779-ac76-440f-ad76-1251ff1efb32"),
                         EmployeeId = "000008",
                         FullName = "ServiceDesk Three",
                         HashedPassword = "$2a$12$H9wz9isUk6/mBBi5nWpBAeZhV.lXmIz/qP7w43.jwm9CSUDA83kt2",
@@ -84,7 +84,7 @@ namespace StockFlow.Infrastructure.Data.Seeders
                     },
                     new Employee()
                     {
-                        Id = new Guid("7be9b779-ac76-440f-ad76-1251ff1efb52"),
+                        Id = new Guid("7be9b779-ac76-440f-ad76-1251ff1efb31"),
                         EmployeeId = "000009",
                         FullName = "ServiceDesk Four",
                         HashedPassword = "$2a$12$H9wz9isUk6/mBBi5nWpBAeZhV.lXmIz/qP7w43.jwm9CSUDA83kt2",

@@ -69,6 +69,10 @@ namespace StockFlow.Infrastructure.Data
             optionsBuilder.UseSeeding((context, _) =>
             {
                 context.UseEmployeeSeeder();
+                context.UseShelfSeeder();
+                context.UseProductBrandSeeder();
+                context.UseSalesSeeder();
+                context.UseProductSeeder();
             });
 
             base.OnConfiguring(optionsBuilder);
