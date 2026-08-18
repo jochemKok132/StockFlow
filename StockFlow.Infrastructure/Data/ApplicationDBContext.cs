@@ -71,7 +71,6 @@ namespace StockFlow.Infrastructure.Data
                 context.UseEmployeeSeeder();
                 context.UseShelfSeeder();
                 context.UseProductBrandSeeder();
-                context.UseSalesSeeder();
                 context.UseProductSeeder();
             });
 

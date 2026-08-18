@@ -1,0 +1,33 @@
+﻿@using Microsoft.AspNetCore.Components.Authorization
+@using StockFlow.ManagementApp.Pages.Shared
+<CascadingAuthenticationState>
+	<Router AppAssembly="@typeof(App).Assembly">
+		<Found Context="routeData">
+			<AuthorizeRouteView RouteData="@routeData" DefaultLayout="@typeof(MainLayout)">
+				<NotAuthorized Context="authState">
+					@if (authState.User.Identity?.IsAuthenticated != true)
+					{
+						<RedirectToLogin />
+					}
+					else
+					{
+						<div class="access-denied">
+							<h3>No Access</h3>
+							<p>You dont have access to this page.</p>
+						</div>
+					}
+				</NotAuthorized>
+				<Authorizing>
+					<p>Loading...</p>
+				</Authorizing>
+			</AuthorizeRouteView>
+			<FocusOnNavigate RouteData="@routeData" Selector="h1" />
+		</Found>
+		<NotFound>
+			<LayoutView Layout="@typeof(MainLayout)">
+				<RedirectToLogin />
+				<p role="alert">This page doesnt exist.</p>
+			</LayoutView>
+		</NotFound>
+	</Router>
+</CascadingAuthenticationState>

@@ -5,5 +5,10 @@
     <Project Path="StockFlow.Domain/StockFlow.Domain.csproj" />
     <Project Path="StockFlow.Infrastructure/StockFlow.Infrastructure.csproj" />
   </Folder>
-  <Folder Name="/Frontend/" />
+  <Folder Name="/Frontend/">
+    <Project Path="StockFlow.ManagementApp/StockFlow.ManagementApp.csproj" Id="fe202e03-5b85-4279-9cc1-10428599f71e" />
+  </Folder>
+  <Folder Name="/Solution Items/">
+    <File Path=".gitignore" />
+  </Folder>
 </Solution>

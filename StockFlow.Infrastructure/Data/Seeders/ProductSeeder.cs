@@ -1873,30 +1873,7 @@ namespace StockFlow.Infrastructure.Data.Seeders
 
                 context.Set<Product>().AddRange(Products);
                 context.SaveChanges();
-
-                Guid summerPaintSale = new Guid("7c2e0d22-a35b-4656-b420-ed3e7398ca01");
-                Guid hardwareClearanceSale = new Guid("7c2e0d22-a35b-4656-b420-ed3e7398ca02");
-                Guid sanitaryRenovationSale = new Guid("7c2e0d22-a35b-4656-b420-ed3e7398ca03");
-
-                AttachProductToSale(context, summerPaintSale, new Guid("8d3f0d22-a35b-4656-b420-000000000001")); // Flexa Verf Muurverf Wit 1L
-                AttachProductToSale(context, summerPaintSale, new Guid("8d3f0d22-a35b-4656-b420-000000000002")); // Sigma Coatings Muurverf Grijs 1L
-                AttachProductToSale(context, summerPaintSale, new Guid("8d3f0d22-a35b-4656-b420-000000000003")); // Histor Muurverf Zwart 1L
-                AttachProductToSale(context, hardwareClearanceSale, new Guid("8d3f0d22-a35b-4656-b420-00000000001f")); // GAMMA Universele Schroeven 4x30mm
-                AttachProductToSale(context, hardwareClearanceSale, new Guid("8d3f0d22-a35b-4656-b420-000000000020")); // Bosch Universele Schroeven 5x50mm
-                AttachProductToSale(context, hardwareClearanceSale, new Guid("8d3f0d22-a35b-4656-b420-000000000021")); // Makita Spaanplaatschroeven 3.5x20mm
-                AttachProductToSale(context, sanitaryRenovationSale, new Guid("8d3f0d22-a35b-4656-b420-000000000079")); // Hansgrohe Regendouche 25cm
-                AttachProductToSale(context, sanitaryRenovationSale, new Guid("8d3f0d22-a35b-4656-b420-00000000007a")); // Villeroy & Boch Handdouche Set
-                AttachProductToSale(context, sanitaryRenovationSale, new Guid("8d3f0d22-a35b-4656-b420-00000000007b")); // Grohe Douchekop Verstelbaar
-
-                context.SaveChanges();
             }
-        }
-
-        private static void AttachProductToSale(DbContext context, Guid saleId, Guid productId)
-        {
-            Sales saleStub = context.Set<Sales>().Find(saleId)!;
-            Product productStub = context.Set<Product>().Find(productId)!;
-            saleStub.Products.Add(productStub);
         }
     }
 }
