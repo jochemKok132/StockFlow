@@ -9,6 +9,8 @@
     <Project Path="StockFlow.ManagementApp/StockFlow.ManagementApp.csproj" Id="fe202e03-5b85-4279-9cc1-10428599f71e" />
   </Folder>
   <Folder Name="/Solution Items/">
+    <File Path=".github/workflows/ci-build-test.yml" />
     <File Path=".gitignore" />
+    <File Path="README.md" />
   </Folder>
 </Solution>
