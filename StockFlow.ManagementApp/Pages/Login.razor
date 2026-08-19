@@ -1,0 +1,105 @@
+﻿@page "/login"
+@layout BlankLayout
+@inject NavigationManager Nav
+@inject IAuthService AuthService
+
+<div class="login-wrapper">
+    <div class="login-left">
+        <div class="brand">
+            <span class="logo">
+                <img src="/icon-192.png"
+                     alt="Logo StockFlow" title="Logo StockFlow">
+            </span>
+        </div>
+    </div>
+
+    <div class="login-right">
+        <h1>StockFlow</h1>
+        <h2>Login</h2>
+        <EditForm Model="@loginModel" OnValidSubmit="@HandleLogin" FormName="loginForm">
+            <DataAnnotationsValidator />
+            <ValidationSummary class="text-danger" />
+
+            <div class="form-group">
+                <InputText id="email"
+                           class="form-control"
+                           Value="@loginModel.EmployeeId"
+                           ValueChanged="@OnEmployeeIdChanged"
+                           ValueExpression="@(() => loginModel.EmployeeId)"
+                           inputmode="numeric"
+                           pattern="[0-9]*"
+                           maxlength="6"
+                           placeholder="Employee Id" />
+            </div>
+
+            <div class="form-group">
+                <InputText id="password"
+                           class="form-control"
+                           Value="@loginModel.Password"
+                           ValueChanged="@OnPasswordChanged"
+                           ValueExpression="@(() => loginModel.Password)"
+                           type="password"
+                           inputmode="numeric"
+                           pattern="[0-9]*"
+                           placeholder="Password" />
+            </div>
+
+            @if (!string.IsNullOrEmpty(errorMessage))
+            {
+                <div class="alert alert-danger">@errorMessage</div>
+            }
+
+            <button type="submit" class="btn-login" disabled="@isLoading">
+                @if (isLoading)
+                {
+                    <span>Loading...</span>
+                }
+                else
+                {
+                    <span>Login</span>
+                }
+            </button>
+        </EditForm>
+    </div>
+</div>
+
+@code {
+    private LoginRequest loginModel = new();
+    private string errorMessage = "";
+    private bool isLoading = false;
+
+    private async Task HandleLogin()
+    {
+        errorMessage = "";
+        isLoading = true;
+
+        var response = await AuthService.LoginAsync(new LoginRequest
+        {
+            EmployeeId = loginModel.EmployeeId,
+            Password = loginModel.Password
+        });
+
+        if (response.Succeeded)
+            Nav.NavigateTo("/");
+        else
+            errorMessage = "Employee Id or password is incorrect.";
+
+        isLoading = false;
+    }
+
+    private void OnEmployeeIdChanged(string value)
+    {
+        loginModel.EmployeeId = FilterDigits(value);
+    }
+
+    private void OnPasswordChanged(string value)
+    {
+        loginModel.Password = FilterDigits(value);
+    }
+
+    private static string FilterDigits(string? value)
+    {
+        var text = value ?? string.Empty;
+        return new string(text.Where(char.IsDigit).ToArray());
+    }
+}

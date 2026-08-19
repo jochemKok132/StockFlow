@@ -18,16 +18,26 @@
 					}
 				</NotAuthorized>
 				<Authorizing>
-					<p>Loading...</p>
+					<div class="d-flex justify-content-center align-items-center vh-100">
+						<div class="spinner-border" role="status">
+							<span class="visually-hidden">Loading...</span>
+						</div>
+					</div>
 				</Authorizing>
 			</AuthorizeRouteView>
 			<FocusOnNavigate RouteData="@routeData" Selector="h1" />
 		</Found>
 		<NotFound>
-			<LayoutView Layout="@typeof(MainLayout)">
-				<RedirectToLogin />
-				<p role="alert">This page doesnt exist.</p>
-			</LayoutView>
+			<AuthorizeView>
+				<Authorized>
+					<LayoutView Layout="@typeof(MainLayout)">
+						<PageNotFound />
+					</LayoutView>
+				</Authorized>
+				<NotAuthorized>
+					<RedirectToLogin />
+				</NotAuthorized>
+			</AuthorizeView>
 		</NotFound>
 	</Router>
 </CascadingAuthenticationState>
