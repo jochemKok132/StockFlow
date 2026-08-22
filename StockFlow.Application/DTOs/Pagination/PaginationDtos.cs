@@ -32,7 +32,7 @@ namespace StockFlow.Application.DTOs.Pagination
     {
         public string? EmployeeName { get; set; }
         public string? EmployeeId { get; set; }
-        public EmployeeRoleDto Role { get; set; }
+        public EmployeeRoleDto? Role { get; set; }
     }
     public class CashRegisterLogsPaginationDto : Pagination<CashRegisterLogsOrderBy>
     {
@@ -44,14 +44,15 @@ namespace StockFlow.Application.DTOs.Pagination
     {
         public string? EmployeeName { get; set; }
         public string? EmployeeId { get; set; }
-        public StockLogTypeDto StockLogType { get; set; }
-        public LogTypeDto LogType { get; set; }
+        public int Barcode { get; set; }
+        public StockLogTypeDto? StockLogType { get; set; }
+        public LogTypeDto? LogType { get; set; }
     }
     public class CustomerLogsPaginationDto : Pagination<CustomerLogsOrderBy>
     {
         public string? CustomerName { get; set; }
         public string? Email { get; set; }
-        public LogTypeDto LogType { get; set; }
+        public LogTypeDto? LogType { get; set; }
 
     }
 }

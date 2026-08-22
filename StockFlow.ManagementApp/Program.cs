@@ -3,7 +3,9 @@ using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using StockFlow.ManagementApp.Authentication;
 using StockFlow.ManagementApp.Interfaces;
+using StockFlow.ManagementApp.Interfaces.AuditLogs;
 using StockFlow.ManagementApp.Services;
+using StockFlow.ManagementApp.Services.AuditLogs;
 
 namespace StockFlow.ManagementApp
 {
@@ -21,6 +23,7 @@ namespace StockFlow.ManagementApp
             builder.Services.AddScoped<AuthenticationStateProvider>(sp => sp.GetRequiredService<AuthStateProvider>());
             builder.Services.AddScoped<IAuthService, AuthService>();
             builder.Services.AddScoped<IHttpService, HttpService>();
+            builder.Services.AddScoped<IStockLogsService, StockLogsService>();
             builder.Services.AddTransient<AuthHandler>();
 
             builder.Services.AddScoped(sp =>

@@ -19,6 +19,7 @@ namespace StockFlow.Application.Mappings.AuditLogs
                 CreatedAt = log.CreatedAt,
                 Id = log.Id,
                 LogType = log.LogType.ToDto(),
+                Barcode = log.Barcode,
                 StockLogType = log.StockLogType.ToDto(),
             };
         }
@@ -29,6 +30,7 @@ namespace StockFlow.Application.Mappings.AuditLogs
                 EmployeeId = dto.EmployeeId,
                 Id = Guid.NewGuid(),
                 LogType = dto.LogType.ToDomain(),
+                Barcode = dto.Barcode,
                 StockLogType = dto.StockLogType.ToDomain(),
             };
         }

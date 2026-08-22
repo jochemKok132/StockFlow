@@ -10,7 +10,7 @@ namespace StockFlow.API.Controllers
     [Route("[controller]")]
     public class StockLogsController(IStockLogsService stockLogsService) : ControllerBase
     {
-        [Authorize(Roles = "Manager,Admin")]
+        [Authorize(Roles = "ServiceDesk,ShiftLeader,Manager,Admin")]
         [HttpGet("GetAll")]
         public async Task<IActionResult> GetAllStockLogsAsync([FromQuery] StockLogsPaginationDto pagination)
         {

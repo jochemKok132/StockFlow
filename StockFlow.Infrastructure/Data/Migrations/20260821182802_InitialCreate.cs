@@ -169,6 +169,7 @@ namespace StockFlow.Infrastructure.Data.Migrations
                     Id = table.Column<Guid>(type: "TEXT", nullable: false),
                     CreatedAt = table.Column<DateTime>(type: "TEXT", nullable: false),
                     StockLogType = table.Column<int>(type: "INTEGER", nullable: false),
+                    Barcode = table.Column<int>(type: "INTEGER", nullable: false),
                     LogType = table.Column<int>(type: "INTEGER", nullable: false),
                     EmployeeId = table.Column<Guid>(type: "TEXT", nullable: false),
                     EmployeeId1 = table.Column<Guid>(type: "TEXT", nullable: false)

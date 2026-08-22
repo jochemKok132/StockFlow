@@ -12,6 +12,7 @@ namespace StockFlow.Domain.Entities.AuditLogs
         public Guid Id { get; set; }
         public DateTime CreatedAt { get; set; }
         public StockLogType StockLogType { get; set; }
+        public int Barcode { get; set; }
         public LogType LogType { get; set; }
         public Guid EmployeeId { get; set; }
         public Employee Employee { get; set; }

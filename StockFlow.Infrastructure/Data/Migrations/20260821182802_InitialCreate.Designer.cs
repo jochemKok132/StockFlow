@@ -11,7 +11,7 @@ using StockFlow.Infrastructure.Data;
 namespace StockFlow.Infrastructure.Data.Migrations
 {
     [DbContext(typeof(ApplicationDBContext))]
-    [Migration("20260817064240_InitialCreate")]
+    [Migration("20260821182802_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -102,6 +102,9 @@ namespace StockFlow.Infrastructure.Data.Migrations
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("TEXT");
+
+                    b.Property<int>("Barcode")
+                        .HasColumnType("INTEGER");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("TEXT");

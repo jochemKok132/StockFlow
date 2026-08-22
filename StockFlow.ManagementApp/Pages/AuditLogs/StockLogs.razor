@@ -1,0 +1,201 @@
+﻿@page "/stocklogs";
+@attribute [Authorize]
+@inject IStockLogsService stockLogsService
+
+<div class="tasks-header">
+    <div>
+        <h2>Stock Logs</h2>
+        <p>All stock changes.</p>
+    </div>
+</div>
+<div class="card">
+    <div class="filters-bar">
+        <div class="filters">
+            <div class="filter-group">
+                <label>Barcode</label>
+                <input type="text" @bind="pagination.Barcode" @bind:event="oninput" @bind:after="ResetAndLoad" placeholder="e.g. 500002" />
+            </div>
+            <div class="filter-group">
+                <label>Employee name</label>
+                <input type="text" @bind="pagination.EmployeeName" @bind:event="oninput" @bind:after="ResetAndLoad" placeholder="e.g. John" />
+            </div>
+            <div class="filter-group">
+                <label>Employee id</label>
+                <input type="text" @bind="pagination.EmployeeId" @bind:event="oninput" @bind:after="ResetAndLoad" placeholder="e.g. 000013" />
+            </div>
+
+            <div class="filter-group">
+                <label>Stock log type</label>
+                <select @bind="pagination.StockLogType" @bind:after="ResetAndLoad">
+                    <option value="">All</option>
+                    @foreach (var value in Enum.GetValues<StockLogTypeDto>())
+                    {
+                        <option value="@value">@value.ToString()</option>
+                    }
+                </select>
+            </div>
+            <div class="filter-group">
+                <label>Log type</label>
+                <select @bind="pagination.LogType" @bind:after="ResetAndLoad">
+                    <option value="">All</option>
+                    @foreach (var value in Enum.GetValues<LogTypeDto>())
+                    {
+                        <option value="@value">@value.ToString()</option>
+                    }
+                </select>
+            </div>
+        </div>
+    </div>
+
+    
+    <table class="tasks-table">
+        <thead>
+            <tr>
+                <th>Barcode</th>
+                <th>Employee name</th>
+                <th @onclick="() => OrderBy(StockLogsOrderBy.EmployeeId)" class="sortable">
+                    Employee id @SortingArrow(StockLogsOrderBy.EmployeeId)
+                </th>
+                <th>Log type</th>
+                <th @onclick="() => OrderBy(StockLogsOrderBy.StockLogType)" class="sortable">
+                    Stock log type @SortingArrow(StockLogsOrderBy.StockLogType)
+                </th>
+                <th @onclick="() => OrderBy(StockLogsOrderBy.CreatedAt)" class="sortable">
+                    Created at @SortingArrow(StockLogsOrderBy.CreatedAt)
+                </th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (loading)
+            {
+                <tr><td class="loading">Loading...</td></tr>
+            }
+            else if (noAccess)
+            {
+                <tr><td class="alert-danger">You don't have access to these logs. (403 Forbidden)</td></tr>
+            }
+            else if (!string.IsNullOrEmpty(error))
+            {
+                <tr><td class="alert-danger">@error</td></tr>
+            }
+            else if (stockLogs.Count == 0)
+            {
+                <tr><td class="empty-state">No logs fitting the criteria found.</td></tr>
+            }
+            else
+            {
+                @foreach (var log in stockLogs)
+                {
+                    <tr>
+                        <td><strong>@log.Barcode</strong></td>
+                        <td>@log.Employee.FullName</td>
+                        <td>@log.Employee.EmployeeId</td>
+                        <td>@log.LogType.ToString()</td>
+                        <td>@log.StockLogType.ToString()</td>
+                        <td class="date-cell">@log.CreatedAt.ToString("dd-MM-yyyy HH:mm")</td>
+                    </tr>
+                }
+            }
+        </tbody>
+    </table>
+
+    <div class="pagination">
+        <button @onclick="PrevPage" disabled="@(pagination.PageNumber <= 1)">&#8592; Vorige</button>
+        <span>Pagina <strong>@pagination.PageNumber</strong></span>
+        <button @onclick="NextPage" disabled="@(stockLogs.Count < pagination.PageSize)">Next &#8594;</button>
+        <div class="page-size">
+            <label>Per page:</label>
+            <select @bind="pagination.PageSize" @bind:after="ResetAndLoad">
+                <option value="5">5</option>
+                <option value="10">10</option>
+                <option value="25">25</option>
+                <option value="50">50</option>
+                <option value="100">100</option>
+            </select>
+        </div>
+    </div>
+</div>
+
+@code {
+    private List<StockLogsDto> stockLogs = new List<StockLogsDto>();
+
+    private bool loading = false;
+    private bool noAccess = false;
+    private string error = "";
+
+    private StockLogsPaginationDto pagination = new StockLogsPaginationDto
+    {
+        EmployeeName = null,
+        OrderBy = StockLogsOrderBy.CreatedAt,
+        OrderType = OrderType.Descending,
+        PageNumber = 1,
+        PageSize = 25,
+        LogType = null,
+        StockLogType = null,
+        EmployeeId = null,
+    };
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadLogs();
+    }
+
+    private async Task ResetAndLoad()
+    {
+        pagination.PageNumber = 1;
+        await LoadLogs();
+    }
+    private async Task OrderBy(StockLogsOrderBy kolom)
+    {
+        if (pagination.OrderBy == kolom)
+            pagination.OrderType = pagination.OrderType == OrderType.Ascending ? OrderType.Descending : OrderType.Ascending;
+        else
+        {
+            pagination.OrderBy = kolom;
+            pagination.OrderType = OrderType.Ascending;
+        }
+        pagination.PageNumber = 1;
+        await LoadLogs();
+    }
+
+    private RenderFragment SortingArrow(StockLogsOrderBy kolom) => builder =>
+    {
+        if (pagination.OrderBy == kolom)
+        {
+            builder.OpenElement(0, "span");
+            builder.AddAttribute(1, "class", "sort-arrow");
+            builder.AddContent(2, pagination.OrderType == OrderType.Ascending ? "▲" : "▼");
+            builder.CloseElement();
+        }
+        else
+        {
+            builder.OpenElement(0, "span");
+            builder.AddAttribute(1, "class", "sort-arrow-inactive");
+            builder.AddContent(2, "⇅");
+            builder.CloseElement();
+        }
+    };
+
+    private async Task NextPage()
+    {
+        pagination.PageNumber++;
+        await LoadLogs();
+    }
+
+    private async Task PrevPage()
+    {
+        if (pagination.PageNumber > 1)
+            pagination.PageNumber--;
+        await LoadLogs();
+    }
+    private async Task LoadLogs()
+    {
+        loading = true;
+        noAccess = false;
+        error = "";
+
+        (stockLogs, error) = await stockLogsService.GetPaginatedStockLogsAsync(pagination);
+
+        loading = false;
+    }
+}

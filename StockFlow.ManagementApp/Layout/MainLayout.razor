@@ -1,47 +1,47 @@
 ﻿@inherits LayoutComponentBase
 @inject IAuthService AuthService
 @inject NavigationManager Nav
-<div class="page">
-    <nav class="sidebar">
-        <div class="sidebar-brand">
-            <img class="brand-icon" src="/icon-192.png" />
-            <span class="brand-name">StockFlow</span>
+<div class="ml-page">
+    <nav class="ml-sidebar">
+        <div class="ml-sidebar-brand">
+            <img class="ml-brand-icon" src="/icon-192.png" />
+            <span class="ml-brand-name">StockFlow</span>
         </div>
 
         <AuthorizeView Context="auth">
             <Authorized>
-                <div class="navbar-links">
+                <div class="ml-navbar-links">
                     <h5>Main menu</h5>
-                    <NavLink href="/inventory" class="nav-link" Match="NavLinkMatch.Prefix">
+                    <NavLink href="/inventory" class="ml-nav-link" Match="NavLinkMatch.Prefix">
                         <i class="bi bi-box-seam-fill"></i>
                         <span>Inventory</span>
                     </NavLink>
-                    <NavLink href="/sales" class="nav-link" Match="NavLinkMatch.Prefix">
+                    <NavLink href="/sales" class="ml-nav-link" Match="NavLinkMatch.Prefix">
                         <i class="bi bi-tags-fill"></i>
                         <span>Sales</span>
                     </NavLink>
-                    <NavLink href="/shelves" class="nav-link" Match="NavLinkMatch.Prefix">
+                    <NavLink href="/shelves" class="ml-nav-link" Match="NavLinkMatch.Prefix">
                         <i class="bi bi-bookshelf"></i>
                         <span>Shelves</span>
                     </NavLink>
 
                     <AuthorizeView Roles="Cashier,ServiceDesk,ShiftLeader,Manager,Admin">
                         <h5>Logs</h5>
-                        <NavLink href="/cashregisterlogs" class="nav-link" Match="NavLinkMatch.Prefix">
+                        <NavLink href="/cashregisterlogs" class="ml-nav-link" Match="NavLinkMatch.Prefix">
                             <i class="bi bi-currency-exchange"></i>
                             <span>Cash register logs</span>
                         </NavLink>
                     </AuthorizeView>
 
                     <AuthorizeView Roles="ServiceDesk,ShiftLeader,Manager,Admin">
-                        <NavLink href="/stocklogs" class="nav-link" Match="NavLinkMatch.Prefix">
+                        <NavLink href="/stocklogs" class="ml-nav-link" Match="NavLinkMatch.Prefix">
                             <i class="bi bi-receipt"></i>
                             <span>Stock logs</span>
                         </NavLink>
                     </AuthorizeView>
 
                     <AuthorizeView Roles="Manager,Admin">
-                        <NavLink href="/customerlogs" class="nav-link" Match="NavLinkMatch.Prefix">
+                        <NavLink href="/customerlogs" class="ml-nav-link" Match="NavLinkMatch.Prefix">
                             <i class="bi bi-person-lines-fill"></i>
                             <span>Customer Logs</span>
                         </NavLink>
@@ -49,21 +49,21 @@
 
                     <AuthorizeView Roles="ShiftLeader,Manager,Admin">
                         <h5>Management</h5>
-                        <NavLink href="/employees" class="nav-link" Match="NavLinkMatch.Prefix">
+                        <NavLink href="/employees" class="ml-nav-link" Match="NavLinkMatch.Prefix">
                             <i class="bi bi-person-vcard"></i>
                             <span>Employees</span>
                         </NavLink>
                     </AuthorizeView>
 
                     <AuthorizeView Roles="Manager,Admin">
-                        <NavLink href="/customers" class="nav-link" Match="NavLinkMatch.Prefix">
+                        <NavLink href="/customers" class="ml-nav-link" Match="NavLinkMatch.Prefix">
                             <i class="bi bi-person-fill"></i>
                             <span>Customers</span>
                         </NavLink>
                     </AuthorizeView>
                 </div>
 
-                <button class="logout-btn" @onclick="HandleLogout">
+                <button class="ml-logout-btn" @onclick="HandleLogout">
                     <i class="bi bi-box-arrow-right"></i>
                     <span>LogOut</span>
                 </button>
@@ -71,7 +71,7 @@
         </AuthorizeView>
     </nav>
 
-    <main class="main-content">
+    <main class="ml-main-content">
         @Body
     </main>
 </div>
