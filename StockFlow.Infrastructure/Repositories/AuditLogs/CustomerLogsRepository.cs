@@ -33,9 +33,14 @@ namespace StockFlow.Infrastructure.Repositories.Stock
 
         public async Task<IEnumerable<CustomerLogs>> GetAllCustomerLogsAsync(CustomerLogsPaginationDto pagination)
         {
+            pagination.CustomerName = pagination.CustomerName?.ToLower();
+
             var query = _context.CustomerLogs
                 .AsNoTracking()
-                .AsQueryable();
+                .Where(e =>
+                    e.Customer.FullName.Contains(pagination.CustomerName ?? string.Empty) &&
+                    e.Customer.Email.Contains(pagination.Email ?? string.Empty) &&
+                    (pagination.LogType == null || e.LogType.ToDto() == pagination.LogType));
 
             query = pagination.OrderType == OrderType.Descending
                 ? pagination.OrderBy switch

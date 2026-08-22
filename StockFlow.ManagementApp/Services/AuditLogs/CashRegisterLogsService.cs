@@ -6,26 +6,24 @@ using StockFlow.ManagementApp.Interfaces.AuditLogs;
 
 namespace StockFlow.ManagementApp.Services.AuditLogs
 {
-    public class StockLogsService(IHttpService httpService) : IStockLogsService
+    public class CashRegisterLogsService(IHttpService httpService) : ICashRegisterLogsService
     {
-        public async Task<(List<StockLogsDto>, string error)> GetPaginatedStockLogsAsync(StockLogsPaginationDto pagination)
+        public async Task<(List<CashRegisterLogsDto>, string error)> GetPaginatedCashRegisterLogsAsync(CashRegisterLogsPaginationDto pagination)
         {
-            var url = "StockLogs/GetAll" +
+            var url = "CashRegisterLogs/GetAll" +
                 $"?pageNumber={pagination.PageNumber}" +
                 $"&pageSize={pagination.PageSize}" +
                 $"&orderBy={pagination.OrderBy}" +
                 $"&orderType={pagination.OrderType}" +
                 $"&employeeName={pagination.EmployeeName}" +
-                $"&barcode={pagination.Barcode}" +
                 $"&employeeId={pagination.EmployeeId}" +
-                $"&stockLogType={pagination.StockLogType}" +
-                $"&logType={pagination.LogType}";
+                $"&customerName={pagination.CustomerName}";
                 
-            var response = await httpService.GetAsync<List<StockLogsDto>>(url);
+            var response = await httpService.GetAsync<List<CashRegisterLogsDto>>(url);
             if (response.Succeeded)
                 return (response.Value!, "");
             else
-                return (new List<StockLogsDto>(), $"Error: {response.Message}");
+                return (new List<CashRegisterLogsDto>(), $"Error: {response.Message}");
         }
     }
 }

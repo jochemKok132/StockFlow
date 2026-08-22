@@ -41,9 +41,14 @@ namespace StockFlow.Infrastructure.Repositories.Stock
 
         public async Task<IEnumerable<CashRegisterLogs>> GetAllCashRegisterLogsAsync(CashRegisterLogsPaginationDto pagination)
         {
+            pagination.CustomerName = pagination.CustomerName?.ToLower();
+            pagination.EmployeeName = pagination.EmployeeName?.ToLower();
             var query = _context.CashRegisterLogs
                 .AsNoTracking()
-                .AsQueryable();
+                .Where(e =>
+                    e.Employee.EmployeeId.Contains(pagination.EmployeeId ?? string.Empty) &&
+                    e.Employee.FullName.Contains(pagination.EmployeeName ?? string.Empty) &&
+                    e.Customer.FullName.Contains(pagination.CustomerName ?? string.Empty));
 
             query = pagination.OrderType == OrderType.Descending
                 ? pagination.OrderBy switch
