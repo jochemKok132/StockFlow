@@ -3,6 +3,7 @@ using StockFlow.Application.DTOs.Enums;
 using StockFlow.Application.DTOs.Pagination;
 using StockFlow.Application.Interfaces.Repositories.EfRepositories;
 using StockFlow.Application.Interfaces.Repositories.ManagementApp.Stock;
+using StockFlow.Application.Mappings.Enums;
 using StockFlow.Domain.Entities.AuditLogs;
 using StockFlow.Domain.Entities.Stock;
 using StockFlow.Infrastructure.Data;

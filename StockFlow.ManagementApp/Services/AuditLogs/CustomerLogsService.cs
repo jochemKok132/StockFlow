@@ -1,3 +1,4 @@
+using StockFlow.Application.DTOs.AuditLogs.Customer;
 using StockFlow.Application.DTOs.AuditLogs.Stock;
 using StockFlow.Application.DTOs.Enums;
 using StockFlow.Application.DTOs.Pagination;

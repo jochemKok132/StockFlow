@@ -1,38 +1,23 @@
-﻿@page "/stocklogs";
+﻿@page "/customerlogs";
 @attribute [Authorize]
-@inject IStockLogsService stockLogsService
+@inject ICustomerLogsService customerLogsService
 
 <div class="tasks-header">
     <div>
-        <h2>Stock Logs</h2>
-        <p>All stock changes.</p>
+        <h2>Customer Logs</h2>
+        <p>All Customer changes.</p>
     </div>
 </div>
 <div class="card">
     <div class="filters-bar">
         <div class="filters">
             <div class="filter-group">
-                <label>Barcode</label>
-                <input type="text" @bind="pagination.Barcode" @bind:event="oninput" @bind:after="ResetAndLoad" placeholder="e.g. 500002" />
+                <label>Customer name</label>
+                <input type="text" @bind="pagination.CustomerName" @bind:event="oninput" @bind:after="ResetAndLoad" placeholder="e.g. John" />
             </div>
             <div class="filter-group">
-                <label>Employee name</label>
-                <input type="text" @bind="pagination.EmployeeName" @bind:event="oninput" @bind:after="ResetAndLoad" placeholder="e.g. John" />
-            </div>
-            <div class="filter-group">
-                <label>Employee id</label>
-                <input type="text" @bind="pagination.EmployeeId" @bind:event="oninput" @bind:after="ResetAndLoad" placeholder="e.g. 000013" />
-            </div>
-
-            <div class="filter-group">
-                <label>Stock log type</label>
-                <select @bind="pagination.StockLogType" @bind:after="ResetAndLoad">
-                    <option value="">All</option>
-                    @foreach (var value in Enum.GetValues<StockLogTypeDto>())
-                    {
-                        <option value="@value">@value.ToString()</option>
-                    }
-                </select>
+                <label>Customer email</label>
+                <input type="email" @bind="pagination.Email" @bind:event="oninput" @bind:after="ResetAndLoad" placeholder="e.g. john@mail.com" />
             </div>
             <div class="filter-group">
                 <label>Log type</label>
@@ -51,17 +36,13 @@
     <table class="tasks-table">
         <thead>
             <tr>
-                <th>Barcode</th>
-                <th>Employee name</th>
-                <th @onclick="() => OrderBy(StockLogsOrderBy.EmployeeId)" class="sortable">
-                    Employee id @SortingArrow(StockLogsOrderBy.EmployeeId)
+                <th @onclick="() => OrderBy(CustomerLogsOrderBy.CustomerName)" class="sortable">
+                    Customer Name @SortingArrow(CustomerLogsOrderBy.CustomerName)
                 </th>
+                <th>Customer email</th>
                 <th>Log type</th>
-                <th @onclick="() => OrderBy(StockLogsOrderBy.StockLogType)" class="sortable">
-                    Stock log type @SortingArrow(StockLogsOrderBy.StockLogType)
-                </th>
-                <th @onclick="() => OrderBy(StockLogsOrderBy.CreatedAt)" class="sortable">
-                    Created at @SortingArrow(StockLogsOrderBy.CreatedAt)
+                <th @onclick="() => OrderBy(CustomerLogsOrderBy.CreatedAt)" class="sortable">
+                    Created at @SortingArrow(CustomerLogsOrderBy.CreatedAt)
                 </th>
             </tr>
         </thead>
@@ -78,20 +59,18 @@
             {
                 <tr><td class="alert-danger">@error</td></tr>
             }
-            else if (stockLogs.Count == 0)
+            else if (customerLogs.Count == 0)
             {
                 <tr><td class="empty-state">No logs fitting the criteria found.</td></tr>
             }
             else
             {
-                @foreach (var log in stockLogs)
+                @foreach (var log in customerLogs)
                 {
                     <tr>
-                        <td><strong>@log.Barcode</strong></td>
-                        <td>@log.Employee.FullName</td>
-                        <td>@log.Employee.EmployeeId</td>
+                        <td><strong>@log.Customer.FullName</strong></td>
+                        <td>@log.Customer.Email</td>
                         <td>@log.LogType.ToString()</td>
-                        <td>@log.StockLogType.ToString()</td>
                         <td class="date-cell">@log.CreatedAt.ToString("dd-MM-yyyy HH:mm")</td>
                     </tr>
                 }
@@ -102,7 +81,7 @@
     <div class="pagination">
         <button @onclick="PrevPage" disabled="@(pagination.PageNumber <= 1)">&#8592; Previous</button>
         <span>Page <strong>@pagination.PageNumber</strong></span>
-        <button @onclick="NextPage" disabled="@(stockLogs.Count < pagination.PageSize)">Next &#8594;</button>
+        <button @onclick="NextPage" disabled="@(customerLogs.Count < pagination.PageSize)">Next &#8594;</button>
         <div class="page-size">
             <label>Per page:</label>
             <select @bind="pagination.PageSize" @bind:after="ResetAndLoad">
@@ -117,22 +96,21 @@
 </div>
 
 @code {
-    private List<StockLogsDto> stockLogs = new List<StockLogsDto>();
+    private List<CustomerLogsDto> customerLogs = new List<CustomerLogsDto>();
 
     private bool loading = false;
     private bool noAccess = false;
     private string error = "";
 
-    private StockLogsPaginationDto pagination = new StockLogsPaginationDto
+    private CustomerLogsPaginationDto pagination = new CustomerLogsPaginationDto
     {
-        EmployeeName = null,
-        OrderBy = StockLogsOrderBy.CreatedAt,
+        OrderBy = CustomerLogsOrderBy.CreatedAt,
         OrderType = OrderType.Descending,
         PageNumber = 1,
         PageSize = 25,
+        CustomerName = null,
+        Email = null,
         LogType = null,
-        StockLogType = null,
-        EmployeeId = null,
     };
 
     protected override async Task OnInitializedAsync()
@@ -145,7 +123,7 @@
         pagination.PageNumber = 1;
         await LoadLogs();
     }
-    private async Task OrderBy(StockLogsOrderBy kolom)
+    private async Task OrderBy(CustomerLogsOrderBy kolom)
     {
         if (pagination.OrderBy == kolom)
             pagination.OrderType = pagination.OrderType == OrderType.Ascending ? OrderType.Descending : OrderType.Ascending;
@@ -158,7 +136,7 @@
         await LoadLogs();
     }
 
-    private RenderFragment SortingArrow(StockLogsOrderBy kolom) => builder =>
+    private RenderFragment SortingArrow(CustomerLogsOrderBy kolom) => builder =>
     {
         if (pagination.OrderBy == kolom)
         {
@@ -194,7 +172,7 @@
         noAccess = false;
         error = "";
 
-        (stockLogs, error) = await stockLogsService.GetPaginatedStockLogsAsync(pagination);
+        (customerLogs, error) = await customerLogsService.GetPaginatedCustomerLogsAsync(pagination);
 
         loading = false;
     }

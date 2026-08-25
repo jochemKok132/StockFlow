@@ -39,6 +39,7 @@ namespace StockFlow.Application.DTOs.Pagination
         public string? EmployeeName { get; set; }
         public string? EmployeeId { get; set; }
         public string? CustomerName { get; set; }
+        public string? Email { get; set; }
     }
     public class StockLogsPaginationDto : Pagination<StockLogsOrderBy>
     {

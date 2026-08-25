@@ -48,6 +48,7 @@ namespace StockFlow.Infrastructure.Repositories.Stock
                 .Where(e =>
                     e.Employee.EmployeeId.Contains(pagination.EmployeeId ?? string.Empty) &&
                     e.Employee.FullName.Contains(pagination.EmployeeName ?? string.Empty) &&
+                    e.Customer.Email.Contains(pagination.Email ?? string.Empty) &&
                     e.Customer.FullName.Contains(pagination.CustomerName ?? string.Empty));
 
             query = pagination.OrderType == OrderType.Descending

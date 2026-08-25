@@ -1,4 +1,5 @@
-﻿using StockFlow.Application.DTOs.AuditLogs.Stock;
+﻿using StockFlow.Application.DTOs.AuditLogs.CashRegister;
+using StockFlow.Application.DTOs.AuditLogs.Stock;
 using StockFlow.Application.DTOs.Enums;
 using StockFlow.Application.DTOs.Pagination;
 using StockFlow.ManagementApp.Interfaces;
@@ -17,6 +18,7 @@ namespace StockFlow.ManagementApp.Services.AuditLogs
                 $"&orderType={pagination.OrderType}" +
                 $"&employeeName={pagination.EmployeeName}" +
                 $"&employeeId={pagination.EmployeeId}" +
+                $"&email={pagination.Email}" +
                 $"&customerName={pagination.CustomerName}";
                 
             var response = await httpService.GetAsync<List<CashRegisterLogsDto>>(url);
