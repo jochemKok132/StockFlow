@@ -24,6 +24,20 @@ namespace StockFlow.API.Controllers
                 return BadRequest("There has been an unforseen error.");
             }
         }
+        [Authorize]
+        [HttpGet("GetById/{id}")]
+        public async Task<IActionResult> GetProductByIdAsync( Guid id)
+        {
+            try
+            {
+                var products = await productService.GetProductByIdAsync(id);
+                return Ok(products);
+            }
+            catch (ArgumentException)
+            {
+                return BadRequest("There has been an unforseen error.");
+            }
+        }
 
         [Authorize(Roles = "Manager,Admin")]
         [HttpPost("Create")]

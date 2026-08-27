@@ -44,7 +44,10 @@ namespace StockFlow.Infrastructure.Repositories.Stock
                 .AsNoTracking()
                 .Include(p => p.Brand)
                 .Include(p => p.Shelf)
-                .AsQueryable();
+                .Where(e =>
+                    e.ProductName.Contains(pagination.ProductName ?? string.Empty) &&
+                    e.Location.Contains(pagination.Location ?? string.Empty) &&
+                    e.Barcode.Contains(pagination.Barcode ?? string.Empty));
 
             query = pagination.OrderType == OrderType.Descending
                 ? pagination.OrderBy switch

@@ -8,7 +8,8 @@ namespace StockFlow.Application.Interfaces.ManagementApp.Stock
 {
     public interface IProductService
     {
-        Task<List<ProductDto>> GetAllProductsAsync(ProductPaginationDto pagination);
+        Task<List<ProductBulkViewDto>> GetAllProductsAsync(ProductPaginationDto pagination);
+        Task<ProductDto> GetProductDetailsAsync(Guid id);
         Task CreateProductAsync(CreateProductDto product);
         Task UpdateProductAsync(UpdateProductDto product);
         Task SoftDeleteProductAsync(Guid id);

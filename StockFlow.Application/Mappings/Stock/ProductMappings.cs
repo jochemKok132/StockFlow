@@ -57,5 +57,18 @@ namespace StockFlow.Application.Mappings.Stock
             entity.ShelfId = dto.ShelfId;
             entity.Stock = dto.Stock;
         }
+        public static ProductBulkViewDto ToProductBulkViewDto(this Product product)
+        {
+            return new ProductBulkViewDto()
+            {
+                Id = product.Id,
+                ProductName = product.ProductName,
+                Barcode = product.Barcode,
+                Location = product.Location,
+                Sale = product.Sales.Any(),
+                Stock = product.Stock,
+                BrandName = product.Brand.Name,
+            };
+        }
     }
 }

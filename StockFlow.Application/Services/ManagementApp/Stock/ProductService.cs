@@ -27,14 +27,14 @@ namespace StockFlow.Application.Services.ManagementApp.Stock
             await productRepository.AddAsync(productEntity);
         }
 
-        public async Task<List<ProductDto>> GetAllProductsAsync(ProductPaginationDto pagination)
+        public async Task<List<ProductBulkViewDto>> GetAllProductsAsync(ProductPaginationDto pagination)
         {
             var products = await productRepository.GetAllProductsAsync(pagination);
 
-            var result = new List<ProductDto>();
+            var result = new List<ProductBulkViewDto>();
             foreach (var product in products)
             {
-                result.Add(product.ToProductDto());
+                result.Add(product.ToProductBulkViewDto());
             }
             return result;
         }
@@ -65,5 +65,12 @@ namespace StockFlow.Application.Services.ManagementApp.Stock
 
             await productRepository.UpdateAsync(product);
         }
+        public async Task<ProductDto> GetProductDetailsAsync(Guid id) 
+        {
+            var product = await productRepository.GetByIdAsync(id);
+            if (product == null) throw new KeyNotFoundException($"Product with the id {productDto.Id} not found.");
+            return product.ToProductDto();
+        }
+
     }
 }
