@@ -3,10 +3,13 @@
 @inject NavigationManager Nav
 <div class="ml-page">
     <nav class="ml-sidebar">
-        <div class="ml-sidebar-brand">
-            <img class="ml-brand-icon" src="/icon-192.png" />
-            <span class="ml-brand-name">StockFlow</span>
-        </div>
+        <NavLink href="/" style="text-decoration: none;" Match="NavLinkMatch.Prefix">
+            <div class="ml-sidebar-brand">
+                <img class="ml-brand-icon" src="/icon-192.png" />
+                <span class="ml-brand-name">StockFlow</span>
+            </div>
+        </NavLink>
+
 
         <AuthorizeView Context="auth">
             <Authorized>

@@ -16,7 +16,6 @@ namespace StockFlow.Application.DTOs.Stock.Product
         public int Location { get; set; }
 
         public string BrandName { get; set; }
-        public bool Sale { get; set; } = [];
-
+        public bool Sale { get; set; }
     }
 }

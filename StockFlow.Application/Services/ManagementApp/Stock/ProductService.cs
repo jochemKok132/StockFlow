@@ -68,7 +68,7 @@ namespace StockFlow.Application.Services.ManagementApp.Stock
         public async Task<ProductDto> GetProductDetailsAsync(Guid id) 
         {
             var product = await productRepository.GetByIdAsync(id);
-            if (product == null) throw new KeyNotFoundException($"Product with the id {productDto.Id} not found.");
+            if (product == null) throw new KeyNotFoundException($"Product with the id {id} not found.");
             return product.ToProductDto();
         }
 

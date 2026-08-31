@@ -1,6 +1,7 @@
 using StockFlow.Application.DTOs.AuditLogs.CashRegister;
 using StockFlow.Application.DTOs.AuditLogs.Stock;
 using StockFlow.Application.DTOs.Pagination;
+using StockFlow.Application.DTOs.Stock.Product;
 
 namespace StockFlow.ManagementApp.Interfaces.AuditLogs
 {

@@ -67,7 +67,7 @@ namespace StockFlow.Application.Mappings.Stock
                 Location = product.Location,
                 Sale = product.Sales.Any(),
                 Stock = product.Stock,
-                BrandName = product.Brand.Name,
+                BrandName = product.Brand.BrandName,
             };
         }
     }

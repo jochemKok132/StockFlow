@@ -1,5 +1,5 @@
 ﻿@page "/cashregisterlogs";
-@attribute [Authorize]
+@attribute [Authorize(Roles = "Cashier,ServiceDesk,ShiftLeader,Manager,Admin")]
 @inject ICashRegisterLogsService CashRegisterLogsService
 
 <div class="tasks-header">

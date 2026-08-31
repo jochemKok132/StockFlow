@@ -1,5 +1,5 @@
 ﻿@page "/stocklogs";
-@attribute [Authorize]
+@attribute [Authorize(Roles = "ShiftLeader,Manager,Admin")]
 @inject IStockLogsService stockLogsService
 
 <div class="tasks-header">

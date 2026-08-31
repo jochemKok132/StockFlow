@@ -1,9 +1,6 @@
 ﻿using StockFlow.Domain.Entities.IEntities;
 using StockFlow.Domain.Entities.People;
 using StockFlow.Domain.Entities.Stock;
-using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace StockFlow.Domain.Entities.AuditLogs
 {

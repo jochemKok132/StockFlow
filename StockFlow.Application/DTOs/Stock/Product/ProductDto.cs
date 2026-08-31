@@ -15,8 +15,8 @@ namespace StockFlow.Application.DTOs.Stock.Product
         public bool SoftDeleted { get; set; }
         public DateTime SoftDeletedAt { get; set; }
 
-        public required string ProductName { get; set; }
-        public required string Description { get; set; }
+        public string ProductName { get; set; }
+        public string Description { get; set; }
         public int Barcode { get; set; }
         public int Stock { get; set; }
         public int Location { get; set; }

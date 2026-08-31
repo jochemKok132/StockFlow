@@ -46,8 +46,8 @@ namespace StockFlow.Infrastructure.Repositories.Stock
                 .Include(p => p.Shelf)
                 .Where(e =>
                     e.ProductName.Contains(pagination.ProductName ?? string.Empty) &&
-                    e.Location.Contains(pagination.Location ?? string.Empty) &&
-                    e.Barcode.Contains(pagination.Barcode ?? string.Empty));
+                    e.Location.ToString().Contains(pagination.Location.ToString()) &&
+                    e.Barcode.ToString().Contains(pagination.Barcode.ToString()));
 
             query = pagination.OrderType == OrderType.Descending
                 ? pagination.OrderBy switch

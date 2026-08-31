@@ -30,7 +30,7 @@ namespace StockFlow.API.Controllers
         {
             try
             {
-                var products = await productService.GetProductByIdAsync(id);
+                var products = await productService.GetProductDetailsAsync(id);
                 return Ok(products);
             }
             catch (ArgumentException)
@@ -78,7 +78,7 @@ namespace StockFlow.API.Controllers
         }
 
         [Authorize(Roles = "Manager,Admin")]
-        [HttpDelete("SoftDelete")]
+        [HttpDelete("SoftDelete/{id}")]
         public async Task<IActionResult> SoftDeleteProductAsync(Guid id)
         {
             try
