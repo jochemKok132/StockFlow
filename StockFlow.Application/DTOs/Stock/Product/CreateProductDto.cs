@@ -12,6 +12,7 @@ namespace StockFlow.Application.DTOs.Stock.Product
         public int Barcode { get; set; }
         public int Stock { get; set; }
         public int Location { get; set; }
+        public decimal Price { get; set; }
         public byte[]? ProductImage { get; set; }
         public IEnumerable<string> SalesTags { get; set; } = [];
 

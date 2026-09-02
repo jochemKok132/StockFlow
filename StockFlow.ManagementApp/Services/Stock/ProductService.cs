@@ -2,7 +2,7 @@
 using StockFlow.Application.DTOs.Pagination;
 using StockFlow.Application.DTOs.Stock.Product;
 using StockFlow.ManagementApp.Interfaces;
-using StockFlow.ManagementApp.Interfaces.AuditLogs;
+using StockFlow.ManagementApp.Interfaces.Stock;
 
 namespace StockFlow.ManagementApp.Services.Stock
 {

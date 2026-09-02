@@ -202,6 +202,7 @@ namespace StockFlow.Infrastructure.Data.Migrations
                     SoftDeletedAt = table.Column<DateTime>(type: "TEXT", nullable: false),
                     ProductName = table.Column<string>(type: "TEXT", nullable: false),
                     Description = table.Column<string>(type: "TEXT", nullable: false),
+                    Price = table.Column<decimal>(type: "TEXT", nullable: false),
                     Barcode = table.Column<int>(type: "INTEGER", nullable: false),
                     Stock = table.Column<int>(type: "INTEGER", nullable: false),
                     Location = table.Column<int>(type: "INTEGER", nullable: false),

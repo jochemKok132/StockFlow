@@ -6,7 +6,7 @@ namespace StockFlow.Application.DTOs.Pagination
     {
         public string? ProductName { get; set; }
         public int Barcode { get; set; }
-        public int Location { get; set; }
+        public string? Location { get; set; }
     }
     public class ProductBrandPaginationDto : Pagination<ProductBrandOrderBy>
     {

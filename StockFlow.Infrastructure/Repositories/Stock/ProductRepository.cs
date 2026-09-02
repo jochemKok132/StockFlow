@@ -40,14 +40,37 @@ namespace StockFlow.Infrastructure.Repositories.Stock
 
         public async Task<IEnumerable<Product>> GetAllProductsAsync(ProductPaginationDto pagination)
         {
+            pagination.ProductName = pagination.ProductName?.ToLower();
+
+            pagination.Location ??= string.Empty;
+
+            string? shelfLocation = null;
+            string? productLocation = null;
+            var hasCombo = pagination.Location.Contains('-');
+
+            if (hasCombo)
+            {
+                var parts = pagination.Location.Split('-', 2);
+                shelfLocation = parts[0];
+                productLocation = parts.Length > 1 ? parts[1] : string.Empty;
+            }
+
             var query = _context.Products
                 .AsNoTracking()
                 .Include(p => p.Brand)
                 .Include(p => p.Shelf)
                 .Where(e =>
-                    e.ProductName.Contains(pagination.ProductName ?? string.Empty) &&
-                    e.Location.ToString().Contains(pagination.Location.ToString()) &&
-                    e.Barcode.ToString().Contains(pagination.Barcode.ToString()));
+                    e.ProductName.ToLower().Contains((pagination.ProductName ?? string.Empty).ToLower()) &&
+                    e.Barcode.ToString().Contains(pagination.Barcode.ToString()) &&
+                    (
+                        (hasCombo &&
+                            e.Shelf.ShelfLocation.ToString().StartsWith(shelfLocation ?? string.Empty) &&
+                            e.Location.ToString().StartsWith(productLocation ?? string.Empty))
+                        ||
+                        (!hasCombo &&
+                            (e.Location.ToString().StartsWith(pagination.Location) ||
+                             e.Shelf.ShelfLocation.ToString().StartsWith(pagination.Location)))
+                    ));
 
             query = pagination.OrderType == OrderType.Descending
                 ? pagination.OrderBy switch

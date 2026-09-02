@@ -1,0 +1,180 @@
+﻿@page "/inventory";
+@attribute [Authorize]
+@inject IProductService productsService
+
+<div class="tasks-header">
+    <div>
+        <h2>Inventory management</h2>
+    </div>
+</div>
+<div class="card">
+    <div class="filters-bar">
+        <div class="filters">
+            <div class="filter-group">
+                <label>Barcode</label>
+                <input type="text" @bind="pagination.Barcode" @bind:event="oninput" @bind:after="ResetAndLoad" placeholder="e.g. 500146" />
+            </div>
+            <div class="filter-group">
+                <label>Product name</label>
+                <input type="text" @bind="pagination.ProductName" @bind:event="oninput" @bind:after="ResetAndLoad" placeholder="e.g. Douchemat" />
+            </div>
+            <div class="filter-group">
+                <label>Location</label>
+                <input type="text" @bind="pagination.Location" @bind:event="oninput" @bind:after="ResetAndLoad" placeholder="e.g. 002-1025" />
+            </div>
+        </div>
+    </div>
+
+    
+    <table class="tasks-table">
+        <thead>
+            <tr>
+                <th>Barcode</th>
+                <th @onclick="() => OrderBy(ProductOrderBy.ProductName)" class="sortable">
+                    Product name @SortingArrow(ProductOrderBy.ProductName)
+                </th>
+                <th>Location</th>
+                <th>Price</th>
+                <th @onclick="() => OrderBy(ProductOrderBy.Sales)" class="sortable">
+                    Sales @SortingArrow(ProductOrderBy.Sales)
+                </th>
+                <th @onclick="() => OrderBy(ProductOrderBy.Brand)" class="sortable">
+                    Brand @SortingArrow(ProductOrderBy.Brand)
+                </th>
+                <th @onclick="() => OrderBy(ProductOrderBy.Stock)" class="sortable">
+                    Stock @SortingArrow(ProductOrderBy.Stock)
+                </th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (loading)
+            {
+                <tr><td class="loading">Loading...</td></tr>
+            }
+            else if (noAccess)
+            {
+                <tr><td class="alert-danger">You don't have access to these products. (403 Forbidden)</td></tr>
+            }
+            else if (!string.IsNullOrEmpty(error))
+            {
+                <tr><td class="alert-danger">@error</td></tr>
+            }
+            else if (products.Count == 0)
+            {
+                <tr><td class="empty-state">No products fitting the criteria found.</td></tr>
+            }
+            else
+            {
+                @foreach (var product in products)
+                {
+                    <tr>
+                        <td><strong>@product.Barcode</strong></td>
+                        <td>@product.ProductName</td>
+                        <td>@product.Location</td>
+                        <td>@product.Price</td>
+                        <td>@product.Sale.ToString()</td>
+                        <td>@product.BrandName</td>
+                        <td>@product.Stock</td>
+                    </tr>
+                }
+            }
+        </tbody>
+    </table>
+
+    <div class="pagination">
+        <button @onclick="PrevPage" disabled="@(pagination.PageNumber <= 1)">&#8592; Previous</button>
+        <span>Page <strong>@pagination.PageNumber</strong></span>
+        <button @onclick="NextPage" disabled="@(products.Count < pagination.PageSize)">Next &#8594;</button>
+        <div class="page-size">
+            <label>Per page:</label>
+            <select @bind="pagination.PageSize" @bind:after="ResetAndLoad">
+                <option value="5">5</option>
+                <option value="10">10</option>
+                <option value="25">25</option>
+                <option value="50">50</option>
+                <option value="100">100</option>
+            </select>
+        </div>
+    </div>
+</div>
+
+@code {
+    private List<ProductBulkViewDto> products = new List<ProductBulkViewDto>();
+
+    private bool loading = false;
+    private bool noAccess = false;
+    private string error = "";
+
+    private ProductPaginationDto pagination = new ProductPaginationDto
+    {
+        OrderBy = ProductOrderBy.CreatedAt,
+        OrderType = OrderType.Descending,
+        PageNumber = 1,
+        PageSize = 25,
+        ProductName = null,
+    };
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadProducts();
+    }
+
+    private async Task ResetAndLoad()
+    {
+        pagination.PageNumber = 1;
+        await LoadProducts();
+    }
+    private async Task OrderBy(ProductOrderBy kolom)
+    {
+        if (pagination.OrderBy == kolom)
+            pagination.OrderType = pagination.OrderType == OrderType.Ascending ? OrderType.Descending : OrderType.Ascending;
+        else
+        {
+            pagination.OrderBy = kolom;
+            pagination.OrderType = OrderType.Ascending;
+        }
+        pagination.PageNumber = 1;
+        await LoadProducts();
+    }
+
+    private RenderFragment SortingArrow(ProductOrderBy kolom) => builder =>
+    {
+        if (pagination.OrderBy == kolom)
+        {
+            builder.OpenElement(0, "span");
+            builder.AddAttribute(1, "class", "sort-arrow");
+            builder.AddContent(2, pagination.OrderType == OrderType.Ascending ? "▲" : "▼");
+            builder.CloseElement();
+        }
+        else
+        {
+            builder.OpenElement(0, "span");
+            builder.AddAttribute(1, "class", "sort-arrow-inactive");
+            builder.AddContent(2, "⇅");
+            builder.CloseElement();
+        }
+    };
+
+    private async Task NextPage()
+    {
+        pagination.PageNumber++;
+        await LoadProducts();
+    }
+
+    private async Task PrevPage()
+    {
+        if (pagination.PageNumber > 1)
+            pagination.PageNumber--;
+        await LoadProducts();
+    }
+    private async Task LoadProducts()
+    {
+        loading = true;
+        noAccess = false;
+        error = "";
+
+        (products, error) = await productsService.GetPaginatedProductsAsync(pagination);
+
+        loading = false;
+    }
+}

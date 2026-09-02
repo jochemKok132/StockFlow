@@ -18,6 +18,7 @@ namespace StockFlow.Application.Mappings.Stock
                 Barcode = product.Barcode,
                 BrandId = product.BrandId,
                 Location = product.Location,
+                Price = product.Price,
                 ProductImage = product.ProductImage,
                 Sales = product.Sales.Select(i => i.ToSalesDto()),
                 ShelfId = product.ShelfId,
@@ -37,6 +38,7 @@ namespace StockFlow.Application.Mappings.Stock
                 Id = Guid.NewGuid(),
                 ProductName = dto.ProductName,
                 Barcode = dto.Barcode,
+                Price = dto.Price,
                 BrandId = dto.BrandId,
                 Location = dto.Location,
                 ProductImage = dto.ProductImage,
@@ -52,6 +54,7 @@ namespace StockFlow.Application.Mappings.Stock
             entity.ProductName = dto.ProductName;
             entity.Barcode = dto.Barcode;
             entity.BrandId = dto.BrandId;
+            entity.Price = dto.Price;
             entity.ProductImage = dto.ProductImage;
             entity.SalesTags = dto.SalesTags;
             entity.ShelfId = dto.ShelfId;
@@ -64,7 +67,8 @@ namespace StockFlow.Application.Mappings.Stock
                 Id = product.Id,
                 ProductName = product.ProductName,
                 Barcode = product.Barcode,
-                Location = product.Location,
+                Location = $"{product.Shelf.ShelfLocation}-{product.Location}",
+                Price = product.Price,
                 Sale = product.Sales.Any(),
                 Stock = product.Stock,
                 BrandName = product.Brand.BrandName,

@@ -4,8 +4,10 @@ using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using StockFlow.ManagementApp.Authentication;
 using StockFlow.ManagementApp.Interfaces;
 using StockFlow.ManagementApp.Interfaces.AuditLogs;
+using StockFlow.ManagementApp.Interfaces.Stock;
 using StockFlow.ManagementApp.Services;
 using StockFlow.ManagementApp.Services.AuditLogs;
+using StockFlow.ManagementApp.Services.Stock;
 
 namespace StockFlow.ManagementApp
 {
@@ -26,6 +28,7 @@ namespace StockFlow.ManagementApp
             builder.Services.AddScoped<IStockLogsService, StockLogsService>();
             builder.Services.AddScoped<ICashRegisterLogsService, CashRegisterLogsService>();
             builder.Services.AddScoped<ICustomerLogsService, CustomerLogsService>();
+            builder.Services.AddScoped<IProductService, ProductService>();
             builder.Services.AddTransient<AuthHandler>();
 
             builder.Services.AddScoped(sp =>

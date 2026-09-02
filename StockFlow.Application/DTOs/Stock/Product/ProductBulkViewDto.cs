@@ -13,7 +13,8 @@ namespace StockFlow.Application.DTOs.Stock.Product
         public required string ProductName { get; set; }
         public int Barcode { get; set; }
         public int Stock { get; set; }
-        public int Location { get; set; }
+        public string Location { get; set; }
+        public decimal Price { get; set; }
 
         public string BrandName { get; set; }
         public bool Sale { get; set; }

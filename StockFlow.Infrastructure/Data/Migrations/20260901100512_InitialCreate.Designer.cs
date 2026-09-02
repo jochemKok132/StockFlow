@@ -11,7 +11,7 @@ using StockFlow.Infrastructure.Data;
 namespace StockFlow.Infrastructure.Data.Migrations
 {
     [DbContext(typeof(ApplicationDBContext))]
-    [Migration("20260821182802_InitialCreate")]
+    [Migration("20260901100512_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -229,6 +229,9 @@ namespace StockFlow.Infrastructure.Data.Migrations
 
                     b.Property<int>("Location")
                         .HasColumnType("INTEGER");
+
+                    b.Property<decimal>("Price")
+                        .HasColumnType("TEXT");
 
                     b.Property<byte[]>("ProductImage")
                         .HasColumnType("BLOB");

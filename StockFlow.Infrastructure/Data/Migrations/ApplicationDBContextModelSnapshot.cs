@@ -227,6 +227,9 @@ namespace StockFlow.Infrastructure.Data.Migrations
                     b.Property<int>("Location")
                         .HasColumnType("INTEGER");
 
+                    b.Property<decimal>("Price")
+                        .HasColumnType("TEXT");
+
                     b.Property<byte[]>("ProductImage")
                         .HasColumnType("BLOB");
 
