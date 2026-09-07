@@ -210,8 +210,7 @@ namespace StockFlow.Infrastructure.Data.Migrations
                     SalesTags = table.Column<string>(type: "TEXT", nullable: false),
                     BrandId = table.Column<Guid>(type: "TEXT", nullable: false),
                     ShelfId = table.Column<Guid>(type: "TEXT", nullable: false),
-                    CashRegisterLogsId = table.Column<Guid>(type: "TEXT", nullable: true),
-                    ShelfId1 = table.Column<Guid>(type: "TEXT", nullable: true)
+                    CashRegisterLogsId = table.Column<Guid>(type: "TEXT", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -233,11 +232,6 @@ namespace StockFlow.Infrastructure.Data.Migrations
                         principalTable: "Shelves",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
-                    table.ForeignKey(
-                        name: "FK_Products_Shelves_ShelfId1",
-                        column: x => x.ShelfId1,
-                        principalTable: "Shelves",
-                        principalColumn: "Id");
                 });
 
             migrationBuilder.CreateTable(
@@ -303,11 +297,6 @@ namespace StockFlow.Infrastructure.Data.Migrations
                 name: "IX_Products_ShelfId",
                 table: "Products",
                 column: "ShelfId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_Products_ShelfId1",
-                table: "Products",
-                column: "ShelfId1");
 
             migrationBuilder.CreateIndex(
                 name: "IX_ProductSales_SalesId",

@@ -1,26 +1,18 @@
-﻿@page "/inventory";
+﻿@page "/sales";
 @attribute [Authorize]
-@inject IProductService productsService
+@inject ISalesService salesService
 
 <div class="tasks-header">
     <div>
-        <h2>Inventory management</h2>
+        <h2>Sales management</h2>
     </div>
 </div>
 <div class="card">
     <div class="filters-bar">
         <div class="filters">
             <div class="filter-group">
-                <label>Barcode</label>
-                <input type="text" @bind="pagination.Barcode" @bind:event="oninput" @bind:after="ResetAndLoad" placeholder="e.g. 500146" />
-            </div>
-            <div class="filter-group">
-                <label>Product name</label>
-                <input type="text" @bind="pagination.ProductName" @bind:event="oninput" @bind:after="ResetAndLoad" placeholder="e.g. Douchemat" />
-            </div>
-            <div class="filter-group">
-                <label>Location</label>
-                <input type="text" @bind="pagination.Location" @bind:event="oninput" @bind:after="ResetAndLoad" placeholder="e.g. 002-1025" />
+                <label>Sale name</label>
+                <input type="text" @bind="pagination.SalesName" @bind:event="oninput" @bind:after="ResetAndLoad" placeholder="e.g. Summer sale" />
             </div>
         </div>
     </div>
@@ -29,20 +21,21 @@
     <table class="tasks-table">
         <thead>
             <tr>
-                <th>Barcode</th>
-                <th @onclick="() => OrderBy(ProductOrderBy.ProductName)" class="sortable">
-                    Product name @SortingArrow(ProductOrderBy.ProductName)
+                <th @onclick="() => OrderBy(SalesOrderBy.SaleName)" class="sortable">
+                    Sale name @SortingArrow(SalesOrderBy.SaleName)
                 </th>
-                <th>Location</th>
-                <th>Price</th>
-                <th @onclick="() => OrderBy(ProductOrderBy.Sales)" class="sortable">
-                    Sales @SortingArrow(ProductOrderBy.Sales)
+                <th @onclick="() => OrderBy(SalesOrderBy.PercentageOff)" class="sortable">
+                    Percentage off @SortingArrow(SalesOrderBy.PercentageOff)
                 </th>
-                <th @onclick="() => OrderBy(ProductOrderBy.Brand)" class="sortable">
-                    Brand @SortingArrow(ProductOrderBy.Brand)
+                <th>Tags</th>
+                <th @onclick="() => OrderBy(SalesOrderBy.ProductAmount)" class="sortable">
+                    Product amount @SortingArrow(SalesOrderBy.ProductAmount)
                 </th>
-                <th @onclick="() => OrderBy(ProductOrderBy.Stock)" class="sortable">
-                    Stock @SortingArrow(ProductOrderBy.Stock)
+                <th @onclick="() => OrderBy(SalesOrderBy.CreatedAt)" class="sortable">
+                    Created at @SortingArrow(SalesOrderBy.CreatedAt)
+                </th>
+                <th @onclick="() => OrderBy(SalesOrderBy.UpdatedAt)" class="sortable">
+                    Updated at @SortingArrow(SalesOrderBy.UpdatedAt)
                 </th>
             </tr>
         </thead>
@@ -53,32 +46,27 @@
             }
             else if (noAccess)
             {
-                <tr><td class="alert-danger">You don't have access to these products. (403 Forbidden)</td></tr>
+                <tr><td class="alert-danger">You don't have access to these sales. (403 Forbidden)</td></tr>
             }
             else if (!string.IsNullOrEmpty(error))
             {
                 <tr><td class="alert-danger">@error</td></tr>
             }
-            else if (products.Count == 0)
+            else if (sales.Count == 0)
             {
-                <tr><td class="empty-state">No products fitting the criteria found.</td></tr>
+                <tr><td class="empty-state">No sales fitting the criteria found.</td></tr>
             }
             else
             {
-                @foreach (var product in products)
+                @foreach (var sale in sales)
                 {
-                    <tr class="clickable-row" @onclick="() => OpenDetails(product)">
-                        <td><strong>@product.Barcode</strong></td>
-                        <td>@product.ProductName</td>
-                        <td>@product.Location</td>
-                        <td>@product.Price</td>
-                        <td>@if (product.Sale)
-                            {
-                                <i class="bi bi-tag-fill"></i>
-                            }
-                        </td>
-                        <td>@product.BrandName</td>
-                        <td>@product.Stock</td>
+                    <tr class="clickable-row" @onclick="() => OpenDetails(sale)">
+                        <td><strong>@sale.SaleName</strong></td>
+                        <td>@sale.PercentageOff</td>
+                        <td>@string.Join(", ", sale.SalesTags)</td>
+                        <td>@sale.Products.Count()</td>
+                        <td class="date-cell">@sale.CreatedAt.ToString("dd-MM-yyyy HH:mm")</td>
+                        <td class="date-cell">@sale.UpdatedAt.ToString("dd-MM-yyyy HH:mm")</td>
                     </tr>
                 }
             }
@@ -88,7 +76,7 @@
     <div class="pagination">
         <button @onclick="PrevPage" disabled="@(pagination.PageNumber <= 1)">&#8592; Previous</button>
         <span>Page <strong>@pagination.PageNumber</strong></span>
-        <button @onclick="NextPage" disabled="@(products.Count < pagination.PageSize)">Next &#8594;</button>
+        <button @onclick="NextPage" disabled="@(sales.Count < pagination.PageSize)">Next &#8594;</button>
         <div class="page-size">
             <label>Per page:</label>
             <select @bind="pagination.PageSize" @bind:after="ResetAndLoad">
@@ -102,16 +90,16 @@
     </div>
 </div>
 
-<ProductDetails Show="showDetails"
+<SaleDetails Show="showDetails"
        EditMode="false"
        ReadMode="true"
-       product="selectedProduct"
+       sale="selectedSale"
        Loading="detailsLoading"
        Error="@detailsError"
        OnClose="CloseDetails"/>
 
 @code {
-    private List<ProductBulkViewDto> products = new List<ProductBulkViewDto>();
+    private List<SalesDto> sales = new List<SalesDto>();
 
     private bool loading = false;
     private bool detailsLoading = false;
@@ -119,31 +107,30 @@
     private bool showDetails = false;
     private bool noAccess = false;
     private string error = "";
-    private ProductDto? selectedProduct; 
+    private SalesDto? selectedSale; 
 
-    private ProductPaginationDto pagination = new ProductPaginationDto
+    private SalesPaginationDto pagination = new SalesPaginationDto
     {
-        OrderBy = ProductOrderBy.CreatedAt,
+        OrderBy = SalesOrderBy.CreatedAt,
         OrderType = OrderType.Descending,
         PageNumber = 1,
         PageSize = 25,
-        ProductName = null,
+        SalesName = null,
     };
 
     protected override async Task OnInitializedAsync()
     {
         await LoadProducts();
     }
-
-    private async Task OpenDetails(ProductBulkViewDto dto)
+    private async Task OpenDetails(SalesDto dto)
     {
         showDetails = true;
         detailsLoading = true;
         detailsError = "";
-        selectedProduct = null;
+        selectedSale = null;
         await InvokeAsync(StateHasChanged);
 
-        (selectedProduct, detailsError) = await productsService.GetProductDetailsAsync(dto.Id);
+        selectedSale = dto;
         detailsLoading = false;
     }
     private void CloseDetails()
@@ -151,14 +138,14 @@
         showDetails = false;
         detailsLoading = false;
         detailsError = "";
-        selectedProduct = null;
+        selectedSale = null;
     }
     private async Task ResetAndLoad()
     {
         pagination.PageNumber = 1;
         await LoadProducts();
     }
-    private async Task OrderBy(ProductOrderBy kolom)
+    private async Task OrderBy(SalesOrderBy kolom)
     {
         if (pagination.OrderBy == kolom)
             pagination.OrderType = pagination.OrderType == OrderType.Ascending ? OrderType.Descending : OrderType.Ascending;
@@ -171,7 +158,7 @@
         await LoadProducts();
     }
 
-    private RenderFragment SortingArrow(ProductOrderBy kolom) => builder =>
+    private RenderFragment SortingArrow(SalesOrderBy kolom) => builder =>
     {
         if (pagination.OrderBy == kolom)
         {
@@ -207,7 +194,7 @@
         noAccess = false;
         error = "";
 
-        (products, error) = await productsService.GetPaginatedProductsAsync(pagination);
+        (sales, error) = await salesService.GetPaginatedSalesAsync(pagination);
 
         loading = false;
     }

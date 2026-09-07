@@ -25,7 +25,9 @@ namespace StockFlow.Application.DTOs.Stock.Product
         public IEnumerable<string> SalesTags { get; set; } = [];
 
         public Guid BrandId { get; set; }
+        public ProductBrandDto Brand { get; set; }
         public Guid ShelfId { get; set; }
+        public ShelfDto Shelf { get; set; }
         public IEnumerable<SalesDto> Sales { get; set; } = [];
 
     }

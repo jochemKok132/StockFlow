@@ -37,7 +37,14 @@ namespace StockFlow.Infrastructure.Repositories.Stock
         public Task UpdateAsync(Product entity) => _updatable.UpdateAsync(entity);
         public Task SoftDeleteAsync(Product entity) => _softDeletable.SoftDeleteAsync(entity);
 
-
+        public async Task<Product?> GetByIdAsync(Guid id)
+        {
+            return await _context.Products
+                .Include(p => p.Brand)
+                .Include(p => p.Shelf)
+                .Include(p => p.Sales)
+                .FirstOrDefaultAsync(e => e.Id == id);
+        }
         public async Task<IEnumerable<Product>> GetAllProductsAsync(ProductPaginationDto pagination)
         {
             pagination.ProductName = pagination.ProductName?.ToLower();
@@ -59,6 +66,7 @@ namespace StockFlow.Infrastructure.Repositories.Stock
                 .AsNoTracking()
                 .Include(p => p.Brand)
                 .Include(p => p.Shelf)
+                .Include(p => p.Sales)
                 .Where(e =>
                     e.ProductName.ToLower().Contains((pagination.ProductName ?? string.Empty).ToLower()) &&
                     e.Barcode.ToString().Contains(pagination.Barcode.ToString()) &&

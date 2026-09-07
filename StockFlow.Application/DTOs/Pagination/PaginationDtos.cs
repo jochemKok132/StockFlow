@@ -19,7 +19,7 @@ namespace StockFlow.Application.DTOs.Pagination
     public class ShelfPaginationDto : Pagination<ShelfOrderBy>
     {
         public string? ShelfName { get; set; }
-        public int Location { get; set; }
+        public string? Location { get; set; }
     }
     public class CustomerPaginationDto : Pagination<CustomerOrderBy>
     {

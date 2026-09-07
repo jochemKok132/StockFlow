@@ -33,7 +33,7 @@ namespace StockFlow.Infrastructure.Data
                    .WithMany(x => x.Products);
 
             builder.Entity<Shelf>()
-                   .HasMany<Product>()
+                   .HasMany(x => x.Products)
                    .WithOne(p => p.Shelf)
                    .HasForeignKey(p => p.ShelfId)
                    .OnDelete(DeleteBehavior.Restrict);
@@ -72,6 +72,7 @@ namespace StockFlow.Infrastructure.Data
                 context.UseShelfSeeder();
                 context.UseProductBrandSeeder();
                 context.UseProductSeeder();
+                context.UseSalesSeeder();
             });
 
             base.OnConfiguring(optionsBuilder);

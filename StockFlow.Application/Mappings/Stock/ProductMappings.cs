@@ -8,7 +8,7 @@ namespace StockFlow.Application.Mappings.Stock
 {
     public static class ProductMappings
     {
-        public static ProductDto ToProductDto(this Product product)
+        public static ProductDto ToProductDto(this Product product, bool includeSales = true)
         {
             return new ProductDto()
             {
@@ -20,7 +20,7 @@ namespace StockFlow.Application.Mappings.Stock
                 Location = product.Location,
                 Price = product.Price,
                 ProductImage = product.ProductImage,
-                Sales = product.Sales.Select(i => i.ToSalesDto()),
+                Sales = includeSales ? product.Sales.Select(i => i.ToSalesDto(false)) : [],
                 ShelfId = product.ShelfId,
                 CreatedAt = product.CreatedAt,
                 SoftDeletedAt = product.SoftDeletedAt,

@@ -1,0 +1,25 @@
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(10, 13, 47, 0.45);
+    display: flex;
+    justify-content: end;
+    z-index: 1050;
+}
+
+.modal-box {
+    background: white;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.25);
+    padding: 20px;
+    width: 100%;
+    max-width: 400px;
+    max-height: 100vh;
+    overflow-y: auto;
+}
+.modal-header {
+    display: flex;
+    flex-direction: column; 
+    align-items: flex-start;
+    justify-content: flex-start;
+    margin-bottom: 15px;
+}

@@ -8,7 +8,7 @@ namespace StockFlow.Application.Mappings.Stock
 {
     public static class SalesMappings
     {
-        public static SalesDto ToSalesDto(this Sales sales)
+        public static SalesDto ToSalesDto(this Sales sales, bool includeProducts = true)
         {
             return new SalesDto()
             {
@@ -21,7 +21,7 @@ namespace StockFlow.Application.Mappings.Stock
                 SoftDeleted = sales.SoftDeleted,
                 SoftDeletedAt = sales.SoftDeletedAt,
                 UpdatedAt = sales.UpdatedAt,
-                Products = sales.Products.Select(x => x.ToProductDto()),
+                Products = includeProducts ? sales.Products.Select(x => x.ToProductDto(false)) : [],
             };
         }
         public static Sales ToSalesEntity(this CreateSalesDto dto)

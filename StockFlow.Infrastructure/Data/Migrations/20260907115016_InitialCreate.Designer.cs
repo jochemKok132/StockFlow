@@ -11,7 +11,7 @@ using StockFlow.Infrastructure.Data;
 namespace StockFlow.Infrastructure.Data.Migrations
 {
     [DbContext(typeof(ApplicationDBContext))]
-    [Migration("20260901100512_InitialCreate")]
+    [Migration("20260907115016_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -247,9 +247,6 @@ namespace StockFlow.Infrastructure.Data.Migrations
                     b.Property<Guid>("ShelfId")
                         .HasColumnType("TEXT");
 
-                    b.Property<Guid?>("ShelfId1")
-                        .HasColumnType("TEXT");
-
                     b.Property<bool>("SoftDeleted")
                         .HasColumnType("INTEGER");
 
@@ -269,8 +266,6 @@ namespace StockFlow.Infrastructure.Data.Migrations
                     b.HasIndex("CashRegisterLogsId");
 
                     b.HasIndex("ShelfId");
-
-                    b.HasIndex("ShelfId1");
 
                     b.ToTable("Products");
                 });
@@ -456,14 +451,10 @@ namespace StockFlow.Infrastructure.Data.Migrations
                         .HasForeignKey("CashRegisterLogsId");
 
                     b.HasOne("StockFlow.Domain.Entities.Stock.Shelf", "Shelf")
-                        .WithMany()
+                        .WithMany("Products")
                         .HasForeignKey("ShelfId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
-
-                    b.HasOne("StockFlow.Domain.Entities.Stock.Shelf", null)
-                        .WithMany("Products")
-                        .HasForeignKey("ShelfId1");
 
                     b.Navigation("Brand");
 

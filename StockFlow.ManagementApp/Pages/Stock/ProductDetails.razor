@@ -1,0 +1,72 @@
+﻿@if (Show)
+{
+    <div class="modal-overlay" @onclick="OnClose">
+        <div class="modal-box" @onclick:stopPropagation="true">
+            @if (Loading)
+            {
+                <div class="loading">Loading product details...</div>
+            }
+            else if (!string.IsNullOrWhiteSpace(Error))
+            {
+                <div class="alert-danger">@Error</div>
+            }
+            else if (product is null)
+            {
+                <div class="empty-state">No product details available.</div>
+            }
+            else
+            {
+                <div class="modal-header">
+                    <h3>Details</h3>
+                    <h5>@product.ProductName</h5>
+                </div>
+                <div class="details">
+                    <dl>
+                        <dt>Barcode</dt>
+                        <dd>@product.Barcode</dd>
+                        <dt>Location</dt>
+                        <dd>@product.Shelf.ShelfLocation-@product.Location</dd>
+                        <dt>Stock</dt>
+                        <dd>@product.Stock</dd>
+                        @if (product.Sales.Any())
+                        {
+                            <dt>Price before sale</dt>
+                            <dd>€@product.Price</dd>
+                        }
+                        <dt>Price</dt>
+                        <dd>€@GetSalesPrice()</dd>
+                        <dt>Tags</dt>
+                        <dd>@string.Join(", ", product.SalesTags)</dd>
+                        <dt>Brand</dt>
+                        <dd>@product.Brand.BrandName</dd>
+                        <dt>Description</dt>
+                        <dd>@product.Description</dd>
+                    </dl>
+                    @if (product.ProductImage != null)
+                    {
+                        <img src="@product.ProductImage" alt="ProductImage" />
+                    }
+                </div>
+            }
+        </div>
+    </div>
+}
+@code {
+    [Parameter] public bool Show { get; set; }
+    [Parameter] public bool EditMode { get; set; }
+    [Parameter] public bool ReadMode { get; set; }
+    [Parameter] public ProductDto? product { get; set; }
+    [Parameter] public bool Loading { get; set; }
+    [Parameter] public string Error { get; set; } = "";
+
+    [Parameter] public EventCallback OnClose { get; set; }
+
+    private decimal GetSalesPrice()
+    {
+        if (!product.Sales.Any())
+            return product.Price;
+
+        var maxDiscount = product.Sales.Max(s => s.PercentageOff);
+        return product.Price * (1 - (maxDiscount / 100.0m));
+    }
+}

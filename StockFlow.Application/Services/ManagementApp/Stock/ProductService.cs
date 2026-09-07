@@ -9,7 +9,7 @@ using System.Text;
 
 namespace StockFlow.Application.Services.ManagementApp.Stock
 {
-    public class ProductService(IProductRepository productRepository, ISalesRepository salesRepository) : IProductService
+    public class ProductService(IProductRepository productRepository, ISalesRepository salesRepository, IShelfRepository shelfRepository, IProductBrandRepository productBrandRepository) : IProductService
     {
         public async Task CreateProductAsync(CreateProductDto product)
         {
@@ -69,7 +69,11 @@ namespace StockFlow.Application.Services.ManagementApp.Stock
         {
             var product = await productRepository.GetByIdAsync(id);
             if (product == null) throw new KeyNotFoundException($"Product with the id {id} not found.");
-            return product.ToProductDto();
+            var productDto = product.ToProductDto();
+            productDto.Brand = (await productBrandRepository.GetByIdAsync(productDto.BrandId)).ToProductBrandDto();
+            productDto.Shelf = (await shelfRepository.GetByIdAsync(productDto.ShelfId)).ToShelfDto();
+            return productDto;
+
         }
 
     }

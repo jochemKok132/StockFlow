@@ -1,26 +1,22 @@
-﻿@page "/inventory";
+﻿@page "/shelves";
 @attribute [Authorize]
-@inject IProductService productsService
+@inject IShelfService shelfService
 
 <div class="tasks-header">
     <div>
-        <h2>Inventory management</h2>
+        <h2>Shelf management</h2>
     </div>
 </div>
 <div class="card">
     <div class="filters-bar">
         <div class="filters">
             <div class="filter-group">
-                <label>Barcode</label>
-                <input type="text" @bind="pagination.Barcode" @bind:event="oninput" @bind:after="ResetAndLoad" placeholder="e.g. 500146" />
-            </div>
-            <div class="filter-group">
-                <label>Product name</label>
-                <input type="text" @bind="pagination.ProductName" @bind:event="oninput" @bind:after="ResetAndLoad" placeholder="e.g. Douchemat" />
+                <label>Shelf name</label>
+                <input type="text" @bind="pagination.ShelfName" @bind:event="oninput" @bind:after="ResetAndLoad" placeholder="e.g. Paint" />
             </div>
             <div class="filter-group">
                 <label>Location</label>
-                <input type="text" @bind="pagination.Location" @bind:event="oninput" @bind:after="ResetAndLoad" placeholder="e.g. 002-1025" />
+                <input type="text" @bind="pagination.Location" @bind:event="oninput" @bind:after="ResetAndLoad" placeholder="e.g. 002" />
             </div>
         </div>
     </div>
@@ -29,20 +25,21 @@
     <table class="tasks-table">
         <thead>
             <tr>
-                <th>Barcode</th>
-                <th @onclick="() => OrderBy(ProductOrderBy.ProductName)" class="sortable">
-                    Product name @SortingArrow(ProductOrderBy.ProductName)
+                <th @onclick="() => OrderBy(ShelfOrderBy.ShelfName)" class="sortable">
+                    Shelf name @SortingArrow(ShelfOrderBy.ShelfName)
                 </th>
-                <th>Location</th>
-                <th>Price</th>
-                <th @onclick="() => OrderBy(ProductOrderBy.Sales)" class="sortable">
-                    Sales @SortingArrow(ProductOrderBy.Sales)
+                <th>Hallway</th>
+                <th @onclick="() => OrderBy(ShelfOrderBy.ShelfLocation)" class="sortable">
+                    Location @SortingArrow(ShelfOrderBy.ShelfLocation)
                 </th>
-                <th @onclick="() => OrderBy(ProductOrderBy.Brand)" class="sortable">
-                    Brand @SortingArrow(ProductOrderBy.Brand)
+                <th @onclick="() => OrderBy(ShelfOrderBy.ProductAmount)" class="sortable">
+                    Product amount @SortingArrow(ShelfOrderBy.ProductAmount)
                 </th>
-                <th @onclick="() => OrderBy(ProductOrderBy.Stock)" class="sortable">
-                    Stock @SortingArrow(ProductOrderBy.Stock)
+                <th @onclick="() => OrderBy(ShelfOrderBy.CreatedAt)" class="sortable">
+                    Created at @SortingArrow(ShelfOrderBy.CreatedAt)
+                </th>
+                <th @onclick="() => OrderBy(ShelfOrderBy.UpdatedAt)" class="sortable">
+                    Updated at @SortingArrow(ShelfOrderBy.UpdatedAt)
                 </th>
             </tr>
         </thead>
@@ -53,32 +50,27 @@
             }
             else if (noAccess)
             {
-                <tr><td class="alert-danger">You don't have access to these products. (403 Forbidden)</td></tr>
+                <tr><td class="alert-danger">You don't have access to these Shelf. (403 Forbidden)</td></tr>
             }
             else if (!string.IsNullOrEmpty(error))
             {
                 <tr><td class="alert-danger">@error</td></tr>
             }
-            else if (products.Count == 0)
+            else if (shelves.Count == 0)
             {
-                <tr><td class="empty-state">No products fitting the criteria found.</td></tr>
+                <tr><td class="empty-state">No Shelf fitting the criteria found.</td></tr>
             }
             else
             {
-                @foreach (var product in products)
+                @foreach (var shelf in shelves)
                 {
-                    <tr class="clickable-row" @onclick="() => OpenDetails(product)">
-                        <td><strong>@product.Barcode</strong></td>
-                        <td>@product.ProductName</td>
-                        <td>@product.Location</td>
-                        <td>@product.Price</td>
-                        <td>@if (product.Sale)
-                            {
-                                <i class="bi bi-tag-fill"></i>
-                            }
-                        </td>
-                        <td>@product.BrandName</td>
-                        <td>@product.Stock</td>
+                    <tr class="clickable-row" @onclick="() => OpenDetails(shelf)">
+                        <td><strong>@shelf.ShelfName</strong></td>
+                        <td>@shelf.ShelfHallway</td>
+                        <td>@shelf.ShelfLocation</td>
+                        <td>@shelf.Products.Count()</td>
+                        <td class="date-cell">@shelf.CreatedAt.ToString("dd-MM-yyyy HH:mm")</td>
+                        <td class="date-cell">@shelf.UpdatedAt.ToString("dd-MM-yyyy HH:mm")</td>
                     </tr>
                 }
             }
@@ -88,7 +80,7 @@
     <div class="pagination">
         <button @onclick="PrevPage" disabled="@(pagination.PageNumber <= 1)">&#8592; Previous</button>
         <span>Page <strong>@pagination.PageNumber</strong></span>
-        <button @onclick="NextPage" disabled="@(products.Count < pagination.PageSize)">Next &#8594;</button>
+        <button @onclick="NextPage" disabled="@(shelves.Count < pagination.PageSize)">Next &#8594;</button>
         <div class="page-size">
             <label>Per page:</label>
             <select @bind="pagination.PageSize" @bind:after="ResetAndLoad">
@@ -102,16 +94,16 @@
     </div>
 </div>
 
-<ProductDetails Show="showDetails"
+<ShelfDetails Show="showDetails"
        EditMode="false"
        ReadMode="true"
-       product="selectedProduct"
+       shelf="selectedShelf"
        Loading="detailsLoading"
        Error="@detailsError"
        OnClose="CloseDetails"/>
 
 @code {
-    private List<ProductBulkViewDto> products = new List<ProductBulkViewDto>();
+    private List<ShelfDto> shelves = new List<ShelfDto>();
 
     private bool loading = false;
     private bool detailsLoading = false;
@@ -119,31 +111,30 @@
     private bool showDetails = false;
     private bool noAccess = false;
     private string error = "";
-    private ProductDto? selectedProduct; 
+    private ShelfDto? selectedshelf; 
 
-    private ProductPaginationDto pagination = new ProductPaginationDto
+    private ShelfPaginationDto pagination = new ShelfPaginationDto
     {
-        OrderBy = ProductOrderBy.CreatedAt,
+        OrderBy = ShelfOrderBy.CreatedAt,
         OrderType = OrderType.Descending,
         PageNumber = 1,
         PageSize = 25,
-        ProductName = null,
+        ShelfName = null,
     };
 
     protected override async Task OnInitializedAsync()
     {
         await LoadProducts();
     }
-
-    private async Task OpenDetails(ProductBulkViewDto dto)
+    private async Task OpenDetails(ShelfDto dto)
     {
         showDetails = true;
         detailsLoading = true;
         detailsError = "";
-        selectedProduct = null;
+        selectedshelf = null;
         await InvokeAsync(StateHasChanged);
 
-        (selectedProduct, detailsError) = await productsService.GetProductDetailsAsync(dto.Id);
+        selectedshelf = dto;
         detailsLoading = false;
     }
     private void CloseDetails()
@@ -151,14 +142,14 @@
         showDetails = false;
         detailsLoading = false;
         detailsError = "";
-        selectedProduct = null;
+        selectedshelf = null;
     }
     private async Task ResetAndLoad()
     {
         pagination.PageNumber = 1;
         await LoadProducts();
     }
-    private async Task OrderBy(ProductOrderBy kolom)
+    private async Task OrderBy(ShelfOrderBy kolom)
     {
         if (pagination.OrderBy == kolom)
             pagination.OrderType = pagination.OrderType == OrderType.Ascending ? OrderType.Descending : OrderType.Ascending;
@@ -171,7 +162,7 @@
         await LoadProducts();
     }
 
-    private RenderFragment SortingArrow(ProductOrderBy kolom) => builder =>
+    private RenderFragment SortingArrow(ShelfOrderBy kolom) => builder =>
     {
         if (pagination.OrderBy == kolom)
         {
@@ -207,7 +198,7 @@
         noAccess = false;
         error = "";
 
-        (products, error) = await productsService.GetPaginatedProductsAsync(pagination);
+        (shelves, error) = await shelfService.GetPaginatedShelfAsync(pagination);
 
         loading = false;
     }

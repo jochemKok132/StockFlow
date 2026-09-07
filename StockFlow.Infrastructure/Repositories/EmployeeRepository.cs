@@ -12,7 +12,7 @@ using System.Text;
 
 namespace StockFlow.Infrastructure.Repositories
 {
-    internal class EmployeeRepository :
+    public class EmployeeRepository :
         EfRepository<Employee>,
         IEfUpdatableRepository<Employee>,
         IEfCreatableRepository<Employee>,
