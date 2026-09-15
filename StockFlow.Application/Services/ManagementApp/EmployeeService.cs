@@ -1,8 +1,10 @@
 ﻿using StockFlow.Application.DTOs.Employee;
 using StockFlow.Application.DTOs.Employee.EmployeeAuthentication;
+using StockFlow.Application.DTOs.Pagination;
 using StockFlow.Application.Interfaces;
 using StockFlow.Application.Interfaces.Helpers;
 using StockFlow.Application.Interfaces.ManagementApp;
+using StockFlow.Application.Interfaces.Repositories;
 using StockFlow.Application.Interfaces.Repositories.ManagementApp;
 using StockFlow.Application.Mappings.People;
 using StockFlow.Domain.Entities.People;
@@ -24,9 +26,9 @@ namespace StockFlow.Application.Services.ManagementApp
             await employeeRepository.AddAsync(newEmployee);
         }
 
-        public async Task<List<EmployeeDto>> GetAllEmployeesAsync()
+        public async Task<List<EmployeeDto>> GetAllEmployeesAsync(EmployeePaginationDto pagination)
         {
-            var employees = await employeeRepository.GetAllAsync();
+            var employees = await employeeRepository.GetAllEmployeesAsync(pagination);
             return employees.Select(e => e.ToEmployeeDto()).ToList();
         }
 

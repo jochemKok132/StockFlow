@@ -1,5 +1,5 @@
-﻿using StockFlow.Application.DTOs.Employee;
-using StockFlow.Application.DTOs.Employee.EmployeeAuthentication;
+﻿using StockFlow.Application.DTOs.Customer;
+using StockFlow.Application.DTOs.Customer.CustomerAuthentication;
 using StockFlow.Application.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -12,16 +12,16 @@ namespace StockFlow.API.Controllers
 {
     [ApiController]
     [Route("[controller]")]
-    public class EmployeeController(IEmployeeService employeeService) : ControllerBase
+    public class CustomerController(ICustomerService customerService) : ControllerBase
     {
         [Authorize(Roles = "Manager,Admin,ShiftLeader")]
         [HttpGet("GetAll")]
-        public async Task<IActionResult> GetAllEmployeesAsync([FromQuery] EmployeePaginationDto pagination)
+        public async Task<IActionResult> GetAllCustomersAsync([FromQuery] CustomerPaginationDto pagination)
         {
             try
             {
-                var employees = await employeeService.GetAllEmployeesAsync(pagination);
-                return Ok(employees);
+                var customers = await customerService.GetAllCustomersAsync(pagination);
+                return Ok(customers);
             }
             catch (ArgumentException)
             {
@@ -31,12 +31,12 @@ namespace StockFlow.API.Controllers
 
         [Authorize]
         [HttpGet("GetById/{id}")]
-        public async Task<IActionResult> GetEmployeeByIdAsync(Guid id)
+        public async Task<IActionResult> GetCustomerByIdAsync(Guid id)
         {
             try
             {
-                var employee = await employeeService.GetEmployeeByIdAsync(id);
-                return Ok(employee);
+                var customer = await customerService.GetCustomerByIdAsync(id);
+                return Ok(customer);
             }
             catch (KeyNotFoundException exception)
             {
@@ -49,34 +49,15 @@ namespace StockFlow.API.Controllers
         }
 
         [Authorize]
-        [HttpGet("GetByEmployeeId/{employeeId}")]
-        public async Task<IActionResult> GetEmployeeByEmployeeIdAsync(string employeeId)
+        [HttpGet("GetByEmail/{email}")]
+        public async Task<IActionResult> GetCustomerByEmailAsync(string email)
         {
             try
             {
-                var employee = await employeeService.GetEmployeeByEmployeeIdAsync(employeeId);
-                return Ok(employee);
+                var customer = await customerService.GetCustomerByEmailAsync(email);
+                return Ok(customer);
             }
             catch (KeyNotFoundException exception)
-            {
-                return BadRequest(exception.Message);
-            }
-            catch (ArgumentException)
-            {
-                return BadRequest("There has been an unforseen error.");
-            }
-        }
-
-        [Authorize(Roles = "Manager,Admin")]
-        [HttpPost("Create")]
-        public async Task<IActionResult> CreateEmployeeAsync(CreateEmployeeDto dto)
-        {
-            try
-            {
-                await employeeService.CreateEmployeeAsync(dto);
-                return NoContent();
-            }
-            catch (ArgumentNullException exception)
             {
                 return BadRequest(exception.Message);
             }
@@ -88,11 +69,11 @@ namespace StockFlow.API.Controllers
 
         [Authorize(Roles = "Manager,Admin")]
         [HttpPut("Update")]
-        public async Task<IActionResult> UpdateEmployeeAsync(UpdateEmployeeDto dto)
+        public async Task<IActionResult> UpdateCustomerAsync(UpdateCustomerDto dto)
         {
             try
             {
-                await employeeService.UpdateEmployeeAsync(dto);
+                await customerService.UpdateCustomerAsync(dto);
                 return NoContent();
             }
             catch (KeyNotFoundException exception)
@@ -111,7 +92,7 @@ namespace StockFlow.API.Controllers
         {
             try
             {
-                var token = await employeeService.LoginAsync(request);
+                var token = await customerService.LoginAsync(request);
                 return Ok(token);
             }
             catch (KeyNotFoundException exception)

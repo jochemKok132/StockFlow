@@ -39,13 +39,13 @@ namespace StockFlow.Infrastructure.Data
                    .OnDelete(DeleteBehavior.Restrict);
 
             builder.Entity<CashRegisterLogs>()
-                   .HasOne<Employee>()
+                   .HasOne(a => a.Employee)
                    .WithMany()
                    .HasForeignKey(x => x.EmployeeId)
                    .OnDelete(DeleteBehavior.Restrict);
 
             builder.Entity<CashRegisterLogs>()
-                   .HasOne<Customer>()
+                   .HasOne(a => a.Customer)
                    .WithMany()
                    .HasForeignKey(p => p.CustomerId)
                    .IsRequired(false)
@@ -58,7 +58,7 @@ namespace StockFlow.Infrastructure.Data
                    .OnDelete(DeleteBehavior.Cascade);
 
             builder.Entity<StockLogs>()
-                   .HasOne<Employee>()
+                   .HasOne(a => a.Employee)
                    .WithMany()
                    .HasForeignKey(x => x.EmployeeId)
                    .OnDelete(DeleteBehavior.Restrict);

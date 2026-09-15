@@ -4,6 +4,7 @@ using Microsoft.Extensions.DependencyInjection;
 using StockFlow.Application.Interfaces.Helpers;
 using StockFlow.Application.Interfaces.ManagementApp.AuditLogs;
 using StockFlow.Application.Interfaces.ManagementApp.Stock;
+using StockFlow.Application.Interfaces.Repositories;
 using StockFlow.Application.Interfaces.Repositories.EfRepositories;
 using StockFlow.Application.Interfaces.Repositories.ManagementApp;
 using StockFlow.Application.Interfaces.Repositories.ManagementApp.Stock;
@@ -35,6 +36,7 @@ namespace StockFlow.Infrastructure
             services.AddScoped<IShelfRepository, ShelfRepository>();
             services.AddScoped<ISalesRepository, SalesRepository>();
             services.AddScoped<IEmployeeRepository, EmployeeRepository>();
+            services.AddScoped<ICustomerRepository, CustomerRepository>();
 
             return services;
         }

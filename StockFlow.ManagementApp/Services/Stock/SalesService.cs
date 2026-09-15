@@ -26,7 +26,7 @@ namespace StockFlow.ManagementApp.Services.Stock
                 $"&pageSize={pagination.PageSize}" +
                 $"&orderBy={pagination.OrderBy}" +
                 $"&orderType={pagination.OrderType}" +
-                $"&saleName={pagination.SalesName}";
+                $"&salesName={pagination.SalesName}";
 
             var response = await httpService.GetAsync<List<SalesDto>>(url);
             if (response.Succeeded)

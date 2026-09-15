@@ -1,4 +1,5 @@
-﻿using StockFlow.Application.Interfaces.Repositories.EfRepositories;
+﻿using StockFlow.Application.DTOs.Pagination;
+using StockFlow.Application.Interfaces.Repositories.EfRepositories;
 using StockFlow.Domain.Entities.People;
 using StockFlow.Domain.Entities.Stock;
 using System;
@@ -7,12 +8,14 @@ using System.Text;
 
 namespace StockFlow.Application.Interfaces.Repositories.ManagementApp
 {
-    public interface IEmployeeRepository :
-        IEfRepository<Employee>,
-        IEfUpdatableRepository<Employee>,
-        IEfCreatableRepository<Employee>
+    public interface ICustomerRepository :
+        IEfRepository<Customer>,
+        IEfUpdatableRepository<Customer>,
+        IEfCreatableRepository<Customer>,
+        IEfSoftDeletableRepository<Customer>
     {
-        Task<Employee?> GetEmployeeByEmployeeIdAsync(string employeeId);
-        Task<string> GetNewEmployeeIdAsync();
+        Task<Customer?> GetCustomerByEmailAsync(string email);
+        Task<IEnumerable<Customer>?> GetAllCustomersAsync(CustomerPaginationDto pagination);
+
     }
 }
