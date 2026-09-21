@@ -8,8 +8,8 @@ namespace StockFlow.Application.DTOs.Employee
     public class UpdateEmployeeDto
     {
         public Guid Id { get; set; }
-        public required string FullName { get; set; }
-        public required string HashedPassword { get; set; }
+        public string? FullName { get; set; }
+        public string? HashedPassword { get; set; }
         public EmployeeRoleDto Role { get; set; } = EmployeeRoleDto.None;
     }
 }

@@ -11,7 +11,6 @@ namespace StockFlow.Application.DTOs.Stock.Product
 
         public required string ProductName { get; set; }
         public required string Description { get; set; }
-        public int Barcode { get; set; }
         public int Stock { get; set; }
         public decimal Price { get; set; }
         public int Location { get; set; }

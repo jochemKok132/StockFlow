@@ -1,11 +1,16 @@
 ﻿@page "/shelves";
 @attribute [Authorize]
 @inject IShelfService shelfService
+@inject AuthenticationStateProvider AuthStateProvider
 
 <div class="tasks-header">
     <div>
         <h2>Shelf management</h2>
     </div>
+    @if (canManage)
+    {
+        <button class="btn-save" @onclick="() => OpenCreate(new CreateShelfDto())">+ New Shelf</button>
+    }
 </div>
 <div class="card">
     <div class="filters-bar">
@@ -35,12 +40,10 @@
                 <th @onclick="() => OrderBy(ShelfOrderBy.ProductAmount)" class="sortable">
                     Product amount @SortingArrow(ShelfOrderBy.ProductAmount)
                 </th>
-                <th @onclick="() => OrderBy(ShelfOrderBy.CreatedAt)" class="sortable">
-                    Created at @SortingArrow(ShelfOrderBy.CreatedAt)
-                </th>
-                <th @onclick="() => OrderBy(ShelfOrderBy.UpdatedAt)" class="sortable">
-                    Updated at @SortingArrow(ShelfOrderBy.UpdatedAt)
-                </th>
+                @if (canManage)
+                {
+                    <th>Management</th>
+                }
             </tr>
         </thead>
         <tbody>
@@ -69,8 +72,13 @@
                         <td>@shelf.ShelfHallway</td>
                         <td>@shelf.ShelfLocation</td>
                         <td>@shelf.Products.Count()</td>
-                        <td class="date-cell">@shelf.CreatedAt.ToString("dd-MM-yyyy HH:mm")</td>
-                        <td class="date-cell">@shelf.UpdatedAt.ToString("dd-MM-yyyy HH:mm")</td>
+                        @if (canManage)
+                        {
+                            <td>
+                                <button class="btn-save" @onclick="() => OpenUpdate(shelf)">Edit</button>
+                                <button class="btn-save" @onclick="() => DeleteItem(shelf)">Delete</button>
+                            </td>
+                        }
                     </tr>
                 }
             }
@@ -93,15 +101,14 @@
         </div>
     </div>
 </div>
-
-<ShelfDetails Show="showDetails"
-       EditMode="false"
-       ReadMode="true"
-       shelf="selectedShelf"
-       Loading="detailsLoading"
-       Error="@detailsError"
-       OnClose="CloseDetails"/>
-
+<EditItem Show="showChanges"
+          EditMode="true"
+          ReadMode="false"
+          item="itemType"
+          Loading="changesLoading"
+          Error="@changesError"
+          OnClose="CloseChanges"
+          OnSave="HandleSave" />
 @code {
     private List<ShelfDto> shelves = new List<ShelfDto>();
 
@@ -111,12 +118,19 @@
     private bool showDetails = false;
     private bool noAccess = false;
     private string error = "";
-    private ShelfDto? selectedshelf; 
+    private ShelfDto? selectedshelf;
+    private bool changesLoading = false;
+    private string changesError = "";
+    private bool showChanges = false;
+    private bool canManage;
 
+    private object? itemType;
+
+    private bool isCreateMode;
     private ShelfPaginationDto pagination = new ShelfPaginationDto
     {
-        OrderBy = ShelfOrderBy.CreatedAt,
-        OrderType = OrderType.Descending,
+        OrderBy = ShelfOrderBy.ShelfLocation,
+        OrderType = OrderType.Ascending,
         PageNumber = 1,
         PageSize = 25,
         ShelfName = null,
@@ -124,6 +138,9 @@
 
     protected override async Task OnInitializedAsync()
     {
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        canManage = authState.User.IsInRole("Manager") || authState.User.IsInRole("Admin");
+
         await LoadProducts();
     }
     private async Task OpenDetails(ShelfDto dto)
@@ -143,6 +160,91 @@
         detailsLoading = false;
         detailsError = "";
         selectedshelf = null;
+    }
+    private async Task DeleteItem(ShelfDto shelf)
+    {
+        if (!canManage) return;
+
+        await shelfService.SoftDeleteShelfAsync(shelf.Id);
+        await ResetAndLoad();
+    }
+    private async Task OpenUpdate(ShelfDto dto)
+    {
+        if (!canManage) return;
+
+        isCreateMode = false;
+        showChanges = true;
+        changesLoading = true;
+        changesError = "";
+        await InvokeAsync(StateHasChanged);
+
+        itemType = new UpdateShelfDto
+        {
+            Id = dto.Id,
+            ShelfLocation = dto.ShelfLocation,
+            ShelfName = dto.ShelfName,
+            ShelfHallway = dto.ShelfHallway,
+        };
+
+
+        changesLoading = false;
+    }
+
+    private void OpenCreate(CreateShelfDto item)
+    {
+        if (!canManage) return;
+
+        isCreateMode = true;
+        showChanges = true;
+        changesLoading = false;
+        changesError = "";
+        itemType = item;
+    }
+
+    private async Task HandleSave(object? item)
+    {
+        if (item is null) return;
+
+        if (!canManage)
+        {
+            changesError = "You don't have permission to do this. (403 Forbidden)";
+            return;
+        }
+
+        changesLoading = true;
+        changesError = "";
+        await InvokeAsync(StateHasChanged);
+
+        try
+        {
+            if (isCreateMode && item is CreateShelfDto createDto)
+            {
+                await shelfService.CreateShelfAsync(createDto);
+            }
+            else if (!isCreateMode && item is UpdateShelfDto updateDto)
+            {
+                await shelfService.UpdateShelfAsync(updateDto);
+            }
+
+            showChanges = false;
+            itemType = null;
+            await LoadProducts();
+        }
+        catch (Exception ex)
+        {
+            changesError = ex.Message;
+        }
+        finally
+        {
+            changesLoading = false;
+        }
+    }
+
+    private void CloseChanges()
+    {
+        showChanges = false;
+        changesError = "";
+        itemType = null;
     }
     private async Task ResetAndLoad()
     {

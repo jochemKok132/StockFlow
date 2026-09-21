@@ -17,6 +17,7 @@ namespace StockFlow.Infrastructure.Data
         public DbSet<CashRegisterLogs> CashRegisterLogs { get; set; }
         public DbSet<CustomerLogs> CustomerLogs { get; set; }
         public DbSet<StockLogs> StockLogs { get; set; }
+        public DbSet<EmployeeLogs> EmployeeLogs { get; set; }
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
@@ -58,6 +59,12 @@ namespace StockFlow.Infrastructure.Data
                    .OnDelete(DeleteBehavior.Cascade);
 
             builder.Entity<StockLogs>()
+                   .HasOne(a => a.Employee)
+                   .WithMany()
+                   .HasForeignKey(x => x.EmployeeId)
+                   .OnDelete(DeleteBehavior.Restrict); 
+            
+            builder.Entity<EmployeeLogs>()
                    .HasOne(a => a.Employee)
                    .WithMany()
                    .HasForeignKey(x => x.EmployeeId)

@@ -73,7 +73,7 @@
                         <td>@log.Employee.FullName</td>
                         <td>@log.Employee.EmployeeId</td>
                         <td>WIP</td>
-                        <td class="date-cell">@log.CreatedAt.ToString("dd-MM-yyyy HH:mm")</td>
+                        <td class="date-cell">@log.CreatedAt.ToLocalTime().ToString("dd-MM-yyyy HH:mm")</td>
                     </tr>
                 }
             }

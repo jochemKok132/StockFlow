@@ -3,6 +3,7 @@ using StockFlow.Application.DTOs.Stock.Sales;
 using StockFlow.Application.Interfaces.ManagementApp.Stock;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 
 namespace StockFlow.API.Controllers
 {
@@ -29,9 +30,10 @@ namespace StockFlow.API.Controllers
         [HttpPost("Create")]
         public async Task<IActionResult> CreateSalesAsync(CreateSalesDto sale)
         {
+            var userId = Request.HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier);
             try
             {
-                await salesService.CreateSalesAsync(sale);
+                await salesService.CreateSalesAsync(sale, Guid.Parse(userId));
                 return NoContent();
             }
             catch (ArgumentNullException exception)
@@ -48,9 +50,10 @@ namespace StockFlow.API.Controllers
         [HttpPut("Update")]
         public async Task<IActionResult> UpdateSalesAsync(UpdateSalesDto sale)
         {
+            var userId = Request.HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier);
             try
             {
-                await salesService.UpdateSalesAsync(sale);
+                await salesService.UpdateSalesAsync(sale, Guid.Parse(userId));
                 return NoContent();
             }
             catch (KeyNotFoundException exception)
@@ -67,9 +70,10 @@ namespace StockFlow.API.Controllers
         [HttpDelete("SoftDelete")]
         public async Task<IActionResult> SoftDeleteSalesAsync(Guid id)
         {
+            var userId = Request.HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier);
             try
             {
-                await salesService.SoftDeleteSalesAsync(id);
+                await salesService.SoftDeleteSalesAsync(id, Guid.Parse(userId));
                 return NoContent();
             }
             catch (KeyNotFoundException exception)

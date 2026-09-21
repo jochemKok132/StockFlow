@@ -1,0 +1,139 @@
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(17, 17, 17, 0.45);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    z-index: 1000;
+}
+
+.modal-box {
+    background: var(--TaskbarColor);
+    border-radius: 8px;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+    padding: 24px;
+    width: 100%;
+    max-width: 560px;
+    max-height: 85vh;
+    overflow-y: auto;
+}
+
+.form-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.form-row {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.form-label {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--MutedText);
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+}
+
+.form-input,
+.form-select {
+    padding: 7px 11px;
+    border: 1px solid var(--BorderColor);
+    border-radius: 6px;
+    font-size: 14px;
+    color: var(--TextColor);
+    background: var(--TaskbarColor);
+    outline: none;
+    width: 100%;
+}
+
+    .form-input:focus,
+    .form-select:focus {
+        border-color: var(--AccentColor);
+        box-shadow: 0 0 0 2px var(--AccentColorSoft);
+    }
+
+    .form-input[readonly],
+    .form-select:disabled {
+        background: var(--DashboardColor);
+        color: var(--MutedText);
+        cursor: not-allowed;
+    }
+
+.form-checkbox {
+    width: 18px;
+    height: 18px;
+    accent-color: var(--AccentColor);
+}
+
+.form-input-file {
+    font-size: 13px;
+    color: var(--MutedText);
+}
+
+.image-field {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.image-preview {
+    max-width: 100%;
+    max-height: 160px;
+    width: auto;
+    border: 1px solid var(--BorderColor);
+    border-radius: 6px;
+    object-fit: contain;
+    background: var(--DashboardColor);
+}
+
+.form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px solid var(--BorderColor);
+}
+
+.btn-save,
+.btn-cancel {
+    padding: 8px 18px;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    border: 1px solid var(--BorderColor);
+}
+
+.btn-save {
+    background: var(--ButtonColor);
+    color: var(--ButtonTextColor);
+    border-color: var(--ButtonColor);
+}
+
+    .btn-save:hover {
+        background: var(--ButtonColorHover);
+        border-color: var(--ButtonColorHover);
+    }
+
+    .btn-save:disabled {
+        background: var(--ButtonDisabledColor);
+        border-color: var(--ButtonDisabledColor);
+        cursor: not-allowed;
+    }
+
+.btn-cancel {
+    background: var(--TaskbarColor);
+    color: var(--TextColor);
+}
+
+    .btn-cancel:hover {
+        border-color: var(--AccentColor);
+        color: var(--AccentColor);
+    }

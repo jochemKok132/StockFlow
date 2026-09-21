@@ -10,8 +10,8 @@ namespace StockFlow.Application.Interfaces.ManagementApp.Stock
     public interface ISalesService
     {
         Task<List<SalesDto>> GetAllSalesAsync(SalesPaginationDto pagination);
-        Task CreateSalesAsync(CreateSalesDto product);
-        Task UpdateSalesAsync(UpdateSalesDto product);
-        Task SoftDeleteSalesAsync(Guid id);
+        Task CreateSalesAsync(CreateSalesDto product, Guid employeeId);
+        Task UpdateSalesAsync(UpdateSalesDto product, Guid employeeId);
+        Task SoftDeleteSalesAsync(Guid id, Guid employeeId);
     }
 }

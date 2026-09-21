@@ -71,7 +71,7 @@
                         <td><strong>@log.Customer.FullName</strong></td>
                         <td>@log.Customer.Email</td>
                         <td>@log.LogType.ToString()</td>
-                        <td class="date-cell">@log.CreatedAt.ToString("dd-MM-yyyy HH:mm")</td>
+                        <td class="date-cell">@log.CreatedAt.ToLocalTime().ToString("dd-MM-yyyy HH:mm")</td>
                     </tr>
                 }
             }

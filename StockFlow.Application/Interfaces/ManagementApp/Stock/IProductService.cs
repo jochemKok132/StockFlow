@@ -10,8 +10,8 @@ namespace StockFlow.Application.Interfaces.ManagementApp.Stock
     {
         Task<List<ProductBulkViewDto>> GetAllProductsAsync(ProductPaginationDto pagination);
         Task<ProductDto> GetProductDetailsAsync(Guid id);
-        Task CreateProductAsync(CreateProductDto product);
-        Task UpdateProductAsync(UpdateProductDto product);
-        Task SoftDeleteProductAsync(Guid id);
+        Task CreateProductAsync(CreateProductDto product, Guid employeeId);
+        Task UpdateProductAsync(UpdateProductDto product, Guid employeeId);
+        Task SoftDeleteProductAsync(Guid id, Guid employeeId);
     }
 }

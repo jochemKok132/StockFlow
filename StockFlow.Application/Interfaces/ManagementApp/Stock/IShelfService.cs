@@ -10,8 +10,8 @@ namespace StockFlow.Application.Interfaces.ManagementApp.Stock
     public interface IShelfService
     {
         Task<List<ShelfDto>> GetAllShelvesAsync(ShelfPaginationDto pagination);
-        Task CreateShelfAsync(CreateShelfDto product);
-        Task UpdateShelfAsync(UpdateShelfDto product);
-        Task SoftDeleteShelfAsync(Guid id);
+        Task CreateShelfAsync(CreateShelfDto product, Guid employeeId);
+        Task UpdateShelfAsync(UpdateShelfDto product, Guid employeeId);
+        Task SoftDeleteShelfAsync(Guid id, Guid employeeId);
     }
 }

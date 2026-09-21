@@ -1,0 +1,219 @@
+﻿@page "/employeelogs";
+@attribute [Authorize(Roles = "ShiftLeader,Manager,Admin")]
+@inject IEmployeeLogsService employeeLogsService
+
+<div class="tasks-header">
+    <div>
+        <h2>Employee Logs</h2>
+        <p>All Employee changes.</p>
+    </div>
+</div>
+<div class="card">
+    <div class="filters-bar">
+        <div class="filters">
+            <div class="filter-group">
+                <label>Identifier</label>
+                <input type="text" @bind="pagination.Identifier" @bind:event="oninput" @bind:after="ResetAndLoad" placeholder="e.g. 500002" />
+            </div>
+            <div class="filter-group">
+                <label>Employee name</label>
+                <input type="text" @bind="pagination.EmployeeName" @bind:event="oninput" @bind:after="ResetAndLoad" placeholder="e.g. John" />
+            </div>
+            <div class="filter-group">
+                <label>Employee id</label>
+                <input type="text" @bind="pagination.EmployeeId" @bind:event="oninput" @bind:after="ResetAndLoad" placeholder="e.g. 000013" />
+            </div>
+
+            <div class="filter-group">
+                <label>Log type</label>
+                <select @bind="pagination.LogType" @bind:after="ResetAndLoad">
+                    <option value="">All</option>
+                    @foreach (var value in Enum.GetValues<LogTypeDto>())
+                    {
+                        <option value="@value">@value.ToString()</option>
+                    }
+                </select>
+            </div>
+        </div>
+    </div>
+
+    
+    <table class="tasks-table">
+        <thead>
+            <tr>
+                <th>Identifier</th>
+                <th>Employee name</th>
+                <th @onclick="() => OrderBy(EmployeeLogsOrderBy.EmployeeId)" class="sortable">
+                    Employee id @SortingArrow(EmployeeLogsOrderBy.EmployeeId)
+                </th>
+                <th>Log type</th>
+                <th>Messages</th>
+                <th @onclick="() => OrderBy(EmployeeLogsOrderBy.CreatedAt)" class="sortable">
+                    Created at @SortingArrow(EmployeeLogsOrderBy.CreatedAt)
+                </th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (loading)
+            {
+                <tr><td class="loading">Loading...</td></tr>
+            }
+            else if (noAccess)
+            {
+                <tr><td class="alert-danger">You don't have access to these logs. (403 Forbidden)</td></tr>
+            }
+            else if (!string.IsNullOrEmpty(error))
+            {
+                <tr><td class="alert-danger">@error</td></tr>
+            }
+            else if (employeeLogs.Count == 0)
+            {
+                <tr><td class="empty-state">No logs fitting the criteria found.</td></tr>
+            }
+            else
+            {
+                @foreach (var log in employeeLogs)
+                {
+                    <tr>
+                        <td><strong>@log.Identifier</strong></td>
+                        <td>@log.Employee.FullName</td>
+                        <td>@log.Employee.EmployeeId</td>
+                        <td>@log.LogType.ToString()</td>
+                        <td>
+                            @if (log.LogType == LogTypeDto.Update)
+                            {
+                                <button class="btn-save" @onclick="() => OpenDetails(log.Messages)">Open Message</button>
+                            }
+                        </td>
+                        <td class="date-cell">@log.CreatedAt.ToLocalTime().ToString("dd-MM-yyyy HH:mm")</td>
+                    </tr>
+                }
+            }
+        </tbody>
+    </table>
+
+    <div class="pagination">
+        <button @onclick="PrevPage" disabled="@(pagination.PageNumber <= 1)">&#8592; Previous</button>
+        <span>Page <strong>@pagination.PageNumber</strong></span>
+        <button @onclick="NextPage" disabled="@(employeeLogs.Count < pagination.PageSize)">Next &#8594;</button>
+        <div class="page-size">
+            <label>Per page:</label>
+            <select @bind="pagination.PageSize" @bind:after="ResetAndLoad">
+                <option value="5">5</option>
+                <option value="10">10</option>
+                <option value="25">25</option>
+                <option value="50">50</option>
+                <option value="100">100</option>
+            </select>
+        </div>
+    </div>
+</div>
+<ItemInfo Show="showDetails"
+       Messages="selectedMessages"
+       Loading="detailsLoading"
+       Error="@detailsError"
+       OnClose="CloseDetails"/>
+@code {
+    private List<EmployeeLogsDto> employeeLogs = new List<EmployeeLogsDto>();
+
+    private bool loading = false;
+    private bool noAccess = false;
+    private string error = "";
+    private List<string> selectedMessages;
+
+    private bool detailsLoading = false;
+    private string detailsError = "";
+    private bool showDetails = false;
+    private EmployeeLogsPaginationDto pagination = new EmployeeLogsPaginationDto
+    {
+        EmployeeName = null,
+        OrderBy = EmployeeLogsOrderBy.CreatedAt,
+        OrderType = OrderType.Descending,
+        PageNumber = 1,
+        PageSize = 25,
+        LogType = null,
+        EmployeeId = null,
+        Identifier = null,
+    };
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadLogs();
+    }
+
+    private async Task ResetAndLoad()
+    {
+        pagination.PageNumber = 1;
+        await LoadLogs();
+    }
+    private async Task OpenDetails(List<string> list)
+    {
+        showDetails = true;
+        detailsLoading = true;
+        detailsError = "";
+        await InvokeAsync(StateHasChanged);
+        selectedMessages = list;
+
+        detailsLoading = false;
+    }
+    private void CloseDetails()
+    {
+        showDetails = false;
+        detailsLoading = false;
+        detailsError = "";
+        selectedMessages = null;
+    }
+    private async Task OrderBy(EmployeeLogsOrderBy kolom)
+    {
+        if (pagination.OrderBy == kolom)
+            pagination.OrderType = pagination.OrderType == OrderType.Ascending ? OrderType.Descending : OrderType.Ascending;
+        else
+        {
+            pagination.OrderBy = kolom;
+            pagination.OrderType = OrderType.Ascending;
+        }
+        pagination.PageNumber = 1;
+        await LoadLogs();
+    }
+
+    private RenderFragment SortingArrow(EmployeeLogsOrderBy kolom) => builder =>
+    {
+        if (pagination.OrderBy == kolom)
+        {
+            builder.OpenElement(0, "span");
+            builder.AddAttribute(1, "class", "sort-arrow");
+            builder.AddContent(2, pagination.OrderType == OrderType.Ascending ? "▲" : "▼");
+            builder.CloseElement();
+        }
+        else
+        {
+            builder.OpenElement(0, "span");
+            builder.AddAttribute(1, "class", "sort-arrow-inactive");
+            builder.AddContent(2, "⇅");
+            builder.CloseElement();
+        }
+    };
+
+    private async Task NextPage()
+    {
+        pagination.PageNumber++;
+        await LoadLogs();
+    }
+
+    private async Task PrevPage()
+    {
+        if (pagination.PageNumber > 1)
+            pagination.PageNumber--;
+        await LoadLogs();
+    }
+    private async Task LoadLogs()
+    {
+        loading = true;
+        noAccess = false;
+        error = "";
+
+        (employeeLogs, error) = await employeeLogsService.GetPaginatedEmployeeLogsAsync(pagination);
+
+        loading = false;
+    }
+}

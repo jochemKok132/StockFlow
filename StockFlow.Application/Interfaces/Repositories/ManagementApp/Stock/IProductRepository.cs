@@ -15,5 +15,6 @@ namespace StockFlow.Application.Interfaces.Repositories.ManagementApp.Stock
     {
         Task<IEnumerable<Product>> GetAllProductsAsync(ProductPaginationDto pagination);
         Task<IEnumerable<Product>> GetAllProductsWithTags(List<string> tags);
+        Task<int> GetNewBarcode();
     }
 }

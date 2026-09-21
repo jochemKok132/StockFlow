@@ -81,6 +81,11 @@ namespace StockFlow.Application.DTOs.Enums
         StockLogType,
         EmployeeId,
     }
+    public enum EmployeeLogsOrderBy
+    {
+        CreatedAt,
+        EmployeeId,
+    }
     public enum CustomerLogsOrderBy 
     {
         CreatedAt,

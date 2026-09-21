@@ -129,9 +129,7 @@ namespace StockFlow.Infrastructure.Data.Migrations
                     Id = table.Column<Guid>(type: "TEXT", nullable: false),
                     CreatedAt = table.Column<DateTime>(type: "TEXT", nullable: false),
                     EmployeeId = table.Column<Guid>(type: "TEXT", nullable: false),
-                    EmployeeId1 = table.Column<Guid>(type: "TEXT", nullable: true),
                     CustomerId = table.Column<Guid>(type: "TEXT", nullable: true),
-                    CustomerId1 = table.Column<Guid>(type: "TEXT", nullable: true),
                     TotalPrice = table.Column<double>(type: "REAL", nullable: false),
                     TotalOff = table.Column<double>(type: "REAL", nullable: false)
                 },
@@ -145,21 +143,33 @@ namespace StockFlow.Infrastructure.Data.Migrations
                         principalColumn: "Id",
                         onDelete: ReferentialAction.SetNull);
                     table.ForeignKey(
-                        name: "FK_CashRegisterLogs_Customers_CustomerId1",
-                        column: x => x.CustomerId1,
-                        principalTable: "Customers",
-                        principalColumn: "Id");
-                    table.ForeignKey(
                         name: "FK_CashRegisterLogs_Employees_EmployeeId",
                         column: x => x.EmployeeId,
                         principalTable: "Employees",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "EmployeeLogs",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "TEXT", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    LogType = table.Column<int>(type: "INTEGER", nullable: false),
+                    Identifier = table.Column<string>(type: "TEXT", nullable: false),
+                    Messages = table.Column<string>(type: "TEXT", nullable: false),
+                    EmployeeId = table.Column<Guid>(type: "TEXT", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_EmployeeLogs", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_CashRegisterLogs_Employees_EmployeeId1",
-                        column: x => x.EmployeeId1,
+                        name: "FK_EmployeeLogs_Employees_EmployeeId",
+                        column: x => x.EmployeeId,
                         principalTable: "Employees",
-                        principalColumn: "Id");
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.CreateTable(
@@ -169,10 +179,10 @@ namespace StockFlow.Infrastructure.Data.Migrations
                     Id = table.Column<Guid>(type: "TEXT", nullable: false),
                     CreatedAt = table.Column<DateTime>(type: "TEXT", nullable: false),
                     StockLogType = table.Column<int>(type: "INTEGER", nullable: false),
-                    Barcode = table.Column<int>(type: "INTEGER", nullable: false),
+                    Identifier = table.Column<string>(type: "TEXT", nullable: false),
+                    Messages = table.Column<string>(type: "TEXT", nullable: false),
                     LogType = table.Column<int>(type: "INTEGER", nullable: false),
-                    EmployeeId = table.Column<Guid>(type: "TEXT", nullable: false),
-                    EmployeeId1 = table.Column<Guid>(type: "TEXT", nullable: false)
+                    EmployeeId = table.Column<Guid>(type: "TEXT", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -183,12 +193,6 @@ namespace StockFlow.Infrastructure.Data.Migrations
                         principalTable: "Employees",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
-                    table.ForeignKey(
-                        name: "FK_StockLogs_Employees_EmployeeId1",
-                        column: x => x.EmployeeId1,
-                        principalTable: "Employees",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
@@ -264,24 +268,19 @@ namespace StockFlow.Infrastructure.Data.Migrations
                 column: "CustomerId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_CashRegisterLogs_CustomerId1",
-                table: "CashRegisterLogs",
-                column: "CustomerId1");
-
-            migrationBuilder.CreateIndex(
                 name: "IX_CashRegisterLogs_EmployeeId",
                 table: "CashRegisterLogs",
                 column: "EmployeeId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_CashRegisterLogs_EmployeeId1",
-                table: "CashRegisterLogs",
-                column: "EmployeeId1");
-
-            migrationBuilder.CreateIndex(
                 name: "IX_CustomerLogs_CustomerId",
                 table: "CustomerLogs",
                 column: "CustomerId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_EmployeeLogs_EmployeeId",
+                table: "EmployeeLogs",
+                column: "EmployeeId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Products_BrandId",
@@ -307,11 +306,6 @@ namespace StockFlow.Infrastructure.Data.Migrations
                 name: "IX_StockLogs_EmployeeId",
                 table: "StockLogs",
                 column: "EmployeeId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_StockLogs_EmployeeId1",
-                table: "StockLogs",
-                column: "EmployeeId1");
         }
 
         /// <inheritdoc />
@@ -319,6 +313,9 @@ namespace StockFlow.Infrastructure.Data.Migrations
         {
             migrationBuilder.DropTable(
                 name: "CustomerLogs");
+
+            migrationBuilder.DropTable(
+                name: "EmployeeLogs");
 
             migrationBuilder.DropTable(
                 name: "ProductSales");

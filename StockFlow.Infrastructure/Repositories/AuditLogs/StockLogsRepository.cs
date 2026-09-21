@@ -6,6 +6,7 @@ using StockFlow.Application.Interfaces.Repositories.ManagementApp.Stock;
 using StockFlow.Application.Mappings.Enums;
 using StockFlow.Domain.Entities.AuditLogs;
 using StockFlow.Domain.Entities.Stock;
+using StockFlow.Domain.Enums;
 using StockFlow.Infrastructure.Data;
 using StockFlow.Infrastructure.Repositories.EfRepositories;
 using System;
@@ -33,15 +34,18 @@ namespace StockFlow.Infrastructure.Repositories.Stock
 
         public async Task<IEnumerable<StockLogs>> GetAllStockLogsAsync(StockLogsPaginationDto pagination)
         {
+            var stockLogType = pagination.StockLogType?.ToDomain();
+            var logType = pagination.LogType?.ToDomain();
             pagination.EmployeeName = pagination.EmployeeName?.ToLower();
             var query = _context.StockLogs
                 .AsNoTracking()
+                .Include(e => e.Employee)
                 .Where(e =>
                     e.Employee.EmployeeId.Contains(pagination.EmployeeId ?? string.Empty) &&
-                    e.Employee.FullName.Contains(pagination.EmployeeName ?? string.Empty) &&
-                    e.Barcode.ToString().Contains(pagination.Barcode.ToString()) &&
-                    (pagination.StockLogType == null || e.StockLogType.ToDto() == pagination.StockLogType) &&
-                    (pagination.LogType == null || e.LogType.ToDto() == pagination.LogType));
+                    e.Employee.FullName.ToLower().Contains(pagination.EmployeeName ?? string.Empty) &&
+                    e.Identifier.Contains(pagination.Identifier ?? string.Empty) &&
+                    (stockLogType == null || e.StockLogType == stockLogType) &&
+                    (logType == null || e.LogType == logType));
 
             query = pagination.OrderType == OrderType.Descending
                 ? pagination.OrderBy switch

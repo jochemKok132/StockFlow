@@ -1,11 +1,16 @@
 ﻿@page "/sales";
 @attribute [Authorize]
+@inject AuthenticationStateProvider AuthStateProvider
 @inject ISalesService salesService
 
 <div class="tasks-header">
     <div>
         <h2>Sales management</h2>
     </div>
+    @if (canManage)
+    {
+        <button class="btn-save" @onclick="() => OpenCreate(new CreateSalesDto())">+ New Sale</button>
+    }
 </div>
 <div class="card">
     <div class="filters-bar">
@@ -31,12 +36,10 @@
                 <th @onclick="() => OrderBy(SalesOrderBy.ProductAmount)" class="sortable">
                     Product amount @SortingArrow(SalesOrderBy.ProductAmount)
                 </th>
-                <th @onclick="() => OrderBy(SalesOrderBy.CreatedAt)" class="sortable">
-                    Created at @SortingArrow(SalesOrderBy.CreatedAt)
-                </th>
-                <th @onclick="() => OrderBy(SalesOrderBy.UpdatedAt)" class="sortable">
-                    Updated at @SortingArrow(SalesOrderBy.UpdatedAt)
-                </th>
+                @if (canManage)
+                {
+                    <th>Management</th>
+                }
             </tr>
         </thead>
         <tbody>
@@ -65,8 +68,10 @@
                         <td>@sale.PercentageOff</td>
                         <td>@string.Join(", ", sale.SalesTags)</td>
                         <td>@sale.Products.Count()</td>
-                        <td class="date-cell">@sale.CreatedAt.ToString("dd-MM-yyyy HH:mm")</td>
-                        <td class="date-cell">@sale.UpdatedAt.ToString("dd-MM-yyyy HH:mm")</td>
+                        <td>
+                            <button class="btn-save" @onclick="() => OpenUpdate(sale)">Edit</button>
+                            <button class="btn-save" @onclick="() => DeleteItem(sale)">Delete</button>
+                        </td>
                     </tr>
                 }
             }
@@ -89,14 +94,14 @@
         </div>
     </div>
 </div>
-
-<SaleDetails Show="showDetails"
-       EditMode="false"
-       ReadMode="true"
-       sale="selectedSale"
-       Loading="detailsLoading"
-       Error="@detailsError"
-       OnClose="CloseDetails"/>
+<EditItem Show="showChanges"
+          EditMode="true"
+          ReadMode="false"
+          item="itemType"
+          Loading="changesLoading"
+          Error="@changesError"
+          OnClose="CloseChanges"
+          OnSave="HandleSave" />
 
 @code {
     private List<SalesDto> sales = new List<SalesDto>();
@@ -109,6 +114,14 @@
     private string error = "";
     private SalesDto? selectedSale; 
 
+    private bool changesLoading = false;
+    private string changesError = "";
+    private bool showChanges = false;
+    private bool canManage;
+
+    private object? itemType;
+
+    private bool isCreateMode;
     private SalesPaginationDto pagination = new SalesPaginationDto
     {
         OrderBy = SalesOrderBy.CreatedAt,
@@ -120,6 +133,9 @@
 
     protected override async Task OnInitializedAsync()
     {
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        canManage = authState.User.IsInRole("Manager") || authState.User.IsInRole("Admin");
+
         await LoadProducts();
     }
     private async Task OpenDetails(SalesDto dto)
@@ -139,6 +155,92 @@
         detailsLoading = false;
         detailsError = "";
         selectedSale = null;
+    }
+    private async Task DeleteItem(SalesDto product)
+    {
+        if (!canManage) return;
+
+        await salesService.SoftDeleteSalesAsync(product.Id);
+        await ResetAndLoad();
+    }
+    private async Task OpenUpdate(SalesDto dto)
+    {
+        if (!canManage) return;
+
+        isCreateMode = false;
+        showChanges = true;
+        changesLoading = true;
+        changesError = "";
+        await InvokeAsync(StateHasChanged);
+
+        itemType = new UpdateSalesDto
+        {
+            Id = dto.Id,
+            Description = dto.Description,
+            SalesTags = dto.SalesTags,
+            SaleName = dto.SaleName,
+            PercentageOff = dto.PercentageOff,
+        };
+
+
+        changesLoading = false;
+    }
+
+    private void OpenCreate(CreateSalesDto item)
+    {
+        if (!canManage) return;
+
+        isCreateMode = true;
+        showChanges = true;
+        changesLoading = false;
+        changesError = "";
+        itemType = item;
+    }
+
+    private async Task HandleSave(object? item)
+    {
+        if (item is null) return;
+
+        if (!canManage)
+        {
+            changesError = "You don't have permission to do this. (403 Forbidden)";
+            return;
+        }
+
+        changesLoading = true;
+        changesError = "";
+        await InvokeAsync(StateHasChanged);
+
+        try
+        {
+            if (isCreateMode && item is CreateSalesDto createDto)
+            {
+                await salesService.CreateSalesAsync(createDto);
+            }
+            else if (!isCreateMode && item is UpdateSalesDto updateDto)
+            {
+                await salesService.UpdateSalesAsync(updateDto);
+            }
+
+            showChanges = false;
+            itemType = null;
+            await LoadProducts();
+        }
+        catch (Exception ex)
+        {
+            changesError = ex.Message;
+        }
+        finally
+        {
+            changesLoading = false;
+        }
+    }
+
+    private void CloseChanges()
+    {
+        showChanges = false;
+        changesError = "";
+        itemType = null;
     }
     private async Task ResetAndLoad()
     {

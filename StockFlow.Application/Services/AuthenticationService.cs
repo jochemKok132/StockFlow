@@ -17,9 +17,9 @@ namespace StockFlow.Application.Services
             ClaimsIdentity claims = new ClaimsIdentity(
                 new List<Claim>()
                 {
-                    new Claim(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
-                    new Claim(JwtRegisteredClaimNames.Name, user.FullName ?? ""),
-                    new Claim(JwtRegisteredClaimNames.NameId, user.EmployeeId ?? ""),
+                    new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
+                    new Claim(ClaimTypes.Name, user.FullName ?? ""),
+                    new Claim(ClaimTypes.Thumbprint, user.EmployeeId ?? ""),
                     new Claim(ClaimTypes.Role, user.Role.ToString())
                 }
             );

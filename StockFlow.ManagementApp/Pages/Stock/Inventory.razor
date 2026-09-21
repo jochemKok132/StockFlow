@@ -1,11 +1,16 @@
 ﻿@page "/inventory";
 @attribute [Authorize]
 @inject IProductService productsService
+@inject AuthenticationStateProvider AuthStateProvider
 
 <div class="tasks-header">
     <div>
         <h2>Inventory management</h2>
     </div>
+    @if (canManage)
+    {
+        <button class="btn-save" @onclick="() => OpenCreate(new CreateProductDto())">+ New product</button>
+    }
 </div>
 <div class="card">
     <div class="filters-bar">
@@ -44,6 +49,10 @@
                 <th @onclick="() => OrderBy(ProductOrderBy.Stock)" class="sortable">
                     Stock @SortingArrow(ProductOrderBy.Stock)
                 </th>
+                @if (canManage)
+                {
+                    <th>Management</th>
+                }
             </tr>
         </thead>
         <tbody>
@@ -79,6 +88,10 @@
                         </td>
                         <td>@product.BrandName</td>
                         <td>@product.Stock</td>
+                        <td>
+                            <button class="btn-save" @onclick="() => OpenUpdate(product)" @onclick:stopPropagation="true">Edit</button>
+                            <button class="btn-save" @onclick="() => DeleteItem(product)" @onclick:stopPropagation="true">Delete</button>
+                        </td>
                     </tr>
                 }
             }
@@ -110,6 +123,15 @@
        Error="@detailsError"
        OnClose="CloseDetails"/>
 
+<EditItem Show="showChanges"
+          EditMode="true"
+          ReadMode="false"
+          item="itemType"
+          Loading="changesLoading"
+          Error="@changesError"
+          OnClose="CloseChanges"
+          OnSave="HandleSave" />
+
 @code {
     private List<ProductBulkViewDto> products = new List<ProductBulkViewDto>();
 
@@ -121,6 +143,15 @@
     private string error = "";
     private ProductDto? selectedProduct; 
 
+    private bool changesLoading = false;
+    private string changesError = "";
+    private bool showChanges = false;
+
+    private object? itemType;
+
+    private bool isCreateMode;
+
+    private bool canManage;
     private ProductPaginationDto pagination = new ProductPaginationDto
     {
         OrderBy = ProductOrderBy.CreatedAt,
@@ -132,9 +163,11 @@
 
     protected override async Task OnInitializedAsync()
     {
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        canManage = authState.User.IsInRole("Manager") || authState.User.IsInRole("Admin");
+
         await LoadProducts();
     }
-
     private async Task OpenDetails(ProductBulkViewDto dto)
     {
         showDetails = true;
@@ -152,6 +185,98 @@
         detailsLoading = false;
         detailsError = "";
         selectedProduct = null;
+    }
+    private async Task DeleteItem(ProductBulkViewDto product)
+    {
+        if (!canManage) return;
+
+        await productsService.SoftDeleteProductAsync(product.Id);
+        await ResetAndLoad();
+    }
+    private async Task OpenUpdate(ProductBulkViewDto dto)
+    {
+        if (!canManage) return;
+
+        isCreateMode = false;
+        showChanges = true;
+        changesLoading = true;
+        changesError = "";
+        await InvokeAsync(StateHasChanged);
+        (var product, detailsError) = await productsService.GetProductDetailsAsync(dto.Id);
+
+        itemType = new UpdateProductDto
+        {
+            Id = product.Id,
+            Description = product.Description,
+            ProductName = product.ProductName,
+            BrandId = product.BrandId,
+            Location = product.Location,
+            Price = product.Price,
+            ProductImage = product.ProductImage,
+            Sales = product.Sales,
+            SalesTags = product.SalesTags,
+            ShelfId = product.ShelfId,
+            Stock = product.Stock,
+        };
+
+        changesLoading = false;
+    }
+
+    private void OpenCreate(CreateProductDto item)
+    {
+        if (!canManage) return;
+
+        isCreateMode = true;
+        showChanges = true;
+        changesLoading = false;
+        changesError = "";
+        itemType = item;
+    }
+
+    private async Task HandleSave(object? item)
+    {
+        if (item is null) return;
+
+        if (!canManage)
+        {
+            changesError = "You don't have permission to do this. (403 Forbidden)";
+            return;
+        }
+
+        changesLoading = true;
+        changesError = "";
+        await InvokeAsync(StateHasChanged);
+
+        try
+        {
+            if (isCreateMode && item is CreateProductDto createDto)
+            {
+                await productsService.CreateProductAsync(createDto);
+            }
+            else if (!isCreateMode && item is UpdateProductDto updateDto)
+            {
+                await productsService.UpdateProductAsync(updateDto);
+            }
+
+            showChanges = false;
+            itemType = null;
+            await LoadProducts();
+        }
+        catch (Exception ex)
+        {
+            changesError = ex.Message;
+        }
+        finally
+        {
+            changesLoading = false;
+        }
+    }
+
+    private void CloseChanges()
+    {
+        showChanges = false;
+        changesError = "";
+        itemType = null;
     }
     private async Task ResetAndLoad()
     {

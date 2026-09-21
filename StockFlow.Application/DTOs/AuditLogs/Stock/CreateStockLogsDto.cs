@@ -10,8 +10,9 @@ namespace StockFlow.Application.DTOs.AuditLogs.Stock
     {
         public Guid Id { get; set; }
         public StockLogTypeDto StockLogType { get; set; }
-        public int Barcode { get; set; }
+        public string Identifier { get; set; } = string.Empty;
         public LogTypeDto LogType { get; set; }
+        public List<string> Messages { get; set; } = [];
         public Guid EmployeeId { get; set; }
     }
 }

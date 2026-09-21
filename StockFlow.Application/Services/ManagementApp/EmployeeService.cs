@@ -1,13 +1,18 @@
 ﻿using StockFlow.Application.DTOs.Employee;
 using StockFlow.Application.DTOs.Employee.EmployeeAuthentication;
 using StockFlow.Application.DTOs.Pagination;
+using StockFlow.Application.DTOs.Stock.Shelf;
 using StockFlow.Application.Interfaces;
 using StockFlow.Application.Interfaces.Helpers;
 using StockFlow.Application.Interfaces.ManagementApp;
+using StockFlow.Application.Interfaces.ManagementApp.AuditLogs;
 using StockFlow.Application.Interfaces.Repositories;
 using StockFlow.Application.Interfaces.Repositories.ManagementApp;
+using StockFlow.Application.Mappings.AuditLogs;
 using StockFlow.Application.Mappings.People;
+using StockFlow.Application.Services.ManagementApp.AuditLogs;
 using StockFlow.Domain.Entities.People;
+using StockFlow.Domain.Entities.Stock;
 using System;
 using System.Collections.Generic;
 using System.Security.Authentication;
@@ -15,15 +20,16 @@ using System.Text;
 
 namespace StockFlow.Application.Services.ManagementApp
 {
-    public class EmployeeService(IEmployeeRepository employeeRepository, IAuthenticationService authenticationService, IPassword password) : IEmployeeService
+    public class EmployeeService(IEmployeeRepository employeeRepository, IAuthenticationService authenticationService, IPassword password, IEmployeeLogsService employeeLogsService) : IEmployeeService
     {
-        public async Task CreateEmployeeAsync(CreateEmployeeDto dto)
+        public async Task CreateEmployeeAsync(CreateEmployeeDto dto, Guid userId)
         {
             Employee newEmployee = dto.ToEmployeeEntity();
 
             newEmployee.EmployeeId = await employeeRepository.GetNewEmployeeIdAsync();
 
             await employeeRepository.AddAsync(newEmployee);
+            await employeeLogsService.CreateEmployeeLogsAsync(dto.ToCreateEmployeeLogsDto(newEmployee.EmployeeId, userId));
         }
 
         public async Task<List<EmployeeDto>> GetAllEmployeesAsync(EmployeePaginationDto pagination)
@@ -50,21 +56,25 @@ namespace StockFlow.Application.Services.ManagementApp
 
             if (employee == null)
                 throw new KeyNotFoundException("The employee with this id cannot be found.");
-
+            
             if(!password.Validate(employee.HashedPassword, request.Password))
                 throw new AuthenticationException("The password is incorrect.");
+            await employeeLogsService.CreateEmployeeLogsAsync(employee.ToLoginEmployeeLogsDto());
 
             return authenticationService.GenerateToken(employee);
         }
 
-        public async Task UpdateEmployeeAsync(UpdateEmployeeDto dto)
+        public async Task UpdateEmployeeAsync(UpdateEmployeeDto dto, Guid userId)
         {
             var employee = await employeeRepository.GetByIdAsync(dto.Id);
             if (employee == null)
                 throw new KeyNotFoundException($"Employee with id {dto.Id} not found.");
+            var log = dto.ToUpdateEmployeeLogsDto(employee, userId);
 
             employee.ToEmployeeEntity(dto);
             await employeeRepository.UpdateAsync(employee);
+            await employeeLogsService.CreateEmployeeLogsAsync(log);
+
         }
     }
 }

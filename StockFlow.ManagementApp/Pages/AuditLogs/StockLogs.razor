@@ -12,8 +12,8 @@
     <div class="filters-bar">
         <div class="filters">
             <div class="filter-group">
-                <label>Barcode</label>
-                <input type="text" @bind="pagination.Barcode" @bind:event="oninput" @bind:after="ResetAndLoad" placeholder="e.g. 500002" />
+                <label>Identifier</label>
+                <input type="text" @bind="pagination.Identifier" @bind:event="oninput" @bind:after="ResetAndLoad" placeholder="e.g. 500002" />
             </div>
             <div class="filter-group">
                 <label>Employee name</label>
@@ -51,7 +51,7 @@
     <table class="tasks-table">
         <thead>
             <tr>
-                <th>Barcode</th>
+                <th>Identifier</th>
                 <th>Employee name</th>
                 <th @onclick="() => OrderBy(StockLogsOrderBy.EmployeeId)" class="sortable">
                     Employee id @SortingArrow(StockLogsOrderBy.EmployeeId)
@@ -60,6 +60,7 @@
                 <th @onclick="() => OrderBy(StockLogsOrderBy.StockLogType)" class="sortable">
                     Stock log type @SortingArrow(StockLogsOrderBy.StockLogType)
                 </th>
+                <th>Messages</th>
                 <th @onclick="() => OrderBy(StockLogsOrderBy.CreatedAt)" class="sortable">
                     Created at @SortingArrow(StockLogsOrderBy.CreatedAt)
                 </th>
@@ -87,12 +88,18 @@
                 @foreach (var log in stockLogs)
                 {
                     <tr>
-                        <td><strong>@log.Barcode</strong></td>
+                        <td><strong>@log.Identifier</strong></td>
                         <td>@log.Employee.FullName</td>
                         <td>@log.Employee.EmployeeId</td>
                         <td>@log.LogType.ToString()</td>
                         <td>@log.StockLogType.ToString()</td>
-                        <td class="date-cell">@log.CreatedAt.ToString("dd-MM-yyyy HH:mm")</td>
+                        <td>
+                            @if (log.LogType == LogTypeDto.Update)
+                            {
+                                <button class="btn-save" @onclick="() => OpenDetails(log.Messages)">Open Message</button>
+                            }
+                        </td>
+                        <td class="date-cell">@log.CreatedAt.ToLocalTime().ToString("dd-MM-yyyy HH:mm")</td>
                     </tr>
                 }
             }
@@ -115,14 +122,22 @@
         </div>
     </div>
 </div>
-
+<ItemInfo Show="showDetails"
+       Messages="selectedMessages"
+       Loading="detailsLoading"
+       Error="@detailsError"
+       OnClose="CloseDetails"/>
 @code {
     private List<StockLogsDto> stockLogs = new List<StockLogsDto>();
 
     private bool loading = false;
     private bool noAccess = false;
     private string error = "";
+    private List<string> selectedMessages;
 
+    private bool detailsLoading = false;
+    private string detailsError = "";
+    private bool showDetails = false;
     private StockLogsPaginationDto pagination = new StockLogsPaginationDto
     {
         EmployeeName = null,
@@ -133,6 +148,7 @@
         LogType = null,
         StockLogType = null,
         EmployeeId = null,
+        Identifier = null,
     };
 
     protected override async Task OnInitializedAsync()
@@ -144,6 +160,23 @@
     {
         pagination.PageNumber = 1;
         await LoadLogs();
+    }
+    private async Task OpenDetails(List<string> list)
+    {
+        showDetails = true;
+        detailsLoading = true;
+        detailsError = "";
+        await InvokeAsync(StateHasChanged);
+        selectedMessages = list;
+
+        detailsLoading = false;
+    }
+    private void CloseDetails()
+    {
+        showDetails = false;
+        detailsLoading = false;
+        detailsError = "";
+        selectedMessages = null;
     }
     private async Task OrderBy(StockLogsOrderBy kolom)
     {

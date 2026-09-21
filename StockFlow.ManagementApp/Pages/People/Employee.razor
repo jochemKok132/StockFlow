@@ -1,11 +1,16 @@
-﻿@page "/Employees";
+﻿@page "/employees";
 @attribute [Authorize]
 @inject IEmployeeService employeeService
+@inject AuthenticationStateProvider AuthStateProvider
 
 <div class="tasks-header">
     <div>
         <h2>Employee management</h2>
     </div>
+    @if (canManage)
+    {
+        <button class="btn-save" @onclick="() => OpenCreate(new CreateEmployeeDto())">+ New Employee</button>
+    }
 </div>
 <div class="card">
     <div class="filters-bar">
@@ -44,12 +49,10 @@
                 <th @onclick="() => OrderBy(EmployeeOrderBy.Role)" class="sortable">
                     Role @SortingArrow(EmployeeOrderBy.Role)
                 </th>
-                <th @onclick="() => OrderBy(EmployeeOrderBy.CreatedAt)" class="sortable">
-                    Created at @SortingArrow(EmployeeOrderBy.CreatedAt)
-                </th>
-                <th @onclick="() => OrderBy(EmployeeOrderBy.UpdatedAt)" class="sortable">
-                    Updated at @SortingArrow(EmployeeOrderBy.UpdatedAt)
-                </th>
+                @if (canManage)
+                {
+                    <th>Management</th>
+                }
             </tr>
         </thead>
         <tbody>
@@ -77,8 +80,13 @@
                         <td><strong>@Employee.FullName</strong></td>
                         <td>@Employee.EmployeeId</td>
                         <td>@Employee.Role</td>
-                        <td class="date-cell">@Employee.CreatedAt.ToString("dd-MM-yyyy HH:mm")</td>
-                        <td class="date-cell">@Employee.UpdatedAt.ToString("dd-MM-yyyy HH:mm")</td>
+                        @if (canManage)
+                        {
+                            <td>
+                                <button class="btn-save" @onclick="() => OpenUpdate(Employee)">Edit</button>
+                                <button class="btn-save" @onclick="() => DeleteItem(Employee)">Delete</button>
+                            </td>
+                        }
                     </tr>
                 }
             }
@@ -101,7 +109,14 @@
         </div>
     </div>
 </div>
-
+<EditItem Show="showChanges"
+          EditMode="true"
+          ReadMode="false"
+          item="itemType"
+          Loading="changesLoading"
+          Error="@changesError"
+          OnClose="CloseChanges"
+          OnSave="HandleSave" />
 @code {
     private List<EmployeeDto> employees = new List<EmployeeDto>();
 
@@ -112,11 +127,18 @@
     private bool noAccess = false;
     private string error = "";
     private EmployeeDto? selectedEmployee; 
+    private bool changesLoading = false;
+    private string changesError = "";
+    private bool showChanges = false;
+    private bool canManage;
 
+    private object? itemType;
+
+    private bool isCreateMode;
     private EmployeePaginationDto pagination = new EmployeePaginationDto
     {
-        OrderBy = EmployeeOrderBy.CreatedAt,
-        OrderType = OrderType.Descending,
+        OrderBy = EmployeeOrderBy.Role,
+        OrderType = OrderType.Ascending,
         PageNumber = 1,
         PageSize = 25,
         EmployeeName = null,
@@ -126,9 +148,95 @@
 
     protected override async Task OnInitializedAsync()
     {
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        canManage = authState.User.IsInRole("Manager") || authState.User.IsInRole("Admin");
+
         await LoadEmployee();
     }
+    private async Task DeleteItem(EmployeeDto shelf)
+    {
+        if (!canManage) return;
 
+        await employeeService.SoftDeleteEmployeeAsync(shelf.Id);
+        await ResetAndLoad();
+    }
+    private async Task OpenUpdate(EmployeeDto dto)
+    {
+        if (!canManage) return;
+
+        isCreateMode = false;
+        showChanges = true;
+        changesLoading = true;
+        changesError = "";
+        await InvokeAsync(StateHasChanged);
+
+        itemType = new UpdateEmployeeDto
+        {
+            Id = dto.Id,
+            FullName = dto.FullName,
+            Role = dto.Role,
+        };
+
+
+        changesLoading = false;
+    }
+
+    private void OpenCreate(CreateEmployeeDto item)
+    {
+        if (!canManage) return;
+
+        isCreateMode = true;
+        showChanges = true;
+        changesLoading = false;
+        changesError = "";
+        itemType = item;
+    }
+
+    private async Task HandleSave(object? item)
+    {
+        if (item is null) return;
+
+        if (!canManage)
+        {
+            changesError = "You don't have permission to do this. (403 Forbidden)";
+            return;
+        }
+
+        changesLoading = true;
+        changesError = "";
+        await InvokeAsync(StateHasChanged);
+
+        try
+        {
+            if (isCreateMode && item is CreateEmployeeDto createDto)
+            {
+                await employeeService.CreateEmployeeAsync(createDto);
+            }
+            else if (!isCreateMode && item is UpdateEmployeeDto updateDto)
+            {
+                await employeeService.UpdateEmployeeAsync(updateDto);
+            }
+
+            showChanges = false;
+            itemType = null;
+            await LoadEmployee();
+        }
+        catch (Exception ex)
+        {
+            changesError = ex.Message;
+        }
+        finally
+        {
+            changesLoading = false;
+        }
+    }
+
+    private void CloseChanges()
+    {
+        showChanges = false;
+        changesError = "";
+        itemType = null;
+    }
     private async Task ResetAndLoad()
     {
         pagination.PageNumber = 1;

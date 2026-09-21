@@ -6,6 +6,6 @@ namespace StockFlow.Application.DTOs.Stock.ProductBrand
 {
     public class CreateProductBrandDto
     {
-        public required string BrandName { get; set; }
+        public string BrandName { get; set; }
     }
 }

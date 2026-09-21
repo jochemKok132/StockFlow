@@ -44,13 +44,7 @@ namespace StockFlow.Infrastructure.Data.Migrations
                     b.Property<Guid?>("CustomerId")
                         .HasColumnType("TEXT");
 
-                    b.Property<Guid?>("CustomerId1")
-                        .HasColumnType("TEXT");
-
                     b.Property<Guid>("EmployeeId")
-                        .HasColumnType("TEXT");
-
-                    b.Property<Guid?>("EmployeeId1")
                         .HasColumnType("TEXT");
 
                     b.Property<double>("TotalOff")
@@ -63,11 +57,7 @@ namespace StockFlow.Infrastructure.Data.Migrations
 
                     b.HasIndex("CustomerId");
 
-                    b.HasIndex("CustomerId1");
-
                     b.HasIndex("EmployeeId");
-
-                    b.HasIndex("EmployeeId1");
 
                     b.ToTable("CashRegisterLogs");
                 });
@@ -94,14 +84,11 @@ namespace StockFlow.Infrastructure.Data.Migrations
                     b.ToTable("CustomerLogs");
                 });
 
-            modelBuilder.Entity("StockFlow.Domain.Entities.AuditLogs.StockLogs", b =>
+            modelBuilder.Entity("StockFlow.Domain.Entities.AuditLogs.EmployeeLogs", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("TEXT");
-
-                    b.Property<int>("Barcode")
-                        .HasColumnType("INTEGER");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("TEXT");
@@ -109,11 +96,46 @@ namespace StockFlow.Infrastructure.Data.Migrations
                     b.Property<Guid>("EmployeeId")
                         .HasColumnType("TEXT");
 
-                    b.Property<Guid>("EmployeeId1")
+                    b.Property<string>("Identifier")
+                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.Property<int>("LogType")
                         .HasColumnType("INTEGER");
+
+                    b.PrimitiveCollection<string>("Messages")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("EmployeeId");
+
+                    b.ToTable("EmployeeLogs");
+                });
+
+            modelBuilder.Entity("StockFlow.Domain.Entities.AuditLogs.StockLogs", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("EmployeeId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Identifier")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("LogType")
+                        .HasColumnType("INTEGER");
+
+                    b.PrimitiveCollection<string>("Messages")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
 
                     b.Property<int>("StockLogType")
                         .HasColumnType("INTEGER");
@@ -121,8 +143,6 @@ namespace StockFlow.Infrastructure.Data.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("EmployeeId");
-
-                    b.HasIndex("EmployeeId1");
 
                     b.ToTable("StockLogs");
                 });
@@ -383,24 +403,16 @@ namespace StockFlow.Infrastructure.Data.Migrations
 
             modelBuilder.Entity("StockFlow.Domain.Entities.AuditLogs.CashRegisterLogs", b =>
                 {
-                    b.HasOne("StockFlow.Domain.Entities.People.Customer", null)
+                    b.HasOne("StockFlow.Domain.Entities.People.Customer", "Customer")
                         .WithMany()
                         .HasForeignKey("CustomerId")
                         .OnDelete(DeleteBehavior.SetNull);
 
-                    b.HasOne("StockFlow.Domain.Entities.People.Customer", "Customer")
-                        .WithMany()
-                        .HasForeignKey("CustomerId1");
-
-                    b.HasOne("StockFlow.Domain.Entities.People.Employee", null)
+                    b.HasOne("StockFlow.Domain.Entities.People.Employee", "Employee")
                         .WithMany()
                         .HasForeignKey("EmployeeId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
-
-                    b.HasOne("StockFlow.Domain.Entities.People.Employee", "Employee")
-                        .WithMany()
-                        .HasForeignKey("EmployeeId1");
 
                     b.Navigation("Customer");
 
@@ -418,18 +430,23 @@ namespace StockFlow.Infrastructure.Data.Migrations
                     b.Navigation("Customer");
                 });
 
-            modelBuilder.Entity("StockFlow.Domain.Entities.AuditLogs.StockLogs", b =>
+            modelBuilder.Entity("StockFlow.Domain.Entities.AuditLogs.EmployeeLogs", b =>
                 {
-                    b.HasOne("StockFlow.Domain.Entities.People.Employee", null)
+                    b.HasOne("StockFlow.Domain.Entities.People.Employee", "Employee")
                         .WithMany()
                         .HasForeignKey("EmployeeId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
+                    b.Navigation("Employee");
+                });
+
+            modelBuilder.Entity("StockFlow.Domain.Entities.AuditLogs.StockLogs", b =>
+                {
                     b.HasOne("StockFlow.Domain.Entities.People.Employee", "Employee")
                         .WithMany()
-                        .HasForeignKey("EmployeeId1")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .HasForeignKey("EmployeeId")
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.Navigation("Employee");

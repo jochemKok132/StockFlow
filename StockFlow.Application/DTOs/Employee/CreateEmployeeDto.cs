@@ -7,7 +7,7 @@ namespace StockFlow.Application.DTOs.Employee
 {
     public class CreateEmployeeDto
     {
-        public required string FullName { get; set; }
+        public string FullName { get; set; }
         public EmployeeRoleDto Role { get; set; } = EmployeeRoleDto.None;
     }
 }

@@ -3,6 +3,7 @@ using StockFlow.Application.DTOs.Stock.Shelf;
 using StockFlow.Application.Interfaces.ManagementApp.Stock;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 
 namespace StockFlow.API.Controllers
 {
@@ -29,9 +30,10 @@ namespace StockFlow.API.Controllers
         [HttpPost("Create")]
         public async Task<IActionResult> CreateShelfAsync(CreateShelfDto shelf)
         {
+            var userId = Request.HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier);
             try
             {
-                await shelfService.CreateShelfAsync(shelf);
+                await shelfService.CreateShelfAsync(shelf, Guid.Parse(userId));
                 return NoContent();
             }
             catch (ArgumentNullException exception)
@@ -48,9 +50,10 @@ namespace StockFlow.API.Controllers
         [HttpPut("Update")]
         public async Task<IActionResult> UpdateShelfAsync(UpdateShelfDto shelf)
         {
+            var userId = Request.HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier);
             try
             {
-                await shelfService.UpdateShelfAsync(shelf);
+                await shelfService.UpdateShelfAsync(shelf, Guid.Parse(userId));
                 return NoContent();
             }
             catch (KeyNotFoundException exception)
@@ -64,12 +67,13 @@ namespace StockFlow.API.Controllers
         }
 
         [Authorize(Roles = "Manager,Admin")]
-        [HttpDelete("SoftDelete")]
+        [HttpDelete("SoftDelete/{id}")]
         public async Task<IActionResult> SoftDeleteShelfAsync(Guid id)
         {
+            var userId = Request.HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier);
             try
             {
-                await shelfService.SoftDeleteShelfAsync(id);
+                await shelfService.SoftDeleteShelfAsync(id, Guid.Parse(userId));
                 return NoContent();
             }
             catch (KeyNotFoundException exception)

@@ -29,6 +29,7 @@ namespace StockFlow.Application
             services.AddScoped<ICashRegisterLogsService, CashRegisterLogsService>();
             services.AddScoped<ICustomerLogsService, CustomerLogsService>();
             services.AddScoped<IStockLogsService, StockLogsService>();
+            services.AddScoped<IEmployeeLogsService, EmployeeLogsService>();
             services.AddScoped<IProductBrandService, ProductBrandService>();
             services.AddScoped<IProductService, ProductService>();
             services.AddScoped<IShelfService, ShelfService>();

@@ -10,8 +10,8 @@ namespace StockFlow.Application.Interfaces.ManagementApp.Stock
     public interface IProductBrandService
     {
         Task<List<ProductBrandDto>> GetAllProductBrandsAsync(ProductBrandPaginationDto pagination);
-        Task CreateProductBrandAsync(CreateProductBrandDto product);
-        Task UpdateProductBrandAsync(UpdateProductBrandDto product);
-        Task SoftDeleteProductBrandAsync(Guid id);
+        Task CreateProductBrandAsync(CreateProductBrandDto product, Guid employeeId);
+        Task UpdateProductBrandAsync(UpdateProductBrandDto product, Guid employeeId);
+        Task SoftDeleteProductBrandAsync(Guid id, Guid employeeId);
     }
 }

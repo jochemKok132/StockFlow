@@ -9,5 +9,6 @@ namespace StockFlow.Application.DTOs.Enums
         Create,
         Update,
         Delete,
+        Login,
     }
 }

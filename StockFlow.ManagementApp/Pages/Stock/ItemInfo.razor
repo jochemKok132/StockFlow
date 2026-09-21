@@ -1,0 +1,40 @@
+﻿@using System.Collections
+@using System.Globalization
+@using System.Reflection
+@using Microsoft.AspNetCore.Components.Forms
+
+@if (Show)
+{
+    <div class="modal-overlay" @onclick="OnClose">
+        <div class="modal-box" @onclick:stopPropagation="true">
+            @if (Loading)
+            {
+                <div class="loading">Loading details...</div>
+            }
+            else if (!string.IsNullOrWhiteSpace(Error))
+            {
+                <div class="alert-danger">@Error</div>
+            }
+            else if (Messages is null)
+            {
+                <div class="empty-state">No details available.</div>
+            }
+            else
+            {
+                <div class="form-grid">
+                    <p>@string.Join(", <br>", Messages)</p>
+                </div>
+            }
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public bool Show { get; set; }
+    [Parameter] public List<string>? Messages { get; set; }
+    [Parameter] public bool Loading { get; set; }
+    [Parameter] public string Error { get; set; } = "";
+
+    [Parameter] public EventCallback OnClose { get; set; }
+
+}

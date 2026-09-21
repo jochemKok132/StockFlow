@@ -38,6 +38,7 @@ namespace StockFlow.Infrastructure.Repositories.Stock
 
             var query = _context.CustomerLogs
                 .AsNoTracking()
+                .Include(e => e.Customer)
                 .Where(e =>
                     e.Customer.FullName.Contains(pagination.CustomerName ?? string.Empty) &&
                     e.Customer.Email.Contains(pagination.Email ?? string.Empty) &&

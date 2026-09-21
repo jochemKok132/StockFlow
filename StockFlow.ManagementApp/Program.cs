@@ -28,9 +28,11 @@ namespace StockFlow.ManagementApp
             builder.Services.AddScoped<IAuthService, AuthService>();
             builder.Services.AddScoped<IHttpService, HttpService>();
             builder.Services.AddScoped<IStockLogsService, StockLogsService>();
+            builder.Services.AddScoped<IEmployeeLogsService, EmployeeLogsService>();
             builder.Services.AddScoped<ICashRegisterLogsService, CashRegisterLogsService>();
             builder.Services.AddScoped<ICustomerLogsService, CustomerLogsService>();
             builder.Services.AddScoped<IProductService, ProductService>();
+            builder.Services.AddScoped<IProductBrandService, ProductBrandService>();
             builder.Services.AddScoped<ISalesService, SalesService>();
             builder.Services.AddScoped<IShelfService, ShelfService>();
             builder.Services.AddScoped<ICustomerService, CustomerService>();

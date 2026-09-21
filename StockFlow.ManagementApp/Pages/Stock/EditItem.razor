@@ -1,0 +1,243 @@
+﻿@using System.Collections
+@using System.Globalization
+@using System.Reflection
+@using Microsoft.AspNetCore.Components.Forms
+
+@if (Show)
+{
+    <div class="modal-overlay" @onclick="OnClose">
+        <div class="modal-box" @onclick:stopPropagation="true">
+            @if (Loading)
+            {
+                <div class="loading">Loading details...</div>
+            }
+            else if (!string.IsNullOrWhiteSpace(Error))
+            {
+                <div class="alert-danger">@Error</div>
+            }
+            else if (item is null)
+            {
+                <div class="empty-state">No details available.</div>
+            }
+            else
+            {
+                <div class="form-grid">
+                    @foreach (var prop in EditableProperties)
+                    {
+                        <div class="form-row">
+                            @if (prop.Name != "Id" && prop.Name != "HashedPassword")
+                            {
+                                <label class="form-label" for="@prop.Name">@prop.Name</label>
+                            }
+
+                            @if (prop.PropertyType == typeof(byte[]))
+                            {
+                                var imgUrl = GetImageDataUrl(prop);
+                                <div class="image-field">
+                                    @if (imgUrl is not null)
+                                    {
+                                        <img src="@imgUrl" alt="@prop.Name" class="image-preview" />
+                                    }
+                                    @if (!ReadMode)
+                                    {
+                                        <InputFile OnChange="e => HandleFileSelected(e, prop)" class="form-input-file" />
+                                    }
+                                </div>
+                            }
+                            else if (GetUnderlyingType(prop.PropertyType).IsEnum)
+                            {
+                                <select id="@prop.Name" class="form-select" disabled="@ReadMode"
+                                        value="@GetValueAsString(prop)"
+                                        @onchange="e => SetValueFromString(prop, e.Value?.ToString() ?? string.Empty)">
+                                    @foreach (var name in Enum.GetNames(GetUnderlyingType(prop.PropertyType)))
+                                    {
+                                        <option value="@name">@name</option>
+                                    }
+                                </select>
+                            }
+                            else if (GetUnderlyingType(prop.PropertyType) == typeof(bool))
+                            {
+                                <input id="@prop.Name" type="checkbox" class="form-checkbox"
+                                       checked="@((bool)(prop.GetValue(item) ?? false))"
+                                       disabled="@ReadMode"
+                                       @onchange="e => SetValueFromString(prop, ((e.Value as bool?) ?? false).ToString())" />
+                            }
+                            else if (IsStringCollection(prop.PropertyType))
+                            {
+                                <input id="@prop.Name" type="text" class="form-input"
+                                       value="@GetValueAsString(prop)"
+                                       readonly="@ReadMode"
+                                       placeholder="comma, separated, values"
+                                       @onchange="e => SetValueFromString(prop, e.Value?.ToString() ?? string.Empty)" />
+                            }
+                            else
+                            {
+                                if (prop.Name != "Id" && prop.Name != "HashedPassword")
+                                {
+                                    <input id="@prop.Name" type="@GetInputType(prop.PropertyType)" class="form-input"
+                                           value="@GetValueAsString(prop)"
+                                           readonly="@ReadMode"
+                                           @onchange="e => SetValueFromString(prop, e.Value?.ToString() ?? string.Empty)" />
+                                }
+                            }
+                        </div>
+                    }
+                </div>
+
+                @if (EditMode)
+                {
+                    <div class="form-actions">
+                        <button type="button" class="btn-save" @onclick="HandleSave">Save</button>
+                        <button type="button" class="btn-cancel" @onclick="OnClose">Cancel</button>
+                    </div>
+                }
+            }
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public bool Show { get; set; }
+    [Parameter] public bool EditMode { get; set; }
+    [Parameter] public bool ReadMode { get; set; }
+    [Parameter] public object? item { get; set; }
+    [Parameter] public bool Loading { get; set; }
+    [Parameter] public string Error { get; set; } = "";
+
+    [Parameter] public EventCallback OnClose { get; set; }
+    [Parameter] public EventCallback<object?> OnSave { get; set; }
+
+    private const long MaxFileSizeBytes = 5 * 1024 * 1024; // 5 MB
+
+    private IEnumerable<PropertyInfo> EditableProperties =>
+        item?.GetType()
+            .GetProperties(BindingFlags.Public | BindingFlags.Instance)
+            .Where(p => p.CanRead && p.CanWrite && IsSupported(p.PropertyType))
+        ?? Enumerable.Empty<PropertyInfo>();
+
+    private static bool IsSupported(Type type)
+    {
+        var t = GetUnderlyingType(type);
+
+        if (t.IsPrimitive || t.IsEnum) return true;
+        if (t == typeof(string) || t == typeof(decimal) || t == typeof(Guid) || t == typeof(DateTime)) return true;
+        if (type == typeof(byte[])) return true;
+        if (IsStringCollection(type)) return true;
+
+        return false;
+    }
+
+    private static Type GetUnderlyingType(Type type) => Nullable.GetUnderlyingType(type) ?? type;
+
+    private static bool IsStringCollection(Type type) =>
+        type != typeof(string) && typeof(IEnumerable<string>).IsAssignableFrom(type);
+
+    private static string GetInputType(Type type)
+    {
+        var t = GetUnderlyingType(type);
+
+        if (t == typeof(int) || t == typeof(long) || t == typeof(short) ||
+            t == typeof(decimal) || t == typeof(double) || t == typeof(float))
+            return "number";
+
+        if (t == typeof(DateTime))
+            return "date";
+
+        return "text";
+    }
+
+    private string GetValueAsString(PropertyInfo prop)
+    {
+        var value = prop.GetValue(item);
+        if (value is null) return string.Empty;
+
+        if (value is DateTime dt)
+            return dt.ToString("yyyy-MM-dd");
+
+        if (value is IEnumerable enumerable && value is not string)
+            return string.Join(", ", enumerable.Cast<object>());
+
+        return value.ToString() ?? string.Empty;
+    }
+
+    private void SetValueFromString(PropertyInfo prop, string value)
+    {
+        var underlyingType = GetUnderlyingType(prop.PropertyType);
+
+        try
+        {
+            object? converted;
+
+            if (underlyingType == typeof(string))
+            {
+                converted = value;
+            }
+            else if (underlyingType.IsEnum)
+            {
+                converted = Enum.Parse(underlyingType, value, ignoreCase: true);
+            }
+            else if (underlyingType == typeof(Guid))
+            {
+                converted = Guid.Parse(value);
+            }
+            else if (underlyingType == typeof(bool))
+            {
+                converted = bool.Parse(value);
+            }
+            else if (underlyingType == typeof(DateTime))
+            {
+                converted = DateTime.Parse(value, CultureInfo.InvariantCulture);
+            }
+            else if (IsStringCollection(prop.PropertyType))
+            {
+                converted = value
+                    .Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
+            }
+            else
+            {
+                converted = Convert.ChangeType(value, underlyingType, CultureInfo.InvariantCulture);
+            }
+
+            prop.SetValue(item, converted);
+        }
+        catch
+        {
+        }
+    }
+
+    private async Task HandleFileSelected(InputFileChangeEventArgs e, PropertyInfo prop)
+    {
+        var file = e.File;
+        if (file is null) return;
+
+        try
+        {
+            using var stream = file.OpenReadStream(MaxFileSizeBytes);
+            using var ms = new MemoryStream();
+            await stream.CopyToAsync(ms);
+
+            prop.SetValue(item, ms.ToArray());
+            StateHasChanged();
+        }
+        catch (IOException)
+        {
+            Error = $"'{file.Name}' exceeds the {MaxFileSizeBytes / (1024 * 1024)} MB limit.";
+        }
+    }
+
+    private string? GetImageDataUrl(PropertyInfo prop)
+    {
+        var value = prop.GetValue(item) as byte[];
+        if (value is null || value.Length == 0) return null;
+
+        return $"data:image/*;base64,{Convert.ToBase64String(value)}";
+    }
+
+    private async Task HandleSave()
+    {
+        if (OnSave.HasDelegate)
+        {
+            await OnSave.InvokeAsync(item);
+        }
+    }
+}

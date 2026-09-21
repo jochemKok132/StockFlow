@@ -42,7 +42,12 @@ namespace StockFlow.Infrastructure.Repositories.Stock
         {
             var query = _context.ProductBrands
                 .AsNoTracking()
-                .AsQueryable();
+                .Include(e => e.Products)
+                .Where(e => 
+                    e.BrandName.ToLower().Contains((pagination.BrandName ?? string.Empty).ToLower()) &&
+                    !e.SoftDeleted
+                    );
+
 
             query = pagination.OrderType == OrderType.Descending
                 ? pagination.OrderBy switch

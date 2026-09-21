@@ -45,7 +45,15 @@ namespace StockFlow.Application.DTOs.Pagination
     {
         public string? EmployeeName { get; set; }
         public string? EmployeeId { get; set; }
-        public int Barcode { get; set; }
+        public string? Identifier { get; set; }
+        public StockLogTypeDto? StockLogType { get; set; }
+        public LogTypeDto? LogType { get; set; }
+    }
+    public class EmployeeLogsPaginationDto : Pagination<EmployeeLogsOrderBy>
+    {
+        public string? EmployeeName { get; set; }
+        public string? EmployeeId { get; set; }
+        public string? Identifier { get; set; }
         public StockLogTypeDto? StockLogType { get; set; }
         public LogTypeDto? LogType { get; set; }
     }

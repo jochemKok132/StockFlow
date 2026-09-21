@@ -42,12 +42,6 @@
                 <th @onclick="() => OrderBy(CustomerOrderBy.SavedPoints)" class="sortable">
                     Saved points @SortingArrow(CustomerOrderBy.SavedPoints)
                 </th>
-                <th @onclick="() => OrderBy(CustomerOrderBy.CreatedAt)" class="sortable">
-                    Created at @SortingArrow(CustomerOrderBy.CreatedAt)
-                </th>
-                <th @onclick="() => OrderBy(CustomerOrderBy.UpdatedAt)" class="sortable">
-                    Updated at @SortingArrow(CustomerOrderBy.UpdatedAt)
-                </th>
             </tr>
         </thead>
         <tbody>
@@ -77,8 +71,6 @@
                         <td>@customer.PostalCode</td>
                         <td>@customer.HouseNumber</td>
                         <td>@customer.SavedPoints</td>
-                        <td class="date-cell">@customer.CreatedAt.ToString("dd-MM-yyyy HH:mm")</td>
-                        <td class="date-cell">@customer.UpdatedAt.ToString("dd-MM-yyyy HH:mm")</td>
                     </tr>
                 }
             }
@@ -115,8 +107,8 @@
 
     private CustomerPaginationDto pagination = new CustomerPaginationDto
     {
-        OrderBy = CustomerOrderBy.CreatedAt,
-        OrderType = OrderType.Descending,
+        OrderBy = CustomerOrderBy.FullName,
+        OrderType = OrderType.Ascending,
         PageNumber = 1,
         PageSize = 25,
         CustomerName = null,

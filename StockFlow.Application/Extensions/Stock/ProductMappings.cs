@@ -37,7 +37,6 @@ namespace StockFlow.Application.Mappings.Stock
                 Description = dto.Description,
                 Id = Guid.NewGuid(),
                 ProductName = dto.ProductName,
-                Barcode = dto.Barcode,
                 Price = dto.Price,
                 BrandId = dto.BrandId,
                 Location = dto.Location,
@@ -52,7 +51,6 @@ namespace StockFlow.Application.Mappings.Stock
             entity.Description = dto.Description;
             entity.Location = dto.Location;
             entity.ProductName = dto.ProductName;
-            entity.Barcode = dto.Barcode;
             entity.BrandId = dto.BrandId;
             entity.Price = dto.Price;
             entity.ProductImage = dto.ProductImage;

@@ -387,3 +387,218 @@
         margin: 0;
         font-size: 14px;
     }
+.card {
+    background: var(--TaskbarColor);
+    border-radius: 8px;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+    padding: 24px;
+}
+
+.filters-bar {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 16px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid var(--BorderColor);
+    margin-bottom: 20px;
+}
+
+.filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    align-items: flex-end;
+}
+
+.filter-group {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+    .filter-group label {
+        font-size: 12px;
+        font-weight: 700;
+        color: var(--MutedText);
+        text-transform: uppercase;
+        letter-spacing: 0.6px;
+    }
+
+    .filter-group input,
+    .filter-group select {
+        padding: 7px 11px;
+        border: 1px solid var(--BorderColor);
+        border-radius: 6px;
+        font-size: 14px;
+        color: var(--TextColor);
+        background: var(--TaskbarColor);
+        outline: none;
+        min-width: 160px;
+    }
+
+        .filter-group input:focus,
+        .filter-group select:focus {
+            border-color: var(--AccentColor);
+            box-shadow: 0 0 0 2px var(--AccentColorSoft);
+        }
+
+.tasks-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+    .tasks-table thead th {
+        background: var(--DashboardColor);
+        color: var(--TextColor);
+        font-size: 12px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.6px;
+        padding: 12px 16px;
+        border-bottom: 2px solid var(--BorderColor);
+        text-align: left;
+    }
+
+    .tasks-table th.sortable {
+        cursor: pointer;
+        user-select: none;
+        white-space: nowrap;
+    }
+
+        .tasks-table th.sortable:hover {
+            color: var(--AccentColor);
+        }
+
+.sort-arrow {
+    margin-left: 5px;
+    color: var(--AccentColor);
+    font-size: 10px;
+}
+
+.sort-arrow-inactive {
+    margin-left: 5px;
+    color: var(--MutedText);
+    font-size: 10px;
+}
+
+.tasks-table td {
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--BorderColor);
+    font-size: 14px;
+    color: var(--TextColor);
+    vertical-align: middle;
+}
+
+.tasks-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.tasks-table tbody tr:hover {
+    background: var(--DashboardColor);
+}
+
+.date-cell {
+    white-space: nowrap;
+    color: var(--MutedText);
+}
+
+.pagination {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    justify-content: center;
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px solid var(--BorderColor);
+}
+
+    .pagination button {
+        background: var(--TaskbarColor);
+        border: 1px solid var(--BorderColor);
+        padding: 6px 16px;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 14px;
+        color: var(--TextColor);
+        font-weight: 500;
+    }
+
+        .pagination button:hover:not(:disabled) {
+            border-color: var(--AccentColor);
+            color: var(--AccentColor);
+        }
+
+        .pagination button:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
+    .pagination span {
+        font-size: 14px;
+        color: var(--MutedText);
+        padding: 0 8px;
+    }
+
+.page-size {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-left: 16px;
+    font-size: 14px;
+    color: var(--MutedText);
+}
+
+    .page-size select {
+        padding: 6px 8px;
+        border: 1px solid var(--BorderColor);
+        border-radius: 6px;
+        font-size: 14px;
+        color: var(--TextColor);
+    }
+
+.alert-danger {
+    background: var(--DangerBg);
+    color: var(--DangerText);
+    padding: 12px 16px;
+    border-radius: 6px;
+    font-size: 14px;
+    border-left: 3px solid var(--DangerText);
+    margin-bottom: 16px;
+}
+
+.loading {
+    color: var(--AccentColor);
+    font-weight: 600;
+    padding: 16px 0;
+    font-size: 14px;
+}
+
+.empty-state {
+    color: var(--MutedText);
+    font-size: 14px;
+    padding: 32px 0;
+    text-align: center;
+}
+
+.tasks-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 20px;
+}
+
+    .tasks-header h2 {
+        font-size: 22px;
+        font-weight: 700;
+        color: var(--TextColor);
+        margin: 0 0 3px;
+    }
+
+    .tasks-header p {
+        color: var(--MutedText);
+        margin: 0;
+        font-size: 14px;
+    }

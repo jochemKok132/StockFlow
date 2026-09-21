@@ -47,6 +47,7 @@ namespace StockFlow.Infrastructure.Repositories
             var query = _context.Customers
                 .AsNoTracking()
                 .Where(e =>
+                !e.SoftDeleted &&
                 e.FullName.ToLower().Contains((pagination.CustomerName ?? string.Empty).ToLower()) &&
                 e.HouseNumber.ToLower().Contains((pagination.HouseNumber ?? string.Empty).ToLower()) &&
                 e.PostalCode.ToLower().Contains((pagination.PostalCode ?? string.Empty).ToLower()) &&

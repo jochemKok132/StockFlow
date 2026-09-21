@@ -46,7 +46,7 @@ namespace StockFlow.ManagementApp.Services.Stock
 
         public async Task<string> SoftDeleteProductAsync(Guid id)
         {
-            var response = await httpService.GetAsync<string>($"Product/SoftDelete/{id}");
+            var response = await httpService.DeleteAsync<string>($"Product/SoftDelete/{id}");
             if (response.Succeeded)
                 return response?.Value ?? string.Empty;
             else

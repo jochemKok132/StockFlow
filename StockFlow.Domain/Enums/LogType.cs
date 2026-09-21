@@ -9,5 +9,6 @@ namespace StockFlow.Domain.Enums
         Create,
         Update,
         Delete,
+        Login,
     }
 }

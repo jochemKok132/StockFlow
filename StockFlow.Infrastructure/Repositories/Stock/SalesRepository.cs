@@ -43,7 +43,9 @@ namespace StockFlow.Infrastructure.Repositories.Stock
             var query = _context.Sales
                 .AsNoTracking()
                 .Include(p => p.Products)
-                .Where(e => e.SaleName.ToLower().Contains((pagination.SalesName ?? string.Empty).ToLower()));
+                .Where(e =>
+                    !e.SoftDeleted &&
+                    e.SaleName.ToLower().Contains((pagination.SalesName ?? string.Empty).ToLower()));
 
             query = pagination.OrderType == OrderType.Descending
                 ? pagination.OrderBy switch
@@ -73,9 +75,14 @@ namespace StockFlow.Infrastructure.Repositories.Stock
         public async Task<IEnumerable<Sales>> GetAllSalesForProductTags(List<string> productTags)
         {
             return await _context.Sales
-                .AsNoTracking()
                 .Where(s => s.SalesTags.Any() && s.SalesTags.All(t => productTags.Contains(t)))
                 .ToListAsync();
+        }
+        public async Task<Sales?> GetByIdWithProductsAsync(Guid id)
+        {
+            return await _context.Sales
+                .Include(s => s.Products)
+                .FirstOrDefaultAsync(s => s.Id == id);
         }
     }
 }

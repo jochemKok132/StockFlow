@@ -68,6 +68,7 @@ namespace StockFlow.Infrastructure.Repositories.Stock
                 .Include(p => p.Shelf)
                 .Include(p => p.Sales)
                 .Where(e =>
+                    !e.SoftDeleted &&
                     e.ProductName.ToLower().Contains((pagination.ProductName ?? string.Empty).ToLower()) &&
                     e.Barcode.ToString().Contains(pagination.Barcode.ToString()) &&
                     (
@@ -114,6 +115,12 @@ namespace StockFlow.Infrastructure.Repositories.Stock
                 .AsNoTracking()
                 .Where(p => tags.All(t => p.SalesTags.Contains(t)))
                 .ToListAsync();
+        }
+
+        public async Task<int> GetNewBarcode()
+        {
+            var count = await _context.Products.CountAsync();
+            return 500000 + (count + 1);
         }
     }
 }

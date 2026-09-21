@@ -71,9 +71,11 @@ namespace StockFlow.API.Controllers
         [HttpPost("Create")]
         public async Task<IActionResult> CreateEmployeeAsync(CreateEmployeeDto dto)
         {
+            var userId = Request.HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier);
+
             try
             {
-                await employeeService.CreateEmployeeAsync(dto);
+                await employeeService.CreateEmployeeAsync(dto, Guid.Parse(userId));
                 return NoContent();
             }
             catch (ArgumentNullException exception)
@@ -90,9 +92,11 @@ namespace StockFlow.API.Controllers
         [HttpPut("Update")]
         public async Task<IActionResult> UpdateEmployeeAsync(UpdateEmployeeDto dto)
         {
+            var userId = Request.HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier);
+
             try
             {
-                await employeeService.UpdateEmployeeAsync(dto);
+                await employeeService.UpdateEmployeeAsync(dto, Guid.Parse(userId));
                 return NoContent();
             }
             catch (KeyNotFoundException exception)

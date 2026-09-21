@@ -13,6 +13,7 @@ using StockFlow.Application.Services.ManagementApp.Stock;
 using StockFlow.Infrastructure.Data;
 using StockFlow.Infrastructure.Helpers;
 using StockFlow.Infrastructure.Repositories;
+using StockFlow.Infrastructure.Repositories.AuditLogs;
 using StockFlow.Infrastructure.Repositories.EfRepositories;
 using StockFlow.Infrastructure.Repositories.Stock;
 
@@ -31,6 +32,7 @@ namespace StockFlow.Infrastructure
             services.AddScoped<ICashRegisterLogsRepository, CashRegisterLogsRepository>();
             services.AddScoped<ICustomerLogsRepository, CustomerLogsRepository>();
             services.AddScoped<IStockLogsRepository, StockLogsRepository>();
+            services.AddScoped<IEmployeeLogsRepository, EmployeeLogsRepository>();
             services.AddScoped<IProductBrandRepository, ProductBrandRepository>();
             services.AddScoped<IProductRepository, ProductRepository>();
             services.AddScoped<IShelfRepository, ShelfRepository>();

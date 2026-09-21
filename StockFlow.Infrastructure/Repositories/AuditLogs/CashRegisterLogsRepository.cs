@@ -45,6 +45,8 @@ namespace StockFlow.Infrastructure.Repositories.Stock
             pagination.EmployeeName = pagination.EmployeeName?.ToLower();
             var query = _context.CashRegisterLogs
                 .AsNoTracking()
+                .Include(e => e.Customer)
+                .Include(e => e.Employee)
                 .Where(e =>
                     e.Employee.EmployeeId.Contains(pagination.EmployeeId ?? string.Empty) &&
                     e.Employee.FullName.Contains(pagination.EmployeeName ?? string.Empty) &&

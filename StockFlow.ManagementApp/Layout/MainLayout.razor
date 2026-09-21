@@ -19,6 +19,10 @@
                         <i class="bi bi-box-seam-fill"></i>
                         <span>Inventory</span>
                     </NavLink>
+                    <NavLink href="/productbrands" class="ml-nav-link" Match="NavLinkMatch.Prefix">
+                        <i class="bi bi-building"></i>
+                        <span>Brands</span>
+                    </NavLink>
                     <NavLink href="/sales" class="ml-nav-link" Match="NavLinkMatch.Prefix">
                         <i class="bi bi-tags-fill"></i>
                         <span>Sales</span>
@@ -47,6 +51,13 @@
                         <NavLink href="/customerlogs" class="ml-nav-link" Match="NavLinkMatch.Prefix">
                             <i class="bi bi-person-lines-fill"></i>
                             <span>Customer Logs</span>
+                        </NavLink>
+                    </AuthorizeView>
+
+                    <AuthorizeView Roles="Manager,Admin">
+                        <NavLink href="/employeelogs" class="ml-nav-link" Match="NavLinkMatch.Prefix">
+                            <i class="bi bi-person-vcard"></i>
+                            <span>Employee Logs</span>
                         </NavLink>
                     </AuthorizeView>
 
