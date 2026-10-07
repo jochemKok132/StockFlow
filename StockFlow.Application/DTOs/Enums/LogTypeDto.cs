@@ -10,5 +10,6 @@ namespace StockFlow.Application.DTOs.Enums
         Update,
         Delete,
         Login,
+        Sold,
     }
 }

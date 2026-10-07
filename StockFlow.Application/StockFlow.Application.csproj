@@ -14,9 +14,7 @@
 
   <ItemGroup>
     <Folder Include="Common\" />
-    <Folder Include="Interfaces\CashRegister\" />
     <Folder Include="Interfaces\Repositories\CashRegister\" />
-    <Folder Include="Services\CashRegister\" />
   </ItemGroup>
 
   <ItemGroup>

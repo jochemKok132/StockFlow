@@ -67,7 +67,7 @@ namespace StockFlow.API.Controllers
         }
 
         [Authorize(Roles = "Manager,Admin")]
-        [HttpDelete("SoftDelete")]
+        [HttpDelete("SoftDelete/{id}")]
         public async Task<IActionResult> SoftDeleteSalesAsync(Guid id)
         {
             var userId = Request.HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier);

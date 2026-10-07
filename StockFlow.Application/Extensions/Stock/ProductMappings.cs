@@ -58,6 +58,10 @@ namespace StockFlow.Application.Mappings.Stock
             entity.ShelfId = dto.ShelfId;
             entity.Stock = dto.Stock;
         }
+        public static void ChangeStock(this Product entity, int amount)
+        {
+            entity.Stock += amount;
+        }
         public static ProductBulkViewDto ToProductBulkViewDto(this Product product)
         {
             return new ProductBulkViewDto()
@@ -66,7 +70,9 @@ namespace StockFlow.Application.Mappings.Stock
                 ProductName = product.ProductName,
                 Barcode = product.Barcode,
                 Location = $"{product.Shelf.ShelfLocation}-{product.Location}",
-                Price = product.Price,
+                Price = product.Sales.Any()
+                    ? Math.Round(product.Price * (1 - (product.Sales.Max(s => s.PercentageOff) / 100.0m)), 2)
+                    : product.Price,
                 Sale = product.Sales.Any(),
                 Stock = product.Stock,
                 BrandName = product.Brand.BrandName,

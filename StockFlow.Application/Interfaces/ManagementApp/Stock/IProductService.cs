@@ -13,5 +13,7 @@ namespace StockFlow.Application.Interfaces.ManagementApp.Stock
         Task CreateProductAsync(CreateProductDto product, Guid employeeId);
         Task UpdateProductAsync(UpdateProductDto product, Guid employeeId);
         Task SoftDeleteProductAsync(Guid id, Guid employeeId);
+        Task UpdateProductStockAsync(Guid id, int amount, Guid employeeId);
+        Task<ProductDto> GetProductByBarcodeAsync(int barcode);
     }
 }

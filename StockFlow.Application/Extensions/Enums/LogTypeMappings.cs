@@ -16,6 +16,7 @@ namespace StockFlow.Application.Mappings.Enums
                 LogTypeDto.Update => LogType.Update,
                 LogTypeDto.Delete => LogType.Delete,
                 LogTypeDto.Login => LogType.Login,
+                LogTypeDto.Sold => LogType.Sold,
                 _ => throw new ArgumentOutOfRangeException(nameof(logType))
             };
         }
@@ -28,6 +29,7 @@ namespace StockFlow.Application.Mappings.Enums
                 LogType.Update => LogTypeDto.Update,
                 LogType.Delete => LogTypeDto.Delete,
                 LogType.Login => LogTypeDto.Login,
+                LogType.Sold => LogTypeDto.Sold,
                 _ => throw new ArgumentOutOfRangeException(nameof(logType))
             };
         }

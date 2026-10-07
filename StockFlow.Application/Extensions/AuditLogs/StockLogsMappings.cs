@@ -6,6 +6,7 @@ using StockFlow.Application.DTOs.Stock.Sales;
 using StockFlow.Application.DTOs.Stock.Shelf;
 using StockFlow.Application.Mappings.Enums;
 using StockFlow.Application.Mappings.People;
+using StockFlow.Application.Mappings.Stock;
 using StockFlow.Domain.Entities.AuditLogs;
 using StockFlow.Domain.Entities.Stock;
 using System;
@@ -63,6 +64,20 @@ namespace StockFlow.Application.Mappings.AuditLogs
                 LogType = LogTypeDto.Update,
                 Messages = dto.FindDifferences(entity),
                 StockLogType = StockLogTypeDto.ProductBrand,
+                EmployeeId = userId,
+            };
+        }
+        public static CreateStockLogsDto ChangeStock(this Product entity, int amount, Guid userId)
+        {
+            var dto = entity.ToProductDto();
+            dto.Stock += amount;
+            return new CreateStockLogsDto()
+            {
+                Identifier = entity.Barcode.ToString(),
+                Id = Guid.NewGuid(),
+                LogType = LogTypeDto.Sold,
+                Messages = dto.FindDifferences(entity),
+                StockLogType = StockLogTypeDto.Product,
                 EmployeeId = userId,
             };
         }

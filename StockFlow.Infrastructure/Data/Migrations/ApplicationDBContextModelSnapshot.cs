@@ -147,6 +147,38 @@ namespace StockFlow.Infrastructure.Data.Migrations
                     b.ToTable("StockLogs");
                 });
 
+            modelBuilder.Entity("StockFlow.Domain.Entities.CashRegister.RegisterItemDetail", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("Amount")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<Guid>("CashregisterLogId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<decimal>("PriceAtTimeOfSale")
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid?>("ProductId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid?>("SalesId")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CashregisterLogId");
+
+                    b.HasIndex("ProductId");
+
+                    b.HasIndex("SalesId");
+
+                    b.ToTable("RegisterItemDetails");
+                });
+
             modelBuilder.Entity("StockFlow.Domain.Entities.People.Customer", b =>
                 {
                     b.Property<Guid>("Id")
@@ -154,6 +186,10 @@ namespace StockFlow.Infrastructure.Data.Migrations
                         .HasColumnType("TEXT");
 
                     b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("CustomerId")
+                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Email")
@@ -234,9 +270,6 @@ namespace StockFlow.Infrastructure.Data.Migrations
                     b.Property<Guid>("BrandId")
                         .HasColumnType("TEXT");
 
-                    b.Property<Guid?>("CashRegisterLogsId")
-                        .HasColumnType("TEXT");
-
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("TEXT");
 
@@ -279,8 +312,6 @@ namespace StockFlow.Infrastructure.Data.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("BrandId");
-
-                    b.HasIndex("CashRegisterLogsId");
 
                     b.HasIndex("ShelfId");
 
@@ -452,6 +483,29 @@ namespace StockFlow.Infrastructure.Data.Migrations
                     b.Navigation("Employee");
                 });
 
+            modelBuilder.Entity("StockFlow.Domain.Entities.CashRegister.RegisterItemDetail", b =>
+                {
+                    b.HasOne("StockFlow.Domain.Entities.AuditLogs.CashRegisterLogs", null)
+                        .WithMany("ProductsSold")
+                        .HasForeignKey("CashregisterLogId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("StockFlow.Domain.Entities.Stock.Product", "Product")
+                        .WithMany()
+                        .HasForeignKey("ProductId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("StockFlow.Domain.Entities.Stock.Sales", "Sale")
+                        .WithMany()
+                        .HasForeignKey("SalesId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("Product");
+
+                    b.Navigation("Sale");
+                });
+
             modelBuilder.Entity("StockFlow.Domain.Entities.Stock.Product", b =>
                 {
                     b.HasOne("StockFlow.Domain.Entities.Stock.ProductBrand", "Brand")
@@ -459,10 +513,6 @@ namespace StockFlow.Infrastructure.Data.Migrations
                         .HasForeignKey("BrandId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
-
-                    b.HasOne("StockFlow.Domain.Entities.AuditLogs.CashRegisterLogs", null)
-                        .WithMany("ProductsSold")
-                        .HasForeignKey("CashRegisterLogsId");
 
                     b.HasOne("StockFlow.Domain.Entities.Stock.Shelf", "Shelf")
                         .WithMany("Products")

@@ -6,6 +6,7 @@ using StockFlow.Application.Interfaces.Repositories.ManagementApp.Stock;
 using StockFlow.Application.Mappings.AuditLogs;
 using StockFlow.Application.Mappings.Stock;
 using StockFlow.Application.Services.ManagementApp.AuditLogs;
+using StockFlow.Domain.Entities.People;
 using StockFlow.Domain.Entities.Stock;
 using System;
 using System.Collections.Generic;
@@ -15,6 +16,7 @@ namespace StockFlow.Application.Services.ManagementApp.Stock
 {
     public class ProductService(IProductRepository productRepository, ISalesRepository salesRepository, IShelfRepository shelfRepository, IProductBrandRepository productBrandRepository, IStockLogsService stockLogsService) : IProductService
     {
+
         public async Task CreateProductAsync(CreateProductDto product, Guid employeeId)
         {
             if (product == null) throw new ArgumentNullException("Product cant be null.");
@@ -87,5 +89,27 @@ namespace StockFlow.Application.Services.ManagementApp.Stock
 
         }
 
+        public async Task<ProductDto> GetProductByBarcodeAsync(int barcode)
+        {
+            var product = await productRepository.GetProductByBarcodeAsync(barcode);
+            if (product == null) throw new KeyNotFoundException($"Product with the barcode {barcode} not found.");
+            var productDto = product.ToProductDto();
+            productDto.Brand = (await productBrandRepository.GetByIdAsync(productDto.BrandId)).ToProductBrandDto();
+            productDto.Shelf = (await shelfRepository.GetByIdAsync(productDto.ShelfId)).ToShelfDto();
+            return productDto;
+        }
+
+        public async Task UpdateProductStockAsync(Guid id, int amount, Guid employeeId)
+        {
+            var product = await productRepository.GetByIdAsync(id);
+            if (product == null) throw new KeyNotFoundException($"Product with the id {id} not found.");
+
+            var log = product.ChangeStock(amount, employeeId);
+
+            product.ChangeStock(amount);
+
+            await productRepository.UpdateAsync(product);
+            await stockLogsService.CreateStockLogsAsync(log);
+        }
     }
 }

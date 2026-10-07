@@ -22,7 +22,7 @@ namespace StockFlow.Application.Services.ManagementApp.Stock
 
             var salesEntity = sale.ToSalesEntity();
 
-            var matchingProducts = await productRepository.GetAllProductsWithTags(sale.SalesTags.ToList());
+            var matchingProducts = await productRepository.GetAllProductsWithTagsAsync(sale.SalesTags.ToList());
 
             foreach (var product in matchingProducts)
             {
@@ -61,7 +61,7 @@ namespace StockFlow.Application.Services.ManagementApp.Stock
 
             sale.ToSalesEntity(salesDto);
 
-            var matchingProducts = (await productRepository.GetAllProductsWithTags(sale.SalesTags.ToList())).ToList();
+            var matchingProducts = (await productRepository.GetAllProductsWithTagsAsync(sale.SalesTags.ToList())).ToList();
             var matchingIds = matchingProducts.Select(p => p.Id).ToHashSet();
 
             foreach (var old in sale.Products.Where(p => !matchingIds.Contains(p.Id)).ToList())

@@ -18,6 +18,7 @@ namespace StockFlow.Application.Mappings.People
                 FullName = customer.FullName,
                 CreatedAt = customer.CreatedAt,
                 UpdatedAt = customer.UpdatedAt,
+                CustomerId = customer.CustomerId,
                 HouseNumber = customer.HouseNumber,
                 PostalCode = customer.PostalCode,
                 SavedPoints = customer.SavedPoints,

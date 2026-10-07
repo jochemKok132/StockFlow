@@ -66,7 +66,6 @@
         if (!product.Sales.Any())
             return product.Price;
 
-        var maxDiscount = product.Sales.Max(s => s.PercentageOff);
-        return product.Price * (1 - (maxDiscount / 100.0m));
+        return Math.Round(product.Price * (1 - (product.Sales.Max(s => s.PercentageOff) / 100.0m)), 2);
     }
 }

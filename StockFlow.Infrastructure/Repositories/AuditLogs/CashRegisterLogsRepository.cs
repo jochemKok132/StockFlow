@@ -4,6 +4,7 @@ using StockFlow.Application.DTOs.Pagination;
 using StockFlow.Application.Interfaces.Repositories.EfRepositories;
 using StockFlow.Application.Interfaces.Repositories.ManagementApp.Stock;
 using StockFlow.Domain.Entities.AuditLogs;
+using StockFlow.Domain.Entities.IEntities;
 using StockFlow.Domain.Entities.Stock;
 using StockFlow.Infrastructure.Data;
 using StockFlow.Infrastructure.Repositories.EfRepositories;
@@ -30,28 +31,33 @@ namespace StockFlow.Infrastructure.Repositories.Stock
 
         public async Task AddAsync(CashRegisterLogs log)
         {
-            foreach (var product in log.ProductsSold)
-            {
-                _context.Products.Attach(product);
-            }
-
+            log.CreatedAt = DateTime.UtcNow;
             _context.CashRegisterLogs.Add(log);
             await _context.SaveChangesAsync();
         }
 
         public async Task<IEnumerable<CashRegisterLogs>> GetAllCashRegisterLogsAsync(CashRegisterLogsPaginationDto pagination)
         {
-            pagination.CustomerName = pagination.CustomerName?.ToLower();
-            pagination.EmployeeName = pagination.EmployeeName?.ToLower();
+            var employeeId = pagination.EmployeeId?.ToLower() ?? string.Empty;
+            var employeeName = pagination.EmployeeName?.ToLower() ?? string.Empty;
+            var email = pagination.Email?.ToLower() ?? string.Empty;
+            var customerName = pagination.CustomerName?.ToLower() ?? string.Empty;
+
+            var noCustomerFilter = email.Length == 0 && customerName.Length == 0;
+
             var query = _context.CashRegisterLogs
                 .AsNoTracking()
+                .Include(e => e.ProductsSold).ThenInclude(e => e.Product)
+                .Include(e => e.ProductsSold).ThenInclude(e => e.Sale)
                 .Include(e => e.Customer)
                 .Include(e => e.Employee)
                 .Where(e =>
-                    e.Employee.EmployeeId.Contains(pagination.EmployeeId ?? string.Empty) &&
-                    e.Employee.FullName.Contains(pagination.EmployeeName ?? string.Empty) &&
-                    e.Customer.Email.Contains(pagination.Email ?? string.Empty) &&
-                    e.Customer.FullName.Contains(pagination.CustomerName ?? string.Empty));
+                    e.Employee.EmployeeId.ToLower().Contains(employeeId) &&
+                    e.Employee.FullName.ToLower().Contains(employeeName) &&
+                    (e.Customer == null
+                        ? noCustomerFilter
+                        : e.Customer.Email.ToLower().Contains(email) &&
+                          e.Customer.FullName.ToLower().Contains(customerName)));
 
             query = pagination.OrderType == OrderType.Descending
                 ? pagination.OrderBy switch

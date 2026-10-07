@@ -66,6 +66,8 @@
     padding: 20px 16px;
     display: flex;
     flex-direction: column;
+    height: 100vh;
+    position: fixed;
 }
 
     .ml-sidebar h5 {
@@ -170,6 +172,7 @@
 
 .ml-main-content {
     flex-grow: 1;
+    margin-left: 240px;
     padding: 24px;
 }
 .card {

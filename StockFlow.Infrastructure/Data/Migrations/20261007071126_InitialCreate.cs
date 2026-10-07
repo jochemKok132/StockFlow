@@ -20,6 +20,7 @@ namespace StockFlow.Infrastructure.Data.Migrations
                     UpdatedAt = table.Column<DateTime>(type: "TEXT", nullable: false),
                     SoftDeleted = table.Column<bool>(type: "INTEGER", nullable: false),
                     SoftDeletedAt = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    CustomerId = table.Column<string>(type: "TEXT", nullable: false),
                     FullName = table.Column<string>(type: "TEXT", nullable: false),
                     Email = table.Column<string>(type: "TEXT", nullable: false),
                     PostalCode = table.Column<string>(type: "TEXT", nullable: true),
@@ -213,17 +214,11 @@ namespace StockFlow.Infrastructure.Data.Migrations
                     ProductImage = table.Column<byte[]>(type: "BLOB", nullable: true),
                     SalesTags = table.Column<string>(type: "TEXT", nullable: false),
                     BrandId = table.Column<Guid>(type: "TEXT", nullable: false),
-                    ShelfId = table.Column<Guid>(type: "TEXT", nullable: false),
-                    CashRegisterLogsId = table.Column<Guid>(type: "TEXT", nullable: true)
+                    ShelfId = table.Column<Guid>(type: "TEXT", nullable: false)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Products", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_Products_CashRegisterLogs_CashRegisterLogsId",
-                        column: x => x.CashRegisterLogsId,
-                        principalTable: "CashRegisterLogs",
-                        principalColumn: "Id");
                     table.ForeignKey(
                         name: "FK_Products_ProductBrands_BrandId",
                         column: x => x.BrandId,
@@ -262,6 +257,40 @@ namespace StockFlow.Infrastructure.Data.Migrations
                         onDelete: ReferentialAction.Cascade);
                 });
 
+            migrationBuilder.CreateTable(
+                name: "RegisterItemDetails",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "TEXT", nullable: false),
+                    CashregisterLogId = table.Column<Guid>(type: "TEXT", nullable: false),
+                    Amount = table.Column<int>(type: "INTEGER", nullable: false),
+                    PriceAtTimeOfSale = table.Column<decimal>(type: "TEXT", nullable: false),
+                    ProductId = table.Column<Guid>(type: "TEXT", nullable: true),
+                    SalesId = table.Column<Guid>(type: "TEXT", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_RegisterItemDetails", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_RegisterItemDetails_CashRegisterLogs_CashregisterLogId",
+                        column: x => x.CashregisterLogId,
+                        principalTable: "CashRegisterLogs",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_RegisterItemDetails_Products_ProductId",
+                        column: x => x.ProductId,
+                        principalTable: "Products",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_RegisterItemDetails_Sales_SalesId",
+                        column: x => x.SalesId,
+                        principalTable: "Sales",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
             migrationBuilder.CreateIndex(
                 name: "IX_CashRegisterLogs_CustomerId",
                 table: "CashRegisterLogs",
@@ -288,11 +317,6 @@ namespace StockFlow.Infrastructure.Data.Migrations
                 column: "BrandId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Products_CashRegisterLogsId",
-                table: "Products",
-                column: "CashRegisterLogsId");
-
-            migrationBuilder.CreateIndex(
                 name: "IX_Products_ShelfId",
                 table: "Products",
                 column: "ShelfId");
@@ -300,6 +324,21 @@ namespace StockFlow.Infrastructure.Data.Migrations
             migrationBuilder.CreateIndex(
                 name: "IX_ProductSales_SalesId",
                 table: "ProductSales",
+                column: "SalesId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_RegisterItemDetails_CashregisterLogId",
+                table: "RegisterItemDetails",
+                column: "CashregisterLogId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_RegisterItemDetails_ProductId",
+                table: "RegisterItemDetails",
+                column: "ProductId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_RegisterItemDetails_SalesId",
+                table: "RegisterItemDetails",
                 column: "SalesId");
 
             migrationBuilder.CreateIndex(
@@ -321,7 +360,13 @@ namespace StockFlow.Infrastructure.Data.Migrations
                 name: "ProductSales");
 
             migrationBuilder.DropTable(
+                name: "RegisterItemDetails");
+
+            migrationBuilder.DropTable(
                 name: "StockLogs");
+
+            migrationBuilder.DropTable(
+                name: "CashRegisterLogs");
 
             migrationBuilder.DropTable(
                 name: "Products");
@@ -330,19 +375,16 @@ namespace StockFlow.Infrastructure.Data.Migrations
                 name: "Sales");
 
             migrationBuilder.DropTable(
-                name: "CashRegisterLogs");
+                name: "Customers");
+
+            migrationBuilder.DropTable(
+                name: "Employees");
 
             migrationBuilder.DropTable(
                 name: "ProductBrands");
 
             migrationBuilder.DropTable(
                 name: "Shelves");
-
-            migrationBuilder.DropTable(
-                name: "Customers");
-
-            migrationBuilder.DropTable(
-                name: "Employees");
         }
     }
 }

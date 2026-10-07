@@ -3,6 +3,7 @@ using StockFlow.Domain.Entities.People;
 using StockFlow.Domain.Entities.Stock;
 using StockFlow.Domain.Entities.AuditLogs;
 using StockFlow.Infrastructure.Data.Seeders;
+using StockFlow.Domain.Entities.CashRegister;
 
 namespace StockFlow.Infrastructure.Data
 {
@@ -18,6 +19,7 @@ namespace StockFlow.Infrastructure.Data
         public DbSet<CustomerLogs> CustomerLogs { get; set; }
         public DbSet<StockLogs> StockLogs { get; set; }
         public DbSet<EmployeeLogs> EmployeeLogs { get; set; }
+        public DbSet<RegisterItemDetail> RegisterItemDetails { get; set; }
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
@@ -51,6 +53,24 @@ namespace StockFlow.Infrastructure.Data
                    .HasForeignKey(p => p.CustomerId)
                    .IsRequired(false)
                    .OnDelete(DeleteBehavior.SetNull);
+
+            builder.Entity<CashRegisterLogs>()
+                    .HasMany(a => a.ProductsSold)
+                    .WithOne()
+                    .HasForeignKey(a => a.CashregisterLogId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+            builder.Entity<RegisterItemDetail>()
+                    .HasOne(e => e.Sale)
+                    .WithMany()
+                    .HasForeignKey(p => p.SalesId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+            builder.Entity<RegisterItemDetail>()
+                    .HasOne(e => e.Product)
+                    .WithMany()
+                    .HasForeignKey(p => p.ProductId)
+                    .OnDelete(DeleteBehavior.Restrict);
 
             builder.Entity<CustomerLogs>()
                    .HasOne(x => x.Customer)

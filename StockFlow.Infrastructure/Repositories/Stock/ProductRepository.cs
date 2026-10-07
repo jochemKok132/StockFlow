@@ -45,6 +45,14 @@ namespace StockFlow.Infrastructure.Repositories.Stock
                 .Include(p => p.Sales)
                 .FirstOrDefaultAsync(e => e.Id == id);
         }
+        public async Task<Product?> GetProductByBarcodeAsync(int barcode)
+        {
+            return await _context.Products
+                .Include(p => p.Brand)
+                .Include(p => p.Shelf)
+                .Include(p => p.Sales)
+                .FirstOrDefaultAsync(e => e.Barcode == barcode);
+        }
         public async Task<IEnumerable<Product>> GetAllProductsAsync(ProductPaginationDto pagination)
         {
             pagination.ProductName = pagination.ProductName?.ToLower();
@@ -109,10 +117,9 @@ namespace StockFlow.Infrastructure.Repositories.Stock
                 .ToListAsync();
         }
 
-        public async Task<IEnumerable<Product>> GetAllProductsWithTags(List<string> tags)
+        public async Task<IEnumerable<Product>> GetAllProductsWithTagsAsync(List<string> tags)
         {
             return await _context.Products
-                .AsNoTracking()
                 .Where(p => tags.All(t => p.SalesTags.Contains(t)))
                 .ToListAsync();
         }

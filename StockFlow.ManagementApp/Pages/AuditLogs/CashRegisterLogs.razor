@@ -68,10 +68,10 @@
                 @foreach (var log in cashRegisterLogs)
                 {
                     <tr>
-                        <td><strong>@log.Customer.FullName</strong></td>
-                        <td>@log.Customer.Email</td>
-                        <td>@log.Employee.FullName</td>
-                        <td>@log.Employee.EmployeeId</td>
+                        <td><strong>@(log.Customer?.FullName ?? "-")</strong></td>
+                        <td>@(log.Customer?.Email ?? "-")</td>
+                        <td>@log.Employee?.FullName</td>
+                        <td>@log.Employee?.EmployeeId</td>
                         <td>WIP</td>
                         <td class="date-cell">@log.CreatedAt.ToLocalTime().ToString("dd-MM-yyyy HH:mm")</td>
                     </tr>

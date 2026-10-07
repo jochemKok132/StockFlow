@@ -1,4 +1,5 @@
-﻿using StockFlow.Domain.Entities.IEntities;
+﻿using StockFlow.Domain.Entities.CashRegister;
+using StockFlow.Domain.Entities.IEntities;
 using StockFlow.Domain.Entities.People;
 using StockFlow.Domain.Entities.Stock;
 
@@ -14,6 +15,6 @@ namespace StockFlow.Domain.Entities.AuditLogs
         public Customer? Customer{ get; set; }
         public double TotalPrice { get; set; }
         public double TotalOff { get; set; }
-        public IEnumerable<Product> ProductsSold { get; set; } = [];
+        public ICollection<RegisterItemDetail> ProductsSold { get; set; } = [];
     }
 }

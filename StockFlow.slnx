@@ -6,6 +6,7 @@
     <Project Path="StockFlow.Infrastructure/StockFlow.Infrastructure.csproj" />
   </Folder>
   <Folder Name="/Frontend/">
+    <Project Path="StockFlow.CashRegister/StockFlow.CashRegister.csproj" Id="88d97335-541c-4f06-a52f-461cb8a50b0b" />
     <Project Path="StockFlow.ManagementApp/StockFlow.ManagementApp.csproj" Id="fe202e03-5b85-4279-9cc1-10428599f71e" />
   </Folder>
   <Folder Name="/Solution Items/">

@@ -12,6 +12,7 @@ namespace StockFlow.Domain.Entities.People
         public DateTime UpdatedAt { get; set; }
         public bool SoftDeleted { get; set; }
         public DateTime SoftDeletedAt { get; set; }
+        public required string CustomerId { get; set; }
         public required string FullName { get; set; }
         public required string Email { get; set; }
         public string? PostalCode { get; set; }
