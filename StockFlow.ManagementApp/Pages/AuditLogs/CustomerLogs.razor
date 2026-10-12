@@ -41,6 +41,7 @@
                 </th>
                 <th>Customer email</th>
                 <th>Log type</th>
+                <th>Changes</th>
                 <th @onclick="() => OrderBy(CustomerLogsOrderBy.CreatedAt)" class="sortable">
                     Created at @SortingArrow(CustomerLogsOrderBy.CreatedAt)
                 </th>
@@ -71,6 +72,12 @@
                         <td><strong>@log.Customer.FullName</strong></td>
                         <td>@log.Customer.Email</td>
                         <td>@log.LogType.ToString()</td>
+                        <td>
+                            @if (log.LogType == LogTypeDto.Update && log.Messages.Any())
+                            {
+                                <button class="btn-edit" @onclick="() => OpenDetails(log.Messages)"><i class="bi bi-eye"></i> Open message</button>
+                            }
+                        </td>
                         <td class="date-cell">@log.CreatedAt.ToLocalTime().ToString("dd-MM-yyyy HH:mm")</td>
                     </tr>
                 }
@@ -95,12 +102,19 @@
     </div>
 </div>
 
+<ItemInfo Show="showDetails"
+          Messages="selectedMessages"
+          OnClose="CloseDetails" />
+
 @code {
     private List<CustomerLogsDto> customerLogs = new List<CustomerLogsDto>();
 
     private bool loading = false;
     private bool noAccess = false;
     private string error = "";
+
+    private List<string>? selectedMessages;
+    private bool showDetails = false;
 
     private CustomerLogsPaginationDto pagination = new CustomerLogsPaginationDto
     {
@@ -112,6 +126,18 @@
         Email = null,
         LogType = null,
     };
+
+    private void OpenDetails(List<string> messages)
+    {
+        selectedMessages = messages;
+        showDetails = true;
+    }
+
+    private void CloseDetails()
+    {
+        showDetails = false;
+        selectedMessages = null;
+    }
 
     protected override async Task OnInitializedAsync()
     {

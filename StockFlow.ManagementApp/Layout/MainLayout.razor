@@ -3,7 +3,7 @@
 @inject NavigationManager Nav
 <div class="ml-page">
     <nav class="ml-sidebar">
-        <NavLink href="/" style="text-decoration: none;" Match="NavLinkMatch.Prefix">
+        <NavLink href="/" class="ml-brand-link" Match="NavLinkMatch.Prefix">
             <div class="ml-sidebar-brand">
                 <img class="ml-brand-icon" src="/icon-192.png" />
                 <span class="ml-brand-name">StockFlow</span>
@@ -44,6 +44,10 @@
                         <NavLink href="/stocklogs" class="ml-nav-link" Match="NavLinkMatch.Prefix">
                             <i class="bi bi-receipt"></i>
                             <span>Stock logs</span>
+                        </NavLink>
+                        <NavLink href="/producthistory" class="ml-nav-link" Match="NavLinkMatch.Prefix">
+                            <i class="bi bi-clock-history"></i>
+                            <span>Product history</span>
                         </NavLink>
                     </AuthorizeView>
 

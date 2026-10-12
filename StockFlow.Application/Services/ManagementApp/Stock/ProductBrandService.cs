@@ -48,8 +48,10 @@ namespace StockFlow.Application.Services.ManagementApp.Stock
             var productBrand = await productBrandRepository.GetByIdAsync(productBrandDto.Id);
             if (productBrand == null) throw new KeyNotFoundException($"ProductBrand with the id {productBrandDto.Id} not found.");
 
+            var log = productBrandDto.ToUpdateStockLogsDto(productBrand, employeeId);
+
             productBrand.ToProductBrandEntity(productBrandDto);
-            await stockLogsService.CreateStockLogsAsync(productBrandDto.ToUpdateStockLogsDto(productBrand, employeeId));
+            await stockLogsService.CreateStockLogsAsync(log);
             await productBrandRepository.UpdateAsync(productBrand);
         }
     }

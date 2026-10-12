@@ -32,6 +32,17 @@ namespace StockFlow.Infrastructure.Repositories.Stock
 
         public Task AddAsync(StockLogs entity) => _creatable.AddAsync(entity);
 
+        // Exact match on the identifier (e.g. a barcode), newest first.
+        public async Task<IEnumerable<StockLogs>> GetLogsByIdentifierAsync(StockLogType stockLogType, string identifier)
+        {
+            return await _context.StockLogs
+                .AsNoTracking()
+                .Include(e => e.Employee)
+                .Where(e => e.StockLogType == stockLogType && e.Identifier == identifier)
+                .OrderByDescending(e => e.CreatedAt)
+                .ToListAsync();
+        }
+
         public async Task<IEnumerable<StockLogs>> GetAllStockLogsAsync(StockLogsPaginationDto pagination)
         {
             var stockLogType = pagination.StockLogType?.ToDomain();

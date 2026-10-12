@@ -27,5 +27,14 @@ namespace StockFlow.ManagementApp.Services.AuditLogs
             else
                 return (new List<StockLogsDto>(), $"Error: {response.Message}");
         }
+
+        public async Task<(ProductStockHistoryDto?, string error)> GetProductStockHistoryAsync(int barcode)
+        {
+            var response = await httpService.GetAsync<ProductStockHistoryDto>($"StockLogs/ProductHistory/{barcode}");
+            if (response.Succeeded)
+                return (response.Value, "");
+            else
+                return (null, response.Message ?? "Something went wrong while loading the history.");
+        }
     }
 }

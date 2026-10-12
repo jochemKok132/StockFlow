@@ -1,0 +1,86 @@
+﻿@using StockFlow.Application.DTOs.CashRegister
+
+@if (Show && Log is not null)
+{
+    <div class="modal-overlay" @onclick="OnClose">
+        <div class="modal-box" @onclick:stopPropagation="true">
+            <div class="panel-header">
+                <div>
+                    <span class="panel-label">Transaction</span>
+                    <h3>Products sold</h3>
+                    <p>
+                        @(Log.Customer?.FullName ?? "Walk-in customer") &middot;
+                        @Log.CreatedAt.ToLocalTime().ToString("dd-MM-yyyy HH:mm")
+                    </p>
+                </div>
+                <button class="btn-icon" title="Close" @onclick="OnClose">
+                    <i class="bi bi-x-lg"></i>
+                </button>
+            </div>
+
+            @if (!Log.ProductsSold.Any())
+            {
+                <div class="empty-state">No products in this transaction.</div>
+            }
+            else
+            {
+                <table class="products-table">
+                    <thead>
+                        <tr>
+                            <th>Product</th>
+                            <th class="number-cell">Amount</th>
+                            <th class="number-cell">Price</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Log.ProductsSold)
+                        {
+                            <tr class="@(item.Product is null ? "" : "clickable-row")" @onclick="() => SelectProduct(item)">
+                                <td>
+                                    <div class="product-name">
+                                        <span>@(item.Product?.ProductName ?? "Unknown product")</span>
+                                        @if (item.Sale is not null)
+                                        {
+                                            <span class="sale-badge"><i class="bi bi-tag-fill"></i> Sale</span>
+                                        }
+                                    </div>
+                                    @if (item.Product is not null)
+                                    {
+                                        <span class="product-sub">Barcode @item.Product.Barcode</span>
+                                    }
+                                </td>
+                                <td class="number-cell"><strong>@item.Amount&times;</strong></td>
+                                <td class="number-cell">&euro;@item.PriceAtTimeOfSale.ToString("0.00")</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+
+                <div class="panel-footer">
+                    <div class="total-row">
+                        <span>Discount</span>
+                        <span>&euro;@Log.TotalOff.ToString("0.00")</span>
+                    </div>
+                    <div class="total-row total-main">
+                        <span>Total</span>
+                        <span>&euro;@Log.TotalPrice.ToString("0.00")</span>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public bool Show { get; set; }
+    [Parameter] public CashRegisterLogsDto? Log { get; set; }
+
+    [Parameter] public EventCallback OnClose { get; set; }
+    [Parameter] public EventCallback<RegisterItemDetailDto> OnProductClick { get; set; }
+
+    private async Task SelectProduct(RegisterItemDetailDto item)
+    {
+        if (item.Product is null) return;
+        await OnProductClick.InvokeAsync(item);
+    }
+}

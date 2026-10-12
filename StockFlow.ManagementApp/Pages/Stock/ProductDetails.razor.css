@@ -1,25 +1,95 @@
-.modal-overlay {
-    position: fixed;
-    inset: 0;
-    background: rgba(10, 13, 47, 0.45);
+.image-wrapper {
     display: flex;
-    justify-content: end;
-    z-index: 1050;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    background: var(--DashboardColor);
+    border: 1px solid var(--BorderColor);
+    border-radius: var(--RadiusSmall);
 }
 
-.modal-box {
-    background: white;
-    box-shadow: 0 10px 40px rgba(0,0,0,0.25);
-    padding: 20px;
-    width: 100%;
-    max-width: 400px;
-    max-height: 100vh;
-    overflow-y: auto;
-}
-.modal-header {
+    .image-wrapper img {
+        max-width: 100%;
+        max-height: 200px;
+        object-fit: contain;
+    }
+
+.price-block {
     display: flex;
-    flex-direction: column; 
-    align-items: flex-start;
-    justify-content: flex-start;
-    margin-bottom: 15px;
+    align-items: center;
+    gap: 12px;
 }
+
+.price {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--TextColor);
+}
+
+.price-old {
+    font-size: 14px;
+    color: var(--MutedText);
+    text-decoration: line-through;
+}
+
+.details {
+    display: grid;
+    grid-template-columns: 120px 1fr;
+    margin: 0;
+    border: 1px solid var(--BorderColor);
+    border-radius: var(--RadiusSmall);
+}
+
+    .details dt,
+    .details dd {
+        margin: 0;
+        padding: 12px 16px;
+        border-bottom: 1px solid var(--BorderColor);
+        font-size: 14px;
+    }
+
+    .details dt {
+        font-size: 12px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.6px;
+        color: var(--MutedText);
+        background: var(--DashboardColor);
+    }
+
+    .details dd {
+        color: var(--TextColor);
+    }
+
+        .details dt:last-of-type,
+        .details dd:last-of-type {
+            border-bottom: none;
+        }
+
+.tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+}
+
+.tag {
+    padding: 2px 8px;
+    font-size: 12px;
+    color: var(--TextColor);
+    background: var(--SurfaceColor);
+    border: 1px solid var(--BorderColor);
+    border-radius: var(--RadiusSmall);
+}
+
+.description {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+    .description p {
+        margin: 0;
+        font-size: 14px;
+        line-height: 1.5;
+        color: var(--TextColor);
+    }

@@ -25,6 +25,25 @@ namespace StockFlow.API.Controllers
             }
         }
 
+        [Authorize(Roles = "ServiceDesk,ShiftLeader,Manager,Admin")]
+        [HttpGet("ProductHistory/{barcode:int}")]
+        public async Task<IActionResult> GetProductStockHistoryAsync(int barcode)
+        {
+            try
+            {
+                var history = await stockLogsService.GetProductStockHistoryAsync(barcode);
+                return Ok(history);
+            }
+            catch (KeyNotFoundException exception)
+            {
+                return NotFound(exception.Message);
+            }
+            catch (ArgumentException)
+            {
+                return BadRequest("There has been an unforseen error.");
+            }
+        }
+
         [Authorize(Roles = "Manager,Admin")]
         [HttpPost("Create")]
         public async Task<IActionResult> CreateStockLogsAsync(CreateStockLogsDto log)

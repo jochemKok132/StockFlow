@@ -82,7 +82,7 @@
                         <td>
                             @if (log.LogType == LogTypeDto.Update)
                             {
-                                <button class="btn-save" @onclick="() => OpenDetails(log.Messages)">Open Message</button>
+                                <button class="btn-edit" @onclick="() => OpenDetails(log.Messages)"><i class="bi bi-eye"></i> Open message</button>
                             }
                         </td>
                         <td class="date-cell">@log.CreatedAt.ToLocalTime().ToString("dd-MM-yyyy HH:mm")</td>

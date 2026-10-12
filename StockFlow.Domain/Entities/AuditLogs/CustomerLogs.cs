@@ -14,5 +14,6 @@ namespace StockFlow.Domain.Entities.AuditLogs
         public LogType LogType { get; set; }
         public Guid CustomerId { get; set; }
         public Customer Customer { get; set; }
+        public IEnumerable<string> Messages { get; set; } = [];
     }
 }

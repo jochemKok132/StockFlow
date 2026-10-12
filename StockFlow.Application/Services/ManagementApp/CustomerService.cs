@@ -12,9 +12,12 @@ using System.Collections.Generic;
 using System.Security.Authentication;
 using System.Text;
 
+using StockFlow.Application.Interfaces.ManagementApp.AuditLogs;
+using StockFlow.Application.Mappings.AuditLogs;
+
 namespace StockFlow.Application.Services.ManagementApp
 {
-    public class CustomerService(ICustomerRepository customerRepository, IAuthenticationService authenticationService, IPassword password) : ICustomerService
+    public class CustomerService(ICustomerRepository customerRepository, IAuthenticationService authenticationService, IPassword password, ICustomerLogsService customerLogsService) : ICustomerService
     {
         public async Task<List<CustomerDto>> GetAllCustomersAsync(CustomerPaginationDto pagination)
         {
@@ -58,8 +61,12 @@ namespace StockFlow.Application.Services.ManagementApp
             if (customer == null)
                 throw new KeyNotFoundException($"Customer with id {dto.Id} not found.");
 
+            // Build the log before applying the changes so the old values are still available.
+            var log = dto.ToUpdateCustomerLogsDto(customer);
+
             customer.ToCustomerEntity(dto);
             await customerRepository.UpdateAsync(customer);
+            await customerLogsService.CreateCustomerLogsAsync(log);
         }
     }
 }

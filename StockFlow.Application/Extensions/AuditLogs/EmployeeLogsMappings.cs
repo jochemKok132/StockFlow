@@ -27,7 +27,7 @@ namespace StockFlow.Application.Mappings.AuditLogs
                 Employee = log.Employee.ToEmployeeDto(),
                 CreatedAt = log.CreatedAt,
                 Id = log.Id,
-                Messages = log.Messages.ToList(),
+                Messages = log.Messages.WithoutNavigationChanges(),
                 LogType = log.LogType.ToDto(),
                 Identifier = log.Identifier,
             };

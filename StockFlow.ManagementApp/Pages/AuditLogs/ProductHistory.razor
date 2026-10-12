@@ -1,0 +1,285 @@
+﻿@page "/producthistory"
+@using System.Text.RegularExpressions
+@attribute [Authorize(Roles = "ServiceDesk,ShiftLeader,Manager,Admin")]
+@inject IStockLogsService StockLogsService
+@inject NavigationManager Nav
+
+<div class="tasks-header">
+    <div>
+        <h2>Product history</h2>
+        <p>Look up every stock change of a product by its barcode.</p>
+    </div>
+</div>
+
+<div class="card">
+    <form class="search-bar" @onsubmit="Search">
+        <div class="filter-group">
+            <label for="barcode">Barcode</label>
+            <input id="barcode" type="text" inputmode="numeric" maxlength="9"
+                   placeholder="e.g. 1001"
+                   @bind="barcodeInput" @bind:event="oninput" />
+        </div>
+        <button type="submit" class="btn-save" disabled="@(loading || string.IsNullOrWhiteSpace(barcodeInput))">
+            <i class="bi bi-search"></i> Search
+        </button>
+    </form>
+
+    @if (loading)
+    {
+        <div class="loading">Loading history...</div>
+    }
+    else if (!string.IsNullOrEmpty(error))
+    {
+        <div class="alert-danger">@error</div>
+    }
+    else if (history is null)
+    {
+        <div class="search-empty">
+            <i class="bi bi-upc-scan"></i>
+            <span>Enter a barcode to see its stock history.</span>
+        </div>
+    }
+    else
+    {
+        var product = history.Product;
+
+        <div class="product-summary">
+            <div class="product-main">
+                @if (GetImageDataUrl(product) is string imageUrl)
+                {
+                    <img class="product-thumb" src="@imageUrl" alt="@product.ProductName" />
+                }
+                else
+                {
+                    <div class="product-thumb product-thumb-empty"><i class="bi bi-box-seam"></i></div>
+                }
+                <div class="product-text">
+                    <span class="panel-label">Barcode @product.Barcode</span>
+                    <button type="button" class="product-link" title="Show product details" @onclick="() => showDetails = true">
+                        @product.ProductName <i class="bi bi-box-arrow-up-right"></i>
+                    </button>
+                    <span class="product-meta">
+                        @(product.Brand?.BrandName ?? "-") &middot;
+                        Location @(product.Shelf?.ShelfLocation)-@product.Location
+                        @if (product.SoftDeleted)
+                        {
+                            <span class="badge badge-delete">Deleted</span>
+                        }
+                    </span>
+                </div>
+            </div>
+
+            <div class="stats">
+                <div class="stat">
+                    <span class="stat-value">@product.Stock</span>
+                    <span class="stat-label">Current stock</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-value">@UnitsSold</span>
+                    <span class="stat-label">Units sold</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-value">@UnitsAdded</span>
+                    <span class="stat-label">Units added</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-value">@history.Logs.Count</span>
+                    <span class="stat-label">Log entries</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="history-toolbar">
+            <span class="panel-label">History</span>
+            <div class="segmented">
+                <button type="button" class="@(stockOnly ? "" : "active")" @onclick="() => stockOnly = false">All changes</button>
+                <button type="button" class="@(stockOnly ? "active" : "")" @onclick="() => stockOnly = true">Stock changes only</button>
+            </div>
+        </div>
+
+        <table class="tasks-table">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Type</th>
+                    <th>Employee</th>
+                    <th>Stock</th>
+                    <th>Other changes</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (!VisibleRows.Any())
+                {
+                    <tr><td colspan="5" class="empty-state">No @(stockOnly ? "stock changes" : "log entries") found for this product.</td></tr>
+                }
+                @foreach (var row in VisibleRows)
+                {
+                    <tr>
+                        <td class="date-cell">@row.Log.CreatedAt.ToLocalTime().ToString("dd-MM-yyyy HH:mm")</td>
+                        <td><span class="badge @BadgeClass(row.Log.LogType)">@row.Log.LogType</span></td>
+                        <td>
+                            <strong>@row.Log.Employee.FullName</strong>
+                            <span class="sub-text">@row.Log.Employee.EmployeeId</span>
+                        </td>
+                        <td>
+                            @if (row.StockOld is int oldStock && row.StockNew is int newStock)
+                            {
+                                var delta = newStock - oldStock;
+                                <div class="stock-change">
+                                    <span>@oldStock</span>
+                                    <i class="bi bi-arrow-right"></i>
+                                    <strong>@newStock</strong>
+                                    <span class="delta @(delta >= 0 ? "delta-up" : "delta-down")">@(delta > 0 ? "+" : "")@delta</span>
+                                </div>
+                            }
+                            else
+                            {
+                                <span class="sub-text">-</span>
+                            }
+                        </td>
+                        <td>
+                            @if (row.OtherMessages.Count > 0)
+                            {
+                                <button class="btn-edit" @onclick="() => OpenMessages(row.OtherMessages)">
+                                    <i class="bi bi-eye"></i> @row.OtherMessages.Count @(row.OtherMessages.Count == 1 ? "change" : "changes")
+                                </button>
+                            }
+                            else
+                            {
+                                <span class="sub-text">-</span>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+</div>
+
+<ItemInfo Show="showMessages"
+          Messages="selectedMessages"
+          OnClose="() => showMessages = false" />
+
+<ProductDetails Show="showDetails"
+                EditMode="false"
+                ReadMode="true"
+                product="history?.Product"
+                OnClose="() => showDetails = false" />
+
+@code {
+    [SupplyParameterFromQuery(Name = "barcode")]
+    public int? BarcodeQuery { get; set; }
+
+    private string barcodeInput = "";
+    private int? loadedBarcode;
+    private ProductStockHistoryDto? history;
+    private List<HistoryRow> rows = [];
+
+    private bool loading = false;
+    private string error = "";
+    private bool stockOnly = false;
+
+    private bool showMessages = false;
+    private List<string>? selectedMessages;
+    private bool showDetails = false;
+
+    private record HistoryRow(StockLogsDto Log, int? StockOld, int? StockNew, List<string> OtherMessages);
+
+    // DifferenceFinder format: "Stock: New: 12. Old: 15"
+    private static readonly Regex StockPattern = new(@"^Stock: New: (?<new>-?\d+)\. Old: (?<old>-?\d+)$");
+
+    private IEnumerable<HistoryRow> VisibleRows =>
+        stockOnly ? rows.Where(r => r.StockNew.HasValue) : rows;
+
+    private int UnitsSold =>
+        rows.Where(r => r.Log.LogType == LogTypeDto.Sold && r.StockNew < r.StockOld)
+            .Sum(r => r.StockOld!.Value - r.StockNew!.Value);
+
+    private int UnitsAdded =>
+        rows.Where(r => r.Log.LogType != LogTypeDto.Sold && r.StockNew > r.StockOld)
+            .Sum(r => r.StockNew!.Value - r.StockOld!.Value);
+
+    // The barcode lives in the URL (?barcode=1001) so a search can be bookmarked or linked to.
+    protected override async Task OnParametersSetAsync()
+    {
+        if (BarcodeQuery is int barcode && barcode != loadedBarcode)
+        {
+            barcodeInput = barcode.ToString();
+            await LoadHistory(barcode);
+        }
+    }
+
+    private async Task Search()
+    {
+        if (!int.TryParse(barcodeInput.Trim(), out var barcode) || barcode < 0)
+        {
+            history = null;
+            rows = [];
+            error = "A barcode can only contain numbers.";
+            return;
+        }
+
+        if (barcode == loadedBarcode)
+            await LoadHistory(barcode);
+        else
+            Nav.NavigateTo($"/producthistory?barcode={barcode}");
+    }
+
+    private async Task LoadHistory(int barcode)
+    {
+        loading = true;
+        error = "";
+        history = null;
+        rows = [];
+        loadedBarcode = barcode;
+        StateHasChanged();
+
+        (history, error) = await StockLogsService.GetProductStockHistoryAsync(barcode);
+        if (history is not null)
+            rows = history.Logs.Select(ToRow).ToList();
+
+        loading = false;
+    }
+
+    private static HistoryRow ToRow(StockLogsDto log)
+    {
+        int? oldStock = null, newStock = null;
+        var other = new List<string>();
+
+        foreach (var message in log.Messages)
+        {
+            var match = StockPattern.Match(message);
+            if (match.Success)
+            {
+                newStock = int.Parse(match.Groups["new"].Value);
+                oldStock = int.Parse(match.Groups["old"].Value);
+            }
+            else
+            {
+                other.Add(message);
+            }
+        }
+
+        return new HistoryRow(log, oldStock, newStock, other);
+    }
+
+    private void OpenMessages(List<string> messages)
+    {
+        selectedMessages = messages;
+        showMessages = true;
+    }
+
+    private static string BadgeClass(LogTypeDto type) => type switch
+    {
+        LogTypeDto.Create => "badge-create",
+        LogTypeDto.Update => "badge-update",
+        LogTypeDto.Sold => "badge-sold",
+        LogTypeDto.Delete => "badge-delete",
+        _ => "",
+    };
+
+    private static string? GetImageDataUrl(ProductDto product) =>
+        product.ProductImage is { Length: > 0 } image
+            ? $"data:image/*;base64,{Convert.ToBase64String(image)}"
+            : null;
+}

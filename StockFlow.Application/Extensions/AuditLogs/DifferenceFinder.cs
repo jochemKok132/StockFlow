@@ -14,6 +14,8 @@ public static class DifferenceFinder
             var newProp = newProperties.FirstOrDefault(p => p.Name == oldProp.Name);
             if (newProp == null) continue;
 
+            if (IsModelType(oldProp.PropertyType) || IsModelType(newProp.PropertyType)) continue;
+
             var oldRaw = oldProp.GetValue(oldValues);
             var newRaw = newProp.GetValue(newValues);
 
@@ -72,9 +74,30 @@ public static class DifferenceFinder
     private static List<object?> ToItems(object? value) =>
         value is IEnumerable items ? items.Cast<object?>().ToList() : new List<object?>();
 
-    private static bool IsModel(object? item)
+    private static bool IsModel(object? item) =>
+        item is not null && IsModelType(item.GetType());
+
+    private static bool IsModelType(Type type)
     {
-        var ns = item?.GetType().Namespace ?? "";
+        if (type.IsEnum) return false;
+        var ns = type.Namespace ?? "";
         return ns.StartsWith("StockFlow.Domain.Entities") || ns.StartsWith("StockFlow.Application.DTOs");
     }
+
+    private static readonly Lazy<HashSet<string>> NavigationPropertyNames = new(() =>
+        typeof(StockFlow.Domain.Entities.Stock.Product).Assembly.GetTypes()
+            .Where(t => t.Namespace?.StartsWith("StockFlow.Domain.Entities") == true)
+            .SelectMany(t => t.GetProperties(BindingFlags.Public | BindingFlags.Instance))
+            .Where(p => IsModelType(p.PropertyType))
+            .Select(p => p.Name)
+            .ToHashSet());
+
+    public static List<string> WithoutNavigationChanges(this IEnumerable<string> messages) =>
+        messages
+            .Where(m =>
+            {
+                var separator = m.IndexOf(": ", StringComparison.Ordinal);
+                return separator < 0 || !NavigationPropertyNames.Value.Contains(m[..separator]);
+            })
+            .ToList();
 }

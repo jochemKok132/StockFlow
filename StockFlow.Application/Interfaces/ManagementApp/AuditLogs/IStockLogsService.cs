@@ -11,5 +11,6 @@ namespace StockFlow.Application.Interfaces.ManagementApp.AuditLogs
     {
         Task<List<StockLogsDto>> GetAllStockLogsAsync(StockLogsPaginationDto pagination);
         Task CreateStockLogsAsync(CreateStockLogsDto log);
+        Task<ProductStockHistoryDto> GetProductStockHistoryAsync(int barcode);
     }
 }

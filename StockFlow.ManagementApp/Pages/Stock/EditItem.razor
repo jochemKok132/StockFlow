@@ -7,6 +7,16 @@
 {
     <div class="modal-overlay" @onclick="OnClose">
         <div class="modal-box" @onclick:stopPropagation="true">
+            <div class="panel-header">
+                <div>
+                    <span class="panel-label">@(ReadMode ? "Details" : "Edit")</span>
+                    <h3>@Title</h3>
+                </div>
+                <button class="btn-icon" title="Close" @onclick="OnClose">
+                    <i class="bi bi-x-lg"></i>
+                </button>
+            </div>
+
             @if (Loading)
             {
                 <div class="loading">Loading details...</div>
@@ -22,13 +32,10 @@
             else
             {
                 <div class="form-grid">
-                    @foreach (var prop in EditableProperties)
+                    @foreach (var prop in EditableProperties.Where(p => !IsHidden(p)))
                     {
                         <div class="form-row">
-                            @if (prop.Name != "Id" && prop.Name != "HashedPassword")
-                            {
-                                <label class="form-label" for="@prop.Name">@prop.Name</label>
-                            }
+                            <label class="form-label" for="@prop.Name">@SplitPascalCase(prop.Name)</label>
 
                             @if (prop.PropertyType == typeof(byte[]))
                             {
@@ -72,13 +79,10 @@
                             }
                             else
                             {
-                                if (prop.Name != "Id" && prop.Name != "HashedPassword")
-                                {
-                                    <input id="@prop.Name" type="@GetInputType(prop.PropertyType)" class="form-input"
-                                           value="@GetValueAsString(prop)"
-                                           readonly="@ReadMode"
-                                           @onchange="e => SetValueFromString(prop, e.Value?.ToString() ?? string.Empty)" />
-                                }
+                                <input id="@prop.Name" type="@GetInputType(prop.PropertyType)" class="form-input"
+                                       value="@GetValueAsString(prop)"
+                                       readonly="@ReadMode"
+                                       @onchange="e => SetValueFromString(prop, e.Value?.ToString() ?? string.Empty)" />
                             }
                         </div>
                     }
@@ -87,8 +91,8 @@
                 @if (EditMode)
                 {
                     <div class="form-actions">
-                        <button type="button" class="btn-save" @onclick="HandleSave">Save</button>
                         <button type="button" class="btn-cancel" @onclick="OnClose">Cancel</button>
+                        <button type="button" class="btn-save" @onclick="HandleSave"><i class="bi bi-check-lg"></i> Save</button>
                     </div>
                 }
             }
@@ -126,6 +130,24 @@
 
         return false;
     }
+
+    // "CreateProductDto" -> "Create product", "UpdateShelfDto" -> "Update shelf"
+    private string Title
+    {
+        get
+        {
+            var name = item?.GetType().Name ?? "Item";
+            if (name.EndsWith("Dto")) name = name[..^3];
+            var words = SplitPascalCase(name);
+            return words.Length > 1 ? words[0] + words[1..].ToLowerInvariant() : words;
+        }
+    }
+
+    private static bool IsHidden(PropertyInfo prop) =>
+        prop.Name == "Id" || prop.Name == "HashedPassword";
+
+    private static string SplitPascalCase(string value) =>
+        System.Text.RegularExpressions.Regex.Replace(value, "(?<=[a-z])(?=[A-Z])", " ");
 
     private static Type GetUnderlyingType(Type type) => Nullable.GetUnderlyingType(type) ?? type;
 

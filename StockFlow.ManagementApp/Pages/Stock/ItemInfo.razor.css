@@ -1,139 +1,71 @@
-.modal-overlay {
-    position: fixed;
-    inset: 0;
-    background: rgba(17, 17, 17, 0.45);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 24px;
-    z-index: 1000;
-}
-
-.modal-box {
-    background: var(--TaskbarColor);
-    border-radius: 8px;
-    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
-    padding: 24px;
-    width: 100%;
-    max-width: 560px;
-    max-height: 85vh;
-    overflow-y: auto;
-}
-
-.form-grid {
+.change-list {
     display: flex;
     flex-direction: column;
-    gap: 16px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    border: 1px solid var(--BorderColor);
+    border-radius: var(--RadiusSmall);
 }
 
-.form-row {
+.change-item {
     display: flex;
     flex-direction: column;
-    gap: 5px;
+    gap: 4px;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--BorderColor);
 }
 
-.form-label {
+    .change-item:last-child {
+        border-bottom: none;
+    }
+
+    .change-item:hover {
+        background: var(--SurfaceColor);
+    }
+
+.change-field {
     font-size: 12px;
     font-weight: 700;
-    color: var(--MutedText);
     text-transform: uppercase;
     letter-spacing: 0.6px;
-}
-
-.form-input,
-.form-select {
-    padding: 7px 11px;
-    border: 1px solid var(--BorderColor);
-    border-radius: 6px;
-    font-size: 14px;
-    color: var(--TextColor);
-    background: var(--TaskbarColor);
-    outline: none;
-    width: 100%;
-}
-
-    .form-input:focus,
-    .form-select:focus {
-        border-color: var(--AccentColor);
-        box-shadow: 0 0 0 2px var(--AccentColorSoft);
-    }
-
-    .form-input[readonly],
-    .form-select:disabled {
-        background: var(--DashboardColor);
-        color: var(--MutedText);
-        cursor: not-allowed;
-    }
-
-.form-checkbox {
-    width: 18px;
-    height: 18px;
-    accent-color: var(--AccentColor);
-}
-
-.form-input-file {
-    font-size: 13px;
     color: var(--MutedText);
 }
 
-.image-field {
+.change-values {
     display: flex;
-    flex-direction: column;
-    gap: 10px;
-}
-
-.image-preview {
-    max-width: 100%;
-    max-height: 160px;
-    width: auto;
-    border: 1px solid var(--BorderColor);
-    border-radius: 6px;
-    object-fit: contain;
-    background: var(--DashboardColor);
-}
-
-.form-actions {
-    display: flex;
-    justify-content: flex-end;
+    align-items: center;
+    flex-wrap: wrap;
     gap: 8px;
-    margin-top: 20px;
-    padding-top: 20px;
-    border-top: 1px solid var(--BorderColor);
-}
-
-.btn-save,
-.btn-cancel {
-    padding: 8px 18px;
-    border-radius: 6px;
     font-size: 14px;
-    font-weight: 500;
-    cursor: pointer;
-    border: 1px solid var(--BorderColor);
 }
 
-.btn-save {
-    background: var(--ButtonColor);
-    color: var(--ButtonTextColor);
-    border-color: var(--ButtonColor);
+    .change-values i {
+        font-size: 12px;
+        color: var(--MutedText);
+    }
+
+.value-old,
+.value-new {
+    padding: 2px 8px;
+    border-radius: var(--RadiusSmall);
+    word-break: break-word;
 }
 
-    .btn-save:hover {
-        background: var(--ButtonColorHover);
-        border-color: var(--ButtonColorHover);
-    }
+.value-old {
+    background: var(--DangerBg);
+    color: var(--DangerText);
+    text-decoration: line-through;
+}
 
-    .btn-save:disabled {
-        background: var(--ButtonDisabledColor);
-        border-color: var(--ButtonDisabledColor);
-        cursor: not-allowed;
-    }
+.value-new {
+    background: var(--SuccessBg);
+    color: var(--SuccessText);
+    font-weight: 600;
+}
 
-.btn-cancel {
-    background: var(--TaskbarColor);
+.change-text {
+    font-size: 14px;
     color: var(--TextColor);
+    word-break: break-word;
 }
-
-    .btn-cancel:hover {
-        border-color: var(--AccentColor);
-        color: var(--AccentColor);
-    }

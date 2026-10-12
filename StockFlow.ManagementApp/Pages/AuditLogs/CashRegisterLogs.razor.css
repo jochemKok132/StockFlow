@@ -1,0 +1,19 @@
+.products-cell {
+    cursor: pointer;
+    white-space: nowrap;
+    color: var(--AccentColor);
+}
+
+    .products-cell i {
+        margin-left: 4px;
+        font-size: 11px;
+    }
+
+    .products-cell:hover {
+        background: var(--AccentColorSoft);
+        color: var(--AccentColorHover);
+    }
+
+.products-count {
+    font-weight: 600;
+}

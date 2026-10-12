@@ -11,5 +11,6 @@ namespace StockFlow.Application.DTOs.AuditLogs.Customer
         public Guid Id { get; set; }
         public LogTypeDto LogType { get; set; }
         public Guid CustomerId { get; set; }
+        public List<string> Messages { get; set; } = [];
     }
 }

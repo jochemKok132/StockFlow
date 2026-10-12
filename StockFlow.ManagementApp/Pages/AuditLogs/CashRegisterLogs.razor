@@ -1,6 +1,8 @@
 ﻿@page "/cashregisterlogs";
 @attribute [Authorize(Roles = "Cashier,ServiceDesk,ShiftLeader,Manager,Admin")]
+@using StockFlow.Application.DTOs.CashRegister
 @inject ICashRegisterLogsService CashRegisterLogsService
+@inject IProductService ProductService
 
 <div class="tasks-header">
     <div>
@@ -40,7 +42,7 @@
                 <th @onclick="() => OrderBy(CashRegisterLogsOrderBy.EmployeeId)" class="sortable">
                     Employee id @SortingArrow(CashRegisterLogsOrderBy.EmployeeId)
                 </th>
-                <th>products WIP</th>
+                <th>Products</th>
                 <th @onclick="() => OrderBy(CashRegisterLogsOrderBy.CreatedAt)" class="sortable">
                     Created at @SortingArrow(CashRegisterLogsOrderBy.CreatedAt)
                 </th>
@@ -72,7 +74,10 @@
                         <td>@(log.Customer?.Email ?? "-")</td>
                         <td>@log.Employee?.FullName</td>
                         <td>@log.Employee?.EmployeeId</td>
-                        <td>WIP</td>
+                        <td class="products-cell" @onclick="() => OpenProducts(log)">
+                            <span class="products-count">@log.ProductsSold.Sum(p => p.Amount) items</span>
+                            <i class="bi bi-chevron-right"></i>
+                        </td>
                         <td class="date-cell">@log.CreatedAt.ToLocalTime().ToString("dd-MM-yyyy HH:mm")</td>
                     </tr>
                 }
@@ -97,12 +102,33 @@
     </div>
 </div>
 
+<SoldProductsOverlay Show="showProducts"
+                     Log="selectedLog"
+                     OnClose="CloseProducts"
+                     OnProductClick="OpenProductDetails" />
+
+<ProductDetails Show="showDetails"
+                EditMode="false"
+                ReadMode="true"
+                product="selectedProduct"
+                Loading="detailsLoading"
+                Error="@detailsError"
+                OnClose="CloseProductDetails" />
+
 @code {
     private List<CashRegisterLogsDto> cashRegisterLogs = new List<CashRegisterLogsDto>();
 
     private bool loading = false;
     private bool noAccess = false;
     private string error = "";
+
+    private CashRegisterLogsDto? selectedLog;
+    private bool showProducts = false;
+
+    private ProductDto? selectedProduct;
+    private bool showDetails = false;
+    private bool detailsLoading = false;
+    private string detailsError = "";
 
     private CashRegisterLogsPaginationDto pagination = new CashRegisterLogsPaginationDto
     {
@@ -156,6 +182,44 @@
             builder.CloseElement();
         }
     };
+
+    private void OpenProducts(CashRegisterLogsDto log)
+    {
+        selectedLog = log;
+        showProducts = true;
+    }
+
+    private void CloseProducts()
+    {
+        showProducts = false;
+        selectedLog = null;
+    }
+
+    private async Task OpenProductDetails(RegisterItemDetailDto item)
+    {
+        if (item.Product is null) return;
+
+        showProducts = false;
+        showDetails = true;
+        detailsLoading = true;
+        detailsError = "";
+        selectedProduct = null;
+        await InvokeAsync(StateHasChanged);
+
+        (selectedProduct, detailsError) = await ProductService.GetProductDetailsAsync(item.Product.Id);
+        detailsLoading = false;
+    }
+
+    private void CloseProductDetails()
+    {
+        showDetails = false;
+        detailsLoading = false;
+        detailsError = "";
+        selectedProduct = null;
+
+        // Go back to the product list of the log the product was opened from
+        showProducts = selectedLog is not null;
+    }
 
     private async Task NextPage()
     {

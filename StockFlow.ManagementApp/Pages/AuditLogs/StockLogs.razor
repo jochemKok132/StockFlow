@@ -94,9 +94,9 @@
                         <td>@log.LogType.ToString()</td>
                         <td>@log.StockLogType.ToString()</td>
                         <td>
-                            @if (log.LogType == LogTypeDto.Update)
+                            @if (log.LogType == LogTypeDto.Update || log.LogType == LogTypeDto.Sold)
                             {
-                                <button class="btn-save" @onclick="() => OpenDetails(log.Messages)">Open Message</button>
+                                <button class="btn-edit" @onclick="() => OpenDetails(log.Messages)"><i class="bi bi-eye"></i> Open message</button>
                             }
                         </td>
                         <td class="date-cell">@log.CreatedAt.ToLocalTime().ToString("dd-MM-yyyy HH:mm")</td>

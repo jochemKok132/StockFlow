@@ -77,6 +77,10 @@ namespace StockFlow.Infrastructure.Data.Migrations
                     b.Property<int>("LogType")
                         .HasColumnType("INTEGER");
 
+                    b.PrimitiveCollection<string>("Messages")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
                     b.HasKey("Id");
 
                     b.HasIndex("CustomerId");

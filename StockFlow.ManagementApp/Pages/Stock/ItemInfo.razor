@@ -1,12 +1,19 @@
-﻿@using System.Collections
-@using System.Globalization
-@using System.Reflection
-@using Microsoft.AspNetCore.Components.Forms
+﻿@using System.Text.RegularExpressions
 
 @if (Show)
 {
     <div class="modal-overlay" @onclick="OnClose">
         <div class="modal-box" @onclick:stopPropagation="true">
+            <div class="panel-header">
+                <div>
+                    <span class="panel-label">Log details</span>
+                    <h3>@Title</h3>
+                </div>
+                <button class="btn-icon" title="Close" @onclick="OnClose">
+                    <i class="bi bi-x-lg"></i>
+                </button>
+            </div>
+
             @if (Loading)
             {
                 <div class="loading">Loading details...</div>
@@ -15,14 +22,35 @@
             {
                 <div class="alert-danger">@Error</div>
             }
-            else if (Messages is null)
+            else if (Messages is null || Messages.Count == 0)
             {
                 <div class="empty-state">No details available.</div>
             }
             else
             {
-                <div class="form-grid">
-                    <p>@string.Join(", <br>", Messages)</p>
+                <ul class="change-list">
+                    @foreach (var change in Messages.Select(ParseChange))
+                    {
+                        <li class="change-item">
+                            <span class="change-field">@change.Field</span>
+                            @if (change.Old is not null && change.New is not null)
+                            {
+                                <div class="change-values">
+                                    <span class="value-old">@change.Old</span>
+                                    <i class="bi bi-arrow-right"></i>
+                                    <span class="value-new">@change.New</span>
+                                </div>
+                            }
+                            else
+                            {
+                                <span class="change-text">@change.Text</span>
+                            }
+                        </li>
+                    }
+                </ul>
+
+                <div class="form-actions">
+                    <button type="button" class="btn-cancel" @onclick="OnClose">Close</button>
                 </div>
             }
         </div>
@@ -31,10 +59,33 @@
 
 @code {
     [Parameter] public bool Show { get; set; }
+    [Parameter] public string Title { get; set; } = "Changes";
     [Parameter] public List<string>? Messages { get; set; }
     [Parameter] public bool Loading { get; set; }
     [Parameter] public string Error { get; set; } = "";
 
     [Parameter] public EventCallback OnClose { get; set; }
 
+    private record Change(string Field, string? Old, string? New, string Text);
+
+    // Messages come from DifferenceFinder, e.g. "Price: New: 4,99. Old: 3,99"
+    private static readonly Regex NewOldPattern = new(@"^New: (?<new>.*)\. Old: (?<old>.*)$", RegexOptions.Singleline);
+
+    private static Change ParseChange(string message)
+    {
+        var separator = message.IndexOf(": ", StringComparison.Ordinal);
+        if (separator < 0)
+            return new Change("Change", null, null, message);
+
+        var field = SplitPascalCase(message[..separator]);
+        var rest = message[(separator + 2)..];
+
+        var match = NewOldPattern.Match(rest);
+        return match.Success
+            ? new Change(field, match.Groups["old"].Value, match.Groups["new"].Value, rest)
+            : new Change(field, null, null, rest);
+    }
+
+    private static string SplitPascalCase(string value) =>
+        Regex.Replace(value, "(?<=[a-z])(?=[A-Z])", " ");
 }

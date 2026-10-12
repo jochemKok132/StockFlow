@@ -36,7 +36,7 @@ namespace StockFlow.Infrastructure.Data.Seeders
                 context.SaveChanges();
             }
 
-            var allSales = context.Set<Sales>().ToList();
+            var allSales = context.Set<Sales>().Include(s => s.Products).ToList();
             var products = context.Set<Product>().ToList();
 
             foreach (var sale in allSales)
