@@ -251,13 +251,20 @@
 
         try
         {
+            string result = "";
             if (isCreateMode && item is CreateProductDto createDto)
             {
-                await productsService.CreateProductAsync(createDto);
+                result = await productsService.CreateProductAsync(createDto);
             }
             else if (!isCreateMode && item is UpdateProductDto updateDto)
             {
-                await productsService.UpdateProductAsync(updateDto);
+                result = await productsService.UpdateProductAsync(updateDto);
+            }
+
+            if (result.StartsWith("Error:"))
+            {
+                changesError = result["Error:".Length..].Trim();
+                return;
             }
 
             showChanges = false;

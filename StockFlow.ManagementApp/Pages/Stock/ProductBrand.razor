@@ -185,13 +185,20 @@
 
         try
         {
+            string result = "";
             if (isCreateMode && item is CreateProductBrandDto createDto)
             {
-                await productBrandService.CreateProductBrandAsync(createDto);
+                result = await productBrandService.CreateProductBrandAsync(createDto);
             }
             else if (!isCreateMode && item is UpdateProductBrandDto updateDto)
             {
-                await productBrandService.UpdateProductBrandAsync(updateDto);
+                result = await productBrandService.UpdateProductBrandAsync(updateDto);
+            }
+
+            if (result.StartsWith("Error:"))
+            {
+                detailsError = result["Error:".Length..].Trim();
+                return;
             }
 
             showDetails = false;

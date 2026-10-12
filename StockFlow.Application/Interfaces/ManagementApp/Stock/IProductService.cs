@@ -1,4 +1,5 @@
-﻿using StockFlow.Application.DTOs.Pagination;
+﻿using StockFlow.Application.DTOs.Enums;
+using StockFlow.Application.DTOs.Pagination;
 using StockFlow.Application.DTOs.Stock.Product;
 using System;
 using System.Collections.Generic;
@@ -13,7 +14,7 @@ namespace StockFlow.Application.Interfaces.ManagementApp.Stock
         Task CreateProductAsync(CreateProductDto product, Guid employeeId);
         Task UpdateProductAsync(UpdateProductDto product, Guid employeeId);
         Task SoftDeleteProductAsync(Guid id, Guid employeeId);
-        Task UpdateProductStockAsync(Guid id, int amount, Guid employeeId);
+        Task UpdateProductStockAsync(Guid id, int amount, Guid employeeId, LogTypeDto logType = LogTypeDto.Sold);
         Task<ProductDto> GetProductByBarcodeAsync(int barcode);
     }
 }

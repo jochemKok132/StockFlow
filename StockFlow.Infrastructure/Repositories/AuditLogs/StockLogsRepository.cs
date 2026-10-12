@@ -32,7 +32,6 @@ namespace StockFlow.Infrastructure.Repositories.Stock
 
         public Task AddAsync(StockLogs entity) => _creatable.AddAsync(entity);
 
-        // Exact match on the identifier (e.g. a barcode), newest first.
         public async Task<IEnumerable<StockLogs>> GetLogsByIdentifierAsync(StockLogType stockLogType, string identifier)
         {
             return await _context.StockLogs

@@ -10,6 +10,8 @@ using StockFlow.Domain.Entities.Stock;
 using System;
 using System.Collections.Generic;
 using System.Text;
+using StockFlow.Application.Validations;
+using StockFlow.Application.Validations.Stock;
 
 namespace StockFlow.Application.Services.ManagementApp.Stock
 {
@@ -18,7 +20,7 @@ namespace StockFlow.Application.Services.ManagementApp.Stock
 
         public async Task CreateSalesAsync(CreateSalesDto sale, Guid employeeId)
         {
-            if (sale == null) throw new ArgumentNullException("Sale cant be null.");
+            sale.Validate();
 
             var salesEntity = sale.ToSalesEntity();
 
@@ -34,6 +36,8 @@ namespace StockFlow.Application.Services.ManagementApp.Stock
 
         public async Task<List<SalesDto>> GetAllSalesAsync(SalesPaginationDto pagination)
         {
+            pagination.Validate();
+
             var sales = await salesRepository.GetAllSalesAsync(pagination);
 
             var result = new List<SalesDto>();
@@ -54,6 +58,8 @@ namespace StockFlow.Application.Services.ManagementApp.Stock
 
         public async Task UpdateSalesAsync(UpdateSalesDto salesDto, Guid employeeId)
         {
+            salesDto.Validate();
+
             var sale = await salesRepository.GetByIdWithProductsAsync(salesDto.Id);
             if (sale == null) throw new KeyNotFoundException($"Sale with the id {salesDto.Id} not found.");
 

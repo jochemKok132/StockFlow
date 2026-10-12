@@ -11,7 +11,6 @@ namespace StockFlow.Application.DTOs.Customer
         public required string Email { get; set; }
         public string? PostalCode { get; set; }
         public string? HouseNumber { get; set; }
-        public required string HashedPassword { get; set; }
         public int SavedPoints { get; set; } = 0;
     }
 }

@@ -4,7 +4,6 @@ using StockFlow.CashRegister.Screens;
 
 namespace StockFlow.CashRegister
 {
-    /// <summary>Implemented by screens that react to function keys.</summary>
     public interface IKeyScreen
     {
         bool HandleKey(Keys key);
@@ -17,7 +16,6 @@ namespace StockFlow.CashRegister
         private string _employeeName = "";
         private Control? _activeScreen;
 
-        /// <summary>True when the form closed because the employee logged out.</summary>
         public bool LoggedOut { get; private set; }
 
         public ScanScreen ScanView { get; }
@@ -90,7 +88,6 @@ namespace StockFlow.CashRegister
             Close();
         }
 
-        // Route function keys to the visible screen, even while a textbox has focus.
         protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
         {
             if (_activeScreen is IKeyScreen screen && screen.HandleKey(keyData))
@@ -114,7 +111,7 @@ namespace StockFlow.CashRegister
 
         public void ShowPurchasingScreen()
         {
-            PurchasingView.Begin(ScanView.Lines, ScanView.CurrentTotal);
+            PurchasingView.Begin(ScanView.Lines, ScanView.CurrentTotal, ScanView.CurrentDiscount, ScanView.PointsToUse, ScanView.Customer);
             SetScreen(PurchasingView);
         }
     }

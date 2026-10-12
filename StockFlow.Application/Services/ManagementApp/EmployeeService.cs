@@ -17,6 +17,8 @@ using System;
 using System.Collections.Generic;
 using System.Security.Authentication;
 using System.Text;
+using StockFlow.Application.Validations;
+using StockFlow.Application.Validations.People;
 
 namespace StockFlow.Application.Services.ManagementApp
 {
@@ -24,7 +26,10 @@ namespace StockFlow.Application.Services.ManagementApp
     {
         public async Task CreateEmployeeAsync(CreateEmployeeDto dto, Guid userId)
         {
+            dto.Validate();
+
             Employee newEmployee = dto.ToEmployeeEntity();
+            newEmployee.HashedPassword = password.Hash(dto.Password);
 
             newEmployee.EmployeeId = await employeeRepository.GetNewEmployeeIdAsync();
 
@@ -34,6 +39,8 @@ namespace StockFlow.Application.Services.ManagementApp
 
         public async Task<List<EmployeeDto>> GetAllEmployeesAsync(EmployeePaginationDto pagination)
         {
+            pagination.Validate();
+
             var employees = await employeeRepository.GetAllEmployeesAsync(pagination);
             return employees.Select(e => e.ToEmployeeDto()).ToList();
         }
@@ -52,12 +59,14 @@ namespace StockFlow.Application.Services.ManagementApp
 
         public async Task<Token> LoginAsync(LoginRequest request)
         {
+            request.Validate();
+
             Employee? employee = await employeeRepository.GetEmployeeByEmployeeIdAsync(request.EmployeeId);
 
             if (employee == null)
                 throw new KeyNotFoundException("The employee with this id cannot be found.");
             
-            if(!password.Validate(employee.HashedPassword, request.Password))
+            if (string.IsNullOrEmpty(employee.HashedPassword) || !password.Validate(employee.HashedPassword, request.Password))
                 throw new AuthenticationException("The password is incorrect.");
             await employeeLogsService.CreateEmployeeLogsAsync(employee.ToLoginEmployeeLogsDto());
 
@@ -66,12 +75,20 @@ namespace StockFlow.Application.Services.ManagementApp
 
         public async Task UpdateEmployeeAsync(UpdateEmployeeDto dto, Guid userId)
         {
+            dto.Validate();
+
             var employee = await employeeRepository.GetByIdAsync(dto.Id);
             if (employee == null)
                 throw new KeyNotFoundException($"Employee with id {dto.Id} not found.");
             var log = dto.ToUpdateEmployeeLogsDto(employee, userId);
 
             employee.ToEmployeeEntity(dto);
+
+            if (!string.IsNullOrWhiteSpace(dto.NewPassword))
+            {
+                employee.HashedPassword = password.Hash(dto.NewPassword);
+                log.Messages.Add("Password: Changed.");
+            }
             await employeeRepository.UpdateAsync(employee);
             await employeeLogsService.CreateEmployeeLogsAsync(log);
 

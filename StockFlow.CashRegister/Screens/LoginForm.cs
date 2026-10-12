@@ -13,7 +13,6 @@ namespace StockFlow.CashRegister.Screens
             _authService = authService;
             ApplyTheme();
 
-            // Fullscreen: keep the card centered and let Esc close the app.
             KeyPreview = true;
             Resize += (_, _) => CenterCard();
             Load += (_, _) => { CenterCard(); txtUsername.Focus(); };

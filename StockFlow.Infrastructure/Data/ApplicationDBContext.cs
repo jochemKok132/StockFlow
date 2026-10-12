@@ -42,6 +42,10 @@ namespace StockFlow.Infrastructure.Data
                    .OnDelete(DeleteBehavior.Restrict);
 
             builder.Entity<CashRegisterLogs>()
+                   .HasIndex(e => e.ReceiptId)
+                   .IsUnique();
+
+            builder.Entity<CashRegisterLogs>()
                    .HasOne(a => a.Employee)
                    .WithMany()
                    .HasForeignKey(x => x.EmployeeId)
@@ -96,6 +100,7 @@ namespace StockFlow.Infrastructure.Data
             optionsBuilder.UseSeeding((context, _) =>
             {
                 context.UseEmployeeSeeder();
+                context.UseCustomerSeeder();
                 context.UseShelfSeeder();
                 context.UseProductBrandSeeder();
                 context.UseProductSeeder();

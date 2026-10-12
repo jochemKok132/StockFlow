@@ -1,9 +1,9 @@
-﻿using StockFlow.Application.DTOs.Pagination;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using StockFlow.Application.Common;
+using StockFlow.Application.DTOs.Pagination;
 using StockFlow.Application.DTOs.Stock.Product;
 using StockFlow.Application.Interfaces.ManagementApp.Stock;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
-using System.Security.Claims;
 
 namespace StockFlow.API.Controllers
 {
@@ -13,90 +13,89 @@ namespace StockFlow.API.Controllers
     {
         [Authorize]
         [HttpGet("GetAll")]
-        public async Task<IActionResult> GetAllProductsAsync([FromQuery] ProductPaginationDto pagination)
+        public async Task<IActionResult> GetAllAsync([FromQuery] ProductPaginationDto pagination)
         {
             try
             {
-                var products = await productService.GetAllProductsAsync(pagination);
-                return Ok(products);
+                List<ProductBulkViewDto> items = await productService.GetAllProductsAsync(pagination);
+                return Ok(ApiResponse<List<ProductBulkViewDto>>.Ok(items));
             }
-            catch (ArgumentException)
+            catch (ArgumentException exception)
             {
-                return BadRequest("There has been an unforseen error.");
+                return BadRequest(ApiResponse<List<ProductBulkViewDto>>.Fail(exception.Message));
             }
         }
+
         [Authorize]
-        [HttpGet("GetById/{id}")]
-        public async Task<IActionResult> GetProductByIdAsync( Guid id)
+        [HttpGet("GetById/{id:guid}")]
+        public async Task<IActionResult> GetByIdAsync(Guid id)
         {
             try
             {
-                var products = await productService.GetProductDetailsAsync(id);
-                return Ok(products);
+                ProductDto product = await productService.GetProductDetailsAsync(id);
+                return Ok(ApiResponse<ProductDto>.Ok(product));
             }
-            catch (ArgumentException)
+            catch (KeyNotFoundException exception)
             {
-                return BadRequest("There has been an unforseen error.");
+                return NotFound(ApiResponse<ProductDto>.Fail(exception.Message));
             }
         }
 
         [Authorize(Roles = "Manager,Admin")]
         [HttpPost("Create")]
-        public async Task<IActionResult> CreateProductAsync(CreateProductDto product)
+        public async Task<IActionResult> CreateAsync(CreateProductDto request)
         {
-            var userId = Request.HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (!User.TryGetUserId(out Guid userId))
+                return Unauthorized(ApiResponse<object>.Fail(ApiMessages.NotLoggedIn));
+
             try
             {
-                await productService.CreateProductAsync(product, Guid.Parse(userId));
-                return NoContent();
+                await productService.CreateProductAsync(request, userId);
+                return Ok(ApiResponse<object>.Ok(message: "Product created."));
             }
-            catch (ArgumentNullException exception)
+            catch (ArgumentException exception)
             {
-                return BadRequest(exception.Message);
-            }
-            catch (ArgumentException)
-            {
-                return BadRequest("There has been an unforseen error.");
+                return BadRequest(ApiResponse<object>.Fail(exception.Message));
             }
         }
 
         [Authorize(Roles = "Manager,Admin")]
         [HttpPut("Update")]
-        public async Task<IActionResult> UpdateProductAsync(UpdateProductDto product)
+        public async Task<IActionResult> UpdateAsync(UpdateProductDto request)
         {
-            var userId = Request.HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (!User.TryGetUserId(out Guid userId))
+                return Unauthorized(ApiResponse<object>.Fail(ApiMessages.NotLoggedIn));
+
             try
             {
-                await productService.UpdateProductAsync(product, Guid.Parse(userId));
-                return NoContent();
+                await productService.UpdateProductAsync(request, userId);
+                return Ok(ApiResponse<object>.Ok(message: "Product updated."));
+            }
+            catch (ArgumentException exception)
+            {
+                return BadRequest(ApiResponse<object>.Fail(exception.Message));
             }
             catch (KeyNotFoundException exception)
             {
-                return BadRequest(exception.Message);
-            }
-            catch (ArgumentException)
-            {
-                return BadRequest("There has been an unforseen error.");
+                return NotFound(ApiResponse<object>.Fail(exception.Message));
             }
         }
 
         [Authorize(Roles = "Manager,Admin")]
-        [HttpDelete("SoftDelete/{id}")]
-        public async Task<IActionResult> SoftDeleteProductAsync(Guid id)
+        [HttpDelete("SoftDelete/{id:guid}")]
+        public async Task<IActionResult> SoftDeleteAsync(Guid id)
         {
-            var userId = Request.HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (!User.TryGetUserId(out Guid userId))
+                return Unauthorized(ApiResponse<object>.Fail(ApiMessages.NotLoggedIn));
+
             try
             {
-                await productService.SoftDeleteProductAsync(id, Guid.Parse(userId));
-                return NoContent();
+                await productService.SoftDeleteProductAsync(id, userId);
+                return Ok(ApiResponse<object>.Ok(message: "Product deleted."));
             }
             catch (KeyNotFoundException exception)
             {
-                return BadRequest(exception.Message);
-            }
-            catch (ArgumentException)
-            {
-                return BadRequest("There has been an unforseen error.");
+                return NotFound(ApiResponse<object>.Fail(exception.Message));
             }
         }
     }

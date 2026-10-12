@@ -5,21 +5,17 @@ using System.Windows.Forms;
 
 namespace StockFlow.CashRegister.Screens
 {
-    /// <summary>
-    /// WinForms version of the :root tokens from the web stylesheet.
-    /// All styling lives here, so the designer files only contain structure.
-    /// </summary>
     public static class Theme
     {
         public static readonly Color TaskbarColor = Color.White;
         public static readonly Color DashboardColor = Color.FromArgb(247, 247, 248);
-        public static readonly Color SurfaceColor = Color.FromArgb(245, 245, 245);   // rgba(17,17,17,.04) on white
-        public static readonly Color BorderColor = Color.FromArgb(236, 236, 236);    // rgba(17,17,17,.08) on white
+        public static readonly Color SurfaceColor = Color.FromArgb(245, 245, 245);
+        public static readonly Color BorderColor = Color.FromArgb(236, 236, 236);
         public static readonly Color TextColor = Color.FromArgb(17, 17, 17);
         public static readonly Color MutedText = Color.FromArgb(138, 138, 144);
         public static readonly Color AccentColor = Color.FromArgb(91, 141, 239);
         public static readonly Color AccentColorHover = Color.FromArgb(67, 115, 217);
-        public static readonly Color AccentColorSoft = Color.FromArgb(230, 238, 253); // rgba(91,141,239,.15) on white
+        public static readonly Color AccentColorSoft = Color.FromArgb(230, 238, 253);
         public static readonly Color ButtonColor = Color.FromArgb(17, 17, 17);
         public static readonly Color ButtonColorHover = Color.FromArgb(42, 42, 42);
         public static readonly Color ButtonTextColor = Color.White;
@@ -33,8 +29,6 @@ namespace StockFlow.CashRegister.Screens
         public static string Money(decimal value) => value.ToString("C", Dutch);
 
         private static Font Font(float size, FontStyle style = FontStyle.Regular) => new(Family, size, style);
-
-        // ---------- containers ----------
 
         public static void ApplyForm(Form form)
         {
@@ -50,15 +44,12 @@ namespace StockFlow.CashRegister.Screens
             control.Font = Font(10);
         }
 
-        // ---------- labels ----------
-
         public static void ApplyTitle(Label label, float size = 18)
         {
             label.Font = Font(size, FontStyle.Bold);
             label.ForeColor = TextColor;
         }
 
-        /// <summary>Small uppercase label, like .filter-group label.</summary>
         public static void ApplyCaption(Label label)
         {
             label.Font = Font(8.5f, FontStyle.Bold);
@@ -77,7 +68,6 @@ namespace StockFlow.CashRegister.Screens
             label.ForeColor = color ?? TextColor;
         }
 
-        /// <summary>Inline alert, like .alert-danger. Hidden until ShowMessage is called.</summary>
         public static void ApplyMessage(Label label)
         {
             label.AutoSize = false;
@@ -101,8 +91,6 @@ namespace StockFlow.CashRegister.Screens
             label.Visible = true;
         }
 
-        // ---------- inputs ----------
-
         public static void ApplyInput(TextBox box, float size = 10.5f)
         {
             box.BorderStyle = BorderStyle.FixedSingle;
@@ -110,8 +98,6 @@ namespace StockFlow.CashRegister.Screens
             box.ForeColor = TextColor;
             box.Font = Font(size);
         }
-
-        // ---------- buttons ----------
 
         private static void FlatButton(Button b, float size)
         {
@@ -122,7 +108,6 @@ namespace StockFlow.CashRegister.Screens
             b.Cursor = Cursors.Hand;
         }
 
-        /// <summary>Black button, like --ButtonColor.</summary>
         public static void ApplyPrimary(Button b, float size = 10)
         {
             FlatButton(b, size);
@@ -139,7 +124,6 @@ namespace StockFlow.CashRegister.Screens
             };
         }
 
-        /// <summary>White button with a subtle border.</summary>
         public static void ApplySecondary(Button b, float size = 10)
         {
             FlatButton(b, size);
@@ -150,7 +134,6 @@ namespace StockFlow.CashRegister.Screens
             b.FlatAppearance.MouseDownBackColor = SurfaceColor;
         }
 
-        /// <summary>Secondary button that turns black while selected, like .ml-nav-link.active.</summary>
         public static void SetSelected(Button b, bool selected)
         {
             b.BackColor = selected ? ButtonColor : TaskbarColor;
@@ -158,8 +141,6 @@ namespace StockFlow.CashRegister.Screens
             b.FlatAppearance.BorderColor = selected ? ButtonColor : BorderColor;
             b.FlatAppearance.MouseOverBackColor = selected ? ButtonColorHover : SurfaceColor;
         }
-
-        // ---------- grid ----------
 
         public static void ApplyGrid(DataGridView grid)
         {
@@ -204,7 +185,6 @@ namespace StockFlow.CashRegister.Screens
         }
     }
 
-    /// <summary>White card with a 1px border, like .card.</summary>
     public class CardPanel : Panel
     {
         [DefaultValue(false)]

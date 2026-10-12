@@ -6,16 +6,18 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace StockFlow.Application.Interfaces.Repositories
+namespace StockFlow.Application.Interfaces.Repositories.ManagementApp
 {
-    public interface IEmployeeRepository :
-        IEfRepository<Employee>,
-        IEfUpdatableRepository<Employee>,
-        IEfCreatableRepository<Employee>
+    public interface ICustomerRepository :
+        IEfRepository<Customer>,
+        IEfUpdatableRepository<Customer>,
+        IEfCreatableRepository<Customer>,
+        IEfSoftDeletableRepository<Customer>
     {
-        Task<Employee?> GetEmployeeByEmployeeIdAsync(string employeeId);
-        Task<string> GetNewEmployeeIdAsync();
-        Task<IEnumerable<Employee>?> GetAllEmployeesAsync(EmployeePaginationDto pagination);
+        Task<Customer?> GetCustomerByEmailAsync(string email);
+        Task<Customer?> GetCustomerByCustomerIdAsync(string customerId);
+        Task<string> GetNewCustomerIdAsync();
+        Task<IEnumerable<Customer>?> GetAllCustomersAsync(CustomerPaginationDto pagination);
 
     }
 }

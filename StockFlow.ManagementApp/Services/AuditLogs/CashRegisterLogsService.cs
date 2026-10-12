@@ -16,6 +16,7 @@ namespace StockFlow.ManagementApp.Services.AuditLogs
                 $"&pageSize={pagination.PageSize}" +
                 $"&orderBy={pagination.OrderBy}" +
                 $"&orderType={pagination.OrderType}" +
+                $"&receiptId={pagination.ReceiptId}" +
                 $"&employeeName={pagination.EmployeeName}" +
                 $"&employeeId={pagination.EmployeeId}" +
                 $"&email={pagination.Email}" +

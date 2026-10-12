@@ -12,6 +12,7 @@ namespace StockFlow.Application.DTOs.CashRegister
         public Guid Id { get; set; }
         public ProductDto Product { get; set; }
         public int Amount { get; set; }
+        public int ReturnedAmount { get; set; }
         public decimal PriceAtTimeOfSale { get; set; }
         public SalesDto? Sale { get; set; }
     }

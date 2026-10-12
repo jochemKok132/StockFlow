@@ -6,10 +6,10 @@
         <div class="modal-box" @onclick:stopPropagation="true">
             <div class="panel-header">
                 <div>
-                    <span class="panel-label">Transaction</span>
+                    <span class="panel-label">Receipt @Log.ReceiptId</span>
                     <h3>Products sold</h3>
                     <p>
-                        @(Log.Customer?.FullName ?? "Walk-in customer") &middot;
+                        @(Log.Customer is null ? "Walk-in customer" : $"{Log.Customer.FullName} ({Log.Customer.CustomerId})") &middot;
                         @Log.CreatedAt.ToLocalTime().ToString("dd-MM-yyyy HH:mm")
                     </p>
                 </div>
@@ -43,6 +43,10 @@
                                         {
                                             <span class="sale-badge"><i class="bi bi-tag-fill"></i> Sale</span>
                                         }
+                                        @if (item.ReturnedAmount > 0)
+                                        {
+                                            <span class="returned-badge"><i class="bi bi-arrow-return-left"></i> @item.ReturnedAmount returned</span>
+                                        }
                                     </div>
                                     @if (item.Product is not null)
                                     {
@@ -61,6 +65,20 @@
                         <span>Discount</span>
                         <span>&euro;@Log.TotalOff.ToString("0.00")</span>
                     </div>
+                    @if (Log.PointsEarned > 0)
+                    {
+                        <div class="total-row">
+                            <span>Points earned</span>
+                            <span>+@Log.PointsEarned</span>
+                        </div>
+                    }
+                    @if (Log.PointsUsed > 0)
+                    {
+                        <div class="total-row">
+                            <span>Points used (@Log.PointsUsed)</span>
+                            <span>-&euro;@((Log.PointsUsed / 100m).ToString("0.00"))</span>
+                        </div>
+                    }
                     <div class="total-row total-main">
                         <span>Total</span>
                         <span>&euro;@Log.TotalPrice.ToString("0.00")</span>

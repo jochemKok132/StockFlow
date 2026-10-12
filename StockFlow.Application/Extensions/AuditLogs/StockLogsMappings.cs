@@ -67,7 +67,7 @@ namespace StockFlow.Application.Mappings.AuditLogs
                 EmployeeId = userId,
             };
         }
-        public static CreateStockLogsDto ChangeStock(this Product entity, int amount, Guid userId)
+        public static CreateStockLogsDto ChangeStock(this Product entity, int amount, Guid userId, LogTypeDto logType = LogTypeDto.Sold)
         {
             var dto = entity.ToProductDto();
             dto.Stock += amount;
@@ -75,7 +75,7 @@ namespace StockFlow.Application.Mappings.AuditLogs
             {
                 Identifier = entity.Barcode.ToString(),
                 Id = Guid.NewGuid(),
-                LogType = LogTypeDto.Sold,
+                LogType = logType,
                 Messages = dto.FindDifferences(entity),
                 StockLogType = StockLogTypeDto.Product,
                 EmployeeId = userId,

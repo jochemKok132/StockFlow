@@ -34,7 +34,6 @@ namespace StockFlow.Application.Mappings.People
         public static void ToEmployeeEntity(this Employee entity, UpdateEmployeeDto dto)
         {
             entity.FullName = dto.FullName;
-            if(!string.IsNullOrWhiteSpace(dto.HashedPassword)) entity.HashedPassword = dto.HashedPassword;
             entity.Role = dto.Role.ToDomain();
         }
     }

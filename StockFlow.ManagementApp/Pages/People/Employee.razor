@@ -210,13 +210,20 @@
 
         try
         {
+            string result = "";
             if (isCreateMode && item is CreateEmployeeDto createDto)
             {
-                await employeeService.CreateEmployeeAsync(createDto);
+                result = await employeeService.CreateEmployeeAsync(createDto);
             }
             else if (!isCreateMode && item is UpdateEmployeeDto updateDto)
             {
-                await employeeService.UpdateEmployeeAsync(updateDto);
+                result = await employeeService.UpdateEmployeeAsync(updateDto);
+            }
+
+            if (result.StartsWith("Error:"))
+            {
+                changesError = result["Error:".Length..].Trim();
+                return;
             }
 
             showChanges = false;

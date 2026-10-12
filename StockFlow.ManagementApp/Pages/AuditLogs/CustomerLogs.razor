@@ -5,12 +5,16 @@
 <div class="tasks-header">
     <div>
         <h2>Customer Logs</h2>
-        <p>All Customer changes.</p>
+        <p>All customer changes.</p>
     </div>
 </div>
 <div class="card">
     <div class="filters-bar">
         <div class="filters">
+            <div class="filter-group">
+                <label>Customer ID</label>
+                <input type="text" inputmode="numeric" maxlength="8" @bind="pagination.CustomerId" @bind:event="oninput" @bind:after="ResetAndLoad" placeholder="e.g. 80000001" />
+            </div>
             <div class="filter-group">
                 <label>Customer name</label>
                 <input type="text" @bind="pagination.CustomerName" @bind:event="oninput" @bind:after="ResetAndLoad" placeholder="e.g. John" />
@@ -36,6 +40,9 @@
     <table class="tasks-table">
         <thead>
             <tr>
+                <th @onclick="() => OrderBy(CustomerLogsOrderBy.CustomerId)" class="sortable">
+                    Customer ID @SortingArrow(CustomerLogsOrderBy.CustomerId)
+                </th>
                 <th @onclick="() => OrderBy(CustomerLogsOrderBy.CustomerName)" class="sortable">
                     Customer Name @SortingArrow(CustomerLogsOrderBy.CustomerName)
                 </th>
@@ -69,11 +76,12 @@
                 @foreach (var log in customerLogs)
                 {
                     <tr>
+                        <td class="id-cell">@log.Customer.CustomerId</td>
                         <td><strong>@log.Customer.FullName</strong></td>
                         <td>@log.Customer.Email</td>
                         <td>@log.LogType.ToString()</td>
                         <td>
-                            @if (log.LogType == LogTypeDto.Update && log.Messages.Any())
+                            @if (log.Messages.Any())
                             {
                                 <button class="btn-edit" @onclick="() => OpenDetails(log.Messages)"><i class="bi bi-eye"></i> Open message</button>
                             }
@@ -122,6 +130,7 @@
         OrderType = OrderType.Descending,
         PageNumber = 1,
         PageSize = 25,
+        CustomerId = null,
         CustomerName = null,
         Email = null,
         LogType = null,

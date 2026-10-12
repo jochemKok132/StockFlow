@@ -68,7 +68,6 @@
 
     private record Change(string Field, string? Old, string? New, string Text);
 
-    // Messages come from DifferenceFinder, e.g. "Price: New: 4,99. Old: 3,99"
     private static readonly Regex NewOldPattern = new(@"^New: (?<new>.*)\. Old: (?<old>.*)$", RegexOptions.Singleline);
 
     private static Change ParseChange(string message)

@@ -53,7 +53,7 @@ public static class DifferenceFinder
             var oldValue = oldRaw?.ToString() ?? "-";
             var newValue = newRaw?.ToString() ?? "-";
 
-            if ((oldValue == newValue) || oldProp.Name == "HashedPassword")
+            if ((oldValue == newValue) || oldProp.Name.Contains("Password"))
                 continue;
 
             differences.Add($"{oldProp.Name}: New: {newValue}. Old: {oldValue}");

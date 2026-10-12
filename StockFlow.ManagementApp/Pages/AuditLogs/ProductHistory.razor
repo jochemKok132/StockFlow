@@ -79,6 +79,10 @@
                     <span class="stat-label">Units sold</span>
                 </div>
                 <div class="stat">
+                    <span class="stat-value">@UnitsReturned</span>
+                    <span class="stat-label">Units returned</span>
+                </div>
+                <div class="stat">
                     <span class="stat-value">@UnitsAdded</span>
                     <span class="stat-label">Units added</span>
                 </div>
@@ -185,7 +189,6 @@
 
     private record HistoryRow(StockLogsDto Log, int? StockOld, int? StockNew, List<string> OtherMessages);
 
-    // DifferenceFinder format: "Stock: New: 12. Old: 15"
     private static readonly Regex StockPattern = new(@"^Stock: New: (?<new>-?\d+)\. Old: (?<old>-?\d+)$");
 
     private IEnumerable<HistoryRow> VisibleRows =>
@@ -195,11 +198,14 @@
         rows.Where(r => r.Log.LogType == LogTypeDto.Sold && r.StockNew < r.StockOld)
             .Sum(r => r.StockOld!.Value - r.StockNew!.Value);
 
-    private int UnitsAdded =>
-        rows.Where(r => r.Log.LogType != LogTypeDto.Sold && r.StockNew > r.StockOld)
+    private int UnitsReturned =>
+        rows.Where(r => r.Log.LogType == LogTypeDto.Returned && r.StockNew > r.StockOld)
             .Sum(r => r.StockNew!.Value - r.StockOld!.Value);
 
-    // The barcode lives in the URL (?barcode=1001) so a search can be bookmarked or linked to.
+    private int UnitsAdded =>
+        rows.Where(r => r.Log.LogType != LogTypeDto.Sold && r.Log.LogType != LogTypeDto.Returned && r.StockNew > r.StockOld)
+            .Sum(r => r.StockNew!.Value - r.StockOld!.Value);
+
     protected override async Task OnParametersSetAsync()
     {
         if (BarcodeQuery is int barcode && barcode != loadedBarcode)
@@ -274,6 +280,7 @@
         LogTypeDto.Create => "badge-create",
         LogTypeDto.Update => "badge-update",
         LogTypeDto.Sold => "badge-sold",
+        LogTypeDto.Returned => "badge-returned",
         LogTypeDto.Delete => "badge-delete",
         _ => "",
     };

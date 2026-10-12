@@ -53,7 +53,8 @@ namespace StockFlow.Application.DTOs.Enums
         CreatedAt,
         UpdatedAt,
         FullName,
-        SavedPoints
+        SavedPoints,
+        CustomerId,
     }
 
     public enum EmployeeOrderBy
@@ -89,6 +90,7 @@ namespace StockFlow.Application.DTOs.Enums
     public enum CustomerLogsOrderBy 
     {
         CreatedAt,
-        CustomerName
+        CustomerName,
+        CustomerId,
     }
 }

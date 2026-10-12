@@ -13,5 +13,7 @@ namespace StockFlow.Application.Interfaces.Repositories.ManagementApp.Stock
         IEfCreatableRepository<CashRegisterLogs>
     {
         Task<IEnumerable<CashRegisterLogs>> GetAllCashRegisterLogsAsync(CashRegisterLogsPaginationDto pagination);
+        Task<CashRegisterLogs?> GetByReceiptIdAsync(string receiptId, bool track = false);
+        Task<string> GetNewReceiptIdAsync();
     }
 }

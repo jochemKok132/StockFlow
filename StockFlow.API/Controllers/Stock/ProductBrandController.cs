@@ -1,10 +1,9 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using StockFlow.Application.Common;
 using StockFlow.Application.DTOs.Pagination;
 using StockFlow.Application.DTOs.Stock.ProductBrand;
 using StockFlow.Application.Interfaces.ManagementApp.Stock;
-using System.Security.Claims;
-using System.Security.Cryptography;
 
 namespace StockFlow.API.Controllers
 {
@@ -14,76 +13,74 @@ namespace StockFlow.API.Controllers
     {
         [Authorize]
         [HttpGet("GetAll")]
-        public async Task<IActionResult> GetAllProductBrandsAsync([FromQuery] ProductBrandPaginationDto pagination)
+        public async Task<IActionResult> GetAllAsync([FromQuery] ProductBrandPaginationDto pagination)
         {
             try
             {
-                var productBrands = await productBrandService.GetAllProductBrandsAsync(pagination);
-                return Ok(productBrands);
+                List<ProductBrandDto> items = await productBrandService.GetAllProductBrandsAsync(pagination);
+                return Ok(ApiResponse<List<ProductBrandDto>>.Ok(items));
             }
-            catch (ArgumentException)
+            catch (ArgumentException exception)
             {
-                return BadRequest("There has been an unforseen error.");
+                return BadRequest(ApiResponse<List<ProductBrandDto>>.Fail(exception.Message));
             }
         }
 
         [Authorize(Roles = "Manager,Admin")]
         [HttpPost("Create")]
-        public async Task<IActionResult> CreateProductBrandAsync(CreateProductBrandDto productBrand)
+        public async Task<IActionResult> CreateAsync(CreateProductBrandDto request)
         {
-            var userId = Request.HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (!User.TryGetUserId(out Guid userId))
+                return Unauthorized(ApiResponse<object>.Fail(ApiMessages.NotLoggedIn));
+
             try
             {
-                await productBrandService.CreateProductBrandAsync(productBrand, Guid.Parse(userId));
-                return NoContent();
+                await productBrandService.CreateProductBrandAsync(request, userId);
+                return Ok(ApiResponse<object>.Ok(message: "Brand created."));
             }
-            catch (ArgumentNullException exception)
+            catch (ArgumentException exception)
             {
-                return BadRequest(exception.Message);
-            }
-            catch (ArgumentException)
-            {
-                return BadRequest("There has been an unforseen error.");
+                return BadRequest(ApiResponse<object>.Fail(exception.Message));
             }
         }
 
         [Authorize(Roles = "Manager,Admin")]
         [HttpPut("Update")]
-        public async Task<IActionResult> UpdateProductBrandAsync(UpdateProductBrandDto productBrand)
+        public async Task<IActionResult> UpdateAsync(UpdateProductBrandDto request)
         {
-            var userId = Request.HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (!User.TryGetUserId(out Guid userId))
+                return Unauthorized(ApiResponse<object>.Fail(ApiMessages.NotLoggedIn));
+
             try
             {
-                await productBrandService.UpdateProductBrandAsync(productBrand, Guid.Parse(userId));
-                return NoContent();
+                await productBrandService.UpdateProductBrandAsync(request, userId);
+                return Ok(ApiResponse<object>.Ok(message: "Brand updated."));
+            }
+            catch (ArgumentException exception)
+            {
+                return BadRequest(ApiResponse<object>.Fail(exception.Message));
             }
             catch (KeyNotFoundException exception)
             {
-                return BadRequest(exception.Message);
-            }
-            catch (ArgumentException)
-            {
-                return BadRequest("There has been an unforseen error.");
+                return NotFound(ApiResponse<object>.Fail(exception.Message));
             }
         }
 
         [Authorize(Roles = "Manager,Admin")]
-        [HttpDelete("SoftDelete/{id}")]
-        public async Task<IActionResult> SoftDeleteProductBrandAsync(Guid id)
+        [HttpDelete("SoftDelete/{id:guid}")]
+        public async Task<IActionResult> SoftDeleteAsync(Guid id)
         {
-            var userId = Request.HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (!User.TryGetUserId(out Guid userId))
+                return Unauthorized(ApiResponse<object>.Fail(ApiMessages.NotLoggedIn));
+
             try
             {
-                await productBrandService.SoftDeleteProductBrandAsync(id, Guid.Parse(userId));
-                return NoContent();
+                await productBrandService.SoftDeleteProductBrandAsync(id, userId);
+                return Ok(ApiResponse<object>.Ok(message: "Brand deleted."));
             }
             catch (KeyNotFoundException exception)
             {
-                return BadRequest(exception.Message);
-            }
-            catch (ArgumentException)
-            {
-                return BadRequest("There has been an unforseen error.");
+                return NotFound(ApiResponse<object>.Fail(exception.Message));
             }
         }
     }

@@ -3,7 +3,6 @@ using System.Windows.Forms;
 
 namespace StockFlow.CashRegister.Screens
 {
-    /// <summary>Small themed replacement for the missing WinForms input box.</summary>
     public static class InputDialog
     {
         public static string? Ask(IWin32Window owner, string title, string prompt, string initial = "")

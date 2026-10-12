@@ -23,6 +23,7 @@ namespace StockFlow.Application.DTOs.Pagination
     }
     public class CustomerPaginationDto : Pagination<CustomerOrderBy>
     {
+        public string? CustomerId { get; set; }
         public string? CustomerName { get; set; }
         public string? Email { get; set; }
         public string? PostalCode { get; set; }
@@ -36,6 +37,7 @@ namespace StockFlow.Application.DTOs.Pagination
     }
     public class CashRegisterLogsPaginationDto : Pagination<CashRegisterLogsOrderBy>
     {
+        public string? ReceiptId { get; set; }
         public string? EmployeeName { get; set; }
         public string? EmployeeId { get; set; }
         public string? CustomerName { get; set; }
@@ -59,6 +61,7 @@ namespace StockFlow.Application.DTOs.Pagination
     }
     public class CustomerLogsPaginationDto : Pagination<CustomerLogsOrderBy>
     {
+        public string? CustomerId { get; set; }
         public string? CustomerName { get; set; }
         public string? Email { get; set; }
         public LogTypeDto? LogType { get; set; }

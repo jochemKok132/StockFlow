@@ -1,12 +1,11 @@
-﻿using StockFlow.Application.DTOs.Employee;
-using StockFlow.Application.DTOs.Employee.EmployeeAuthentication;
-using StockFlow.Application.Interfaces;
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Security.Authentication;
-using StockFlow.Application.Interfaces.ManagementApp;
-using System.Security.Claims;
+using StockFlow.Application.Common;
+using StockFlow.Application.DTOs.Employee;
+using StockFlow.Application.DTOs.Employee.EmployeeAuthentication;
 using StockFlow.Application.DTOs.Pagination;
+using StockFlow.Application.Interfaces.ManagementApp;
+using System.Security.Authentication;
 
 namespace StockFlow.API.Controllers
 {
@@ -16,96 +15,86 @@ namespace StockFlow.API.Controllers
     {
         [Authorize(Roles = "Manager,Admin,ShiftLeader")]
         [HttpGet("GetAll")]
-        public async Task<IActionResult> GetAllEmployeesAsync([FromQuery] EmployeePaginationDto pagination)
+        public async Task<IActionResult> GetAllAsync([FromQuery] EmployeePaginationDto pagination)
         {
             try
             {
-                var employees = await employeeService.GetAllEmployeesAsync(pagination);
-                return Ok(employees);
+                List<EmployeeDto> employees = await employeeService.GetAllEmployeesAsync(pagination);
+                return Ok(ApiResponse<List<EmployeeDto>>.Ok(employees));
             }
-            catch (ArgumentException)
+            catch (ArgumentException exception)
             {
-                return BadRequest("There has been an unforseen error.");
+                return BadRequest(ApiResponse<List<EmployeeDto>>.Fail(exception.Message));
             }
         }
 
-        [Authorize]
-        [HttpGet("GetById/{id}")]
-        public async Task<IActionResult> GetEmployeeByIdAsync(Guid id)
+        [Authorize(Roles = AuthRoles.Employees)]
+        [HttpGet("GetById/{id:guid}")]
+        public async Task<IActionResult> GetByIdAsync(Guid id)
         {
             try
             {
-                var employee = await employeeService.GetEmployeeByIdAsync(id);
-                return Ok(employee);
+                EmployeeDto employee = await employeeService.GetEmployeeByIdAsync(id);
+                return Ok(ApiResponse<EmployeeDto>.Ok(employee));
             }
             catch (KeyNotFoundException exception)
             {
-                return BadRequest(exception.Message);
-            }
-            catch (ArgumentException)
-            {
-                return BadRequest("There has been an unforseen error.");
+                return NotFound(ApiResponse<EmployeeDto>.Fail(exception.Message));
             }
         }
 
-        [Authorize]
+        [Authorize(Roles = AuthRoles.Employees)]
         [HttpGet("GetByEmployeeId/{employeeId}")]
-        public async Task<IActionResult> GetEmployeeByEmployeeIdAsync(string employeeId)
+        public async Task<IActionResult> GetByEmployeeIdAsync(string employeeId)
         {
             try
             {
-                var employee = await employeeService.GetEmployeeByEmployeeIdAsync(employeeId);
-                return Ok(employee);
+                EmployeeDto employee = await employeeService.GetEmployeeByEmployeeIdAsync(employeeId);
+                return Ok(ApiResponse<EmployeeDto>.Ok(employee));
             }
             catch (KeyNotFoundException exception)
             {
-                return BadRequest(exception.Message);
-            }
-            catch (ArgumentException)
-            {
-                return BadRequest("There has been an unforseen error.");
+                return NotFound(ApiResponse<EmployeeDto>.Fail(exception.Message));
             }
         }
 
         [Authorize(Roles = "Manager,Admin")]
         [HttpPost("Create")]
-        public async Task<IActionResult> CreateEmployeeAsync(CreateEmployeeDto dto)
+        public async Task<IActionResult> CreateAsync(CreateEmployeeDto request)
         {
-            var userId = Request.HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (!User.TryGetUserId(out Guid userId))
+                return Unauthorized(ApiResponse<object>.Fail(ApiMessages.NotLoggedIn));
 
             try
             {
-                await employeeService.CreateEmployeeAsync(dto, Guid.Parse(userId));
-                return NoContent();
+                await employeeService.CreateEmployeeAsync(request, userId);
+                return Ok(ApiResponse<object>.Ok(message: "Employee created."));
             }
-            catch (ArgumentNullException exception)
+            catch (ArgumentException exception)
             {
-                return BadRequest(exception.Message);
-            }
-            catch (ArgumentException)
-            {
-                return BadRequest("There has been an unforseen error.");
+                return BadRequest(ApiResponse<object>.Fail(exception.Message));
             }
         }
 
         [Authorize(Roles = "Manager,Admin")]
         [HttpPut("Update")]
-        public async Task<IActionResult> UpdateEmployeeAsync(UpdateEmployeeDto dto)
+        public async Task<IActionResult> UpdateAsync(UpdateEmployeeDto request)
         {
-            var userId = Request.HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (!User.TryGetUserId(out Guid userId))
+                return Unauthorized(ApiResponse<object>.Fail(ApiMessages.NotLoggedIn));
 
             try
             {
-                await employeeService.UpdateEmployeeAsync(dto, Guid.Parse(userId));
-                return NoContent();
+                await employeeService.UpdateEmployeeAsync(request, userId);
+                return Ok(ApiResponse<object>.Ok(message: "Employee updated."));
+            }
+            catch (ArgumentException exception)
+            {
+                return BadRequest(ApiResponse<object>.Fail(exception.Message));
             }
             catch (KeyNotFoundException exception)
             {
-                return BadRequest(exception.Message);
-            }
-            catch (ArgumentException)
-            {
-                return BadRequest("There has been an unforseen error.");
+                return NotFound(ApiResponse<object>.Fail(exception.Message));
             }
         }
 
@@ -115,20 +104,16 @@ namespace StockFlow.API.Controllers
         {
             try
             {
-                var token = await employeeService.LoginAsync(request);
-                return Ok(token);
+                Token token = await employeeService.LoginAsync(request);
+                return Ok(ApiResponse<Token>.Ok(token));
             }
-            catch (KeyNotFoundException exception)
+            catch (ArgumentException exception)
             {
-                return BadRequest(exception.Message);
+                return BadRequest(ApiResponse<Token>.Fail(exception.Message));
             }
-            catch (AuthenticationException exception)
+            catch (Exception exception) when (exception is KeyNotFoundException or AuthenticationException)
             {
-                return Unauthorized(exception.Message);
-            }
-            catch (ArgumentException)
-            {
-                return BadRequest("There has been an unforseen error.");
+                return Unauthorized(ApiResponse<Token>.Fail("Employee Id or password is incorrect."));
             }
         }
     }

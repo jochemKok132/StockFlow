@@ -19,18 +19,15 @@ namespace StockFlow.CashRegister
 
             var services = new ServiceCollection();
 
-            // Core Authentication & Storage
             services.AddAuthorizationCore();
             services.AddScoped<SessionStorageService>();
             services.AddScoped<AuthStateProvider>();
             services.AddScoped<AuthenticationStateProvider>(sp => sp.GetRequiredService<AuthStateProvider>());
 
-            // Application Services
             services.AddScoped<IAuthService, AuthService>();
             services.AddScoped<IHttpService, HttpService>();
             services.AddScoped<ICashRegisterService, CashRegisterService>();
 
-            // HTTP Client & Handler
             services.AddTransient<AuthHandler>();
             services.AddScoped(sp =>
             {
@@ -39,14 +36,11 @@ namespace StockFlow.CashRegister
                 return new HttpClient(handler) { BaseAddress = new Uri("https://localhost:7037/") };
             });
 
-            // WinForms UI Registration
             services.AddTransient<LoginForm>();
             services.AddTransient<MainForm>();
 
             ServiceProvider = services.BuildServiceProvider();
 
-            // Show the login screen, then the register. After a logout, start over with a fresh scope
-            // (new session, new HttpClient). Closing the login screen with Esc exits the app.
             bool loggedOut;
             do
             {

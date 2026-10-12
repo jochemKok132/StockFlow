@@ -1,4 +1,6 @@
 ﻿using StockFlow.Application.DTOs.CashRegister;
+using StockFlow.Application.Common;
+using StockFlow.Application.DTOs.Customer;
 using StockFlow.CashRegister.Interfaces;
 using StockFlow.CashRegister.Screens;
 
@@ -13,7 +15,10 @@ namespace StockFlow.CashRegister
         private readonly ICashRegisterService _cashRegister;
 
         private List<RegisterItemDetailDto> _lines = [];
+        private CustomerDto? _customer;
         private decimal _total;
+        private decimal _discount;
+        private int _pointsUsed;
         private decimal _tendered;
         private string _method = "";
         private bool _busy;
@@ -71,18 +76,32 @@ namespace StockFlow.CashRegister
             btnComplete.Click += async (_, _) => await CompleteAsync();
         }
 
-        // ---------- public API used by MainForm ----------
-
-        public void Begin(IReadOnlyList<RegisterItemDetailDto> lines, decimal total)
+        public void Begin(IReadOnlyList<RegisterItemDetailDto> lines, decimal total, decimal discount, int pointsUsed, CustomerDto? customer)
         {
             _lines = [.. lines];
             _total = total;
+            _discount = discount;
+            _pointsUsed = customer is null ? 0 : pointsUsed;
+            _customer = customer;
             _tendered = 0m;
             _method = "";
 
-            Theme.ShowMessage(lblMessage, null);
+            Theme.ShowMessage(lblMessage, BuildCustomerMessage());
             UpdateView();
         }
+
+        private string? BuildCustomerMessage()
+        {
+            if (_customer is null) return null;
+
+            List<string> parts = [$"Klant: {_customer.FullName} ({_customer.CustomerId})"];
+            if (_discount > 0) parts.Add($"Korting: {Theme.Money(_discount)}");
+            if (_pointsUsed > 0) parts.Add($"Punten: {_pointsUsed} (-{Theme.Money(LoyaltyPoints.ToEuros(_pointsUsed))})");
+            if (PointsToEarn > 0) parts.Add($"Spaart: +{PointsToEarn} punten");
+            return string.Join("   ·   ", parts);
+        }
+
+        private int PointsToEarn => _customer is null ? 0 : LoyaltyPoints.PointsEarned(_total);
 
         public bool HandleKey(Keys key)
         {
@@ -99,8 +118,6 @@ namespace StockFlow.CashRegister
             if (target.Enabled) target.PerformClick();
             return true;
         }
-
-        // ---------- payment ----------
 
         private void SelectMethod(string method)
         {
@@ -143,10 +160,12 @@ namespace StockFlow.CashRegister
 
                 _mainForm.ScanView.Clear();
                 _mainForm.ShowScanScreen();
+                string receipt = string.IsNullOrWhiteSpace(result) ? "" : $" Bonnummer: {result}.";
+                if (PointsToEarn > 0) receipt += $" +{PointsToEarn} punten gespaard.";
                 _mainForm.ScanView.ShowNotice(
                     change > 0 && _method == Cash
-                        ? $"Transactie afgerond. Teruggeld: {Theme.Money(change)}"
-                        : "Transactie afgerond.");
+                        ? $"Transactie afgerond.{receipt} Teruggeld: {Theme.Money(change)}"
+                        : $"Transactie afgerond.{receipt}");
             }
             catch (Exception ex)
             {
@@ -162,16 +181,16 @@ namespace StockFlow.CashRegister
         private Purchase BuildPurchase() => new()
         {
             TotalPrice = (double)_total,
-            TotalOff = 0,               // no discount function on the register yet
+            TotalOff = (double)_discount,
+            CustomerId = _customer?.Id,
+            PointsUsed = _pointsUsed,
             ProductsSold = [.. _lines]
         };
-
-        // ---------- view ----------
 
         private void UpdateView()
         {
             decimal difference = _tendered - _total;
-            bool paid = _method != "" && difference >= 0;
+            bool paid = _total == 0 || (_method != "" && difference >= 0);
 
             lblTotalDue.Text = Theme.Money(_total);
             lblTenderedCaption.Text = _method == "" ? "ONTVANGEN" : $"ONTVANGEN ({_method})";
@@ -183,7 +202,7 @@ namespace StockFlow.CashRegister
             Theme.SetSelected(btnPin, _method == Pin);
             Theme.SetSelected(btnCash, _method == Cash);
 
-            btnComplete.Enabled = paid && !_busy && _total > 0;
+            btnComplete.Enabled = paid && !_busy && (_total > 0 || _pointsUsed > 0);
             btnBack.Enabled = !_busy;
         }
     }

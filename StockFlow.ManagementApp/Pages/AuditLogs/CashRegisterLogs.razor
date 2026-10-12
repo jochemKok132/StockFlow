@@ -14,6 +14,10 @@
     <div class="filters-bar">
         <div class="filters">
             <div class="filter-group">
+                <label>Receipt id</label>
+                <input type="text" @bind="pagination.ReceiptId" @bind:event="oninput" @bind:after="ResetAndLoad" placeholder="e.g. 9000000001" />
+            </div>
+            <div class="filter-group">
                 <label>Customer name</label>
                 <input type="text" @bind="pagination.CustomerName" @bind:event="oninput" @bind:after="ResetAndLoad" placeholder="e.g. John" />
             </div>
@@ -36,6 +40,7 @@
     <table class="tasks-table">
         <thead>
             <tr>
+                <th>Receipt</th>
                 <th>Customer name</th>
                 <th>Customer email</th>
                 <th>Employee name</th>
@@ -43,6 +48,7 @@
                     Employee id @SortingArrow(CashRegisterLogsOrderBy.EmployeeId)
                 </th>
                 <th>Products</th>
+                <th>Points</th>
                 <th @onclick="() => OrderBy(CashRegisterLogsOrderBy.CreatedAt)" class="sortable">
                     Created at @SortingArrow(CashRegisterLogsOrderBy.CreatedAt)
                 </th>
@@ -70,13 +76,32 @@
                 @foreach (var log in cashRegisterLogs)
                 {
                     <tr>
+                        <td class="receipt-cell">@log.ReceiptId</td>
                         <td><strong>@(log.Customer?.FullName ?? "-")</strong></td>
                         <td>@(log.Customer?.Email ?? "-")</td>
                         <td>@log.Employee?.FullName</td>
                         <td>@log.Employee?.EmployeeId</td>
                         <td class="products-cell" @onclick="() => OpenProducts(log)">
                             <span class="products-count">@log.ProductsSold.Sum(p => p.Amount) items</span>
+                            @if (log.ProductsSold.Sum(p => p.ReturnedAmount) is > 0 and var returned)
+                            {
+                                <span class="returned-count">&middot; @returned returned</span>
+                            }
                             <i class="bi bi-chevron-right"></i>
+                        </td>
+                        <td class="points-cell">
+                            @if (log.PointsUsed == 0 && log.PointsEarned == 0)
+                            {
+                                <span>-</span>
+                            }
+                            @if (log.PointsUsed > 0)
+                            {
+                                <span class="points-used">-@log.PointsUsed</span>
+                            }
+                            @if (log.PointsEarned > 0)
+                            {
+                                <span class="points-earned">+@log.PointsEarned</span>
+                            }
                         </td>
                         <td class="date-cell">@log.CreatedAt.ToLocalTime().ToString("dd-MM-yyyy HH:mm")</td>
                     </tr>
@@ -140,6 +165,7 @@
         EmployeeId = null,
         CustomerName = null,
         Email = null,
+        ReceiptId = null,
     };
 
     protected override async Task OnInitializedAsync()
@@ -217,7 +243,6 @@
         detailsError = "";
         selectedProduct = null;
 
-        // Go back to the product list of the log the product was opened from
         showProducts = selectedLog is not null;
     }
 

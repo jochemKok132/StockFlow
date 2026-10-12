@@ -8,6 +8,7 @@ namespace StockFlow.Domain.Entities.AuditLogs
     public class CashRegisterLogs : IEntity, ICreateable
     {
         public Guid Id { get; set; }
+        public string ReceiptId { get; set; } = string.Empty;
         public DateTime CreatedAt { get; set; }
         public Guid EmployeeId { get; set; }
         public Employee? Employee { get; set; }
@@ -15,6 +16,8 @@ namespace StockFlow.Domain.Entities.AuditLogs
         public Customer? Customer{ get; set; }
         public double TotalPrice { get; set; }
         public double TotalOff { get; set; }
+        public int PointsUsed { get; set; }
+        public int PointsEarned { get; set; }
         public ICollection<RegisterItemDetail> ProductsSold { get; set; } = [];
     }
 }

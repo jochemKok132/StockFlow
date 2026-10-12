@@ -1,5 +1,7 @@
-﻿using StockFlow.Application.DTOs.AuditLogs.Customer;
+﻿using StockFlow.Application.DTOs.AuditLogs.CashRegister;
+using StockFlow.Application.DTOs.AuditLogs.Customer;
 using StockFlow.Application.DTOs.CashRegister;
+using StockFlow.Application.DTOs.Customer;
 using StockFlow.Application.DTOs.Stock.Product;
 using StockFlow.CashRegister.Interfaces;
 using StockFlow.Domain.Entities.Stock;
@@ -19,15 +21,52 @@ namespace StockFlow.CashRegister.Services
 
         public async Task<(ProductDto, string error)> GetProductAsync(string input)
         {
-            // The controller route is [controller]/{input}, so the CashRegister/ prefix is required.
             var response = await httpService.GetAsync<ProductDto>($"CashRegister/{input}");
 
             if (!response.Succeeded)
                 return (new ProductDto(), $"Error: {response.Message}");
 
-            // The API answers 204 NoContent when nothing matches.
             if (response.Value is null)
                 return (new ProductDto(), "Error: Product niet gevonden.");
+
+            return (response.Value, "");
+        }
+
+        public async Task<(CustomerDto?, string error)> GetCustomerAsync(string customerId)
+        {
+            var response = await httpService.GetAsync<CustomerDto>($"CashRegister/Customer/{customerId}");
+
+            if (!response.Succeeded)
+                return (null, $"Error: {response.Message}");
+
+            if (response.Value is null)
+                return (null, "Error: Klant niet gevonden.");
+
+            return (response.Value, "");
+        }
+
+        public async Task<(CashRegisterLogsDto?, string error)> GetReceiptAsync(string receiptId)
+        {
+            var response = await httpService.GetAsync<CashRegisterLogsDto>($"CashRegister/Receipt/{receiptId}");
+
+            if (!response.Succeeded)
+                return (null, $"Error: {response.Message}");
+
+            if (response.Value is null)
+                return (null, "Error: Bon niet gevonden.");
+
+            return (response.Value, "");
+        }
+
+        public async Task<(ReturnResult?, string error)> ProcessReturnAsync(ReturnRequest request)
+        {
+            var response = await httpService.PostAsync<ReturnResult, ReturnRequest>("CashRegister/Return", request);
+
+            if (!response.Succeeded)
+                return (null, $"Error: {response.Message}");
+
+            if (response.Value is null)
+                return (null, "Error: De retour kon niet worden verwerkt.");
 
             return (response.Value, "");
         }

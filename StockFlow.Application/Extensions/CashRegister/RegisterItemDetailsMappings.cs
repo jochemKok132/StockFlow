@@ -15,6 +15,7 @@ namespace StockFlow.Application.Extensions.CashRegister
             {
                 Id = dto.Id,
                 Amount = dto.Amount,
+                ReturnedAmount = dto.ReturnedAmount,
                 PriceAtTimeOfSale = dto.PriceAtTimeOfSale,
                 Product = dto.Product.ToProductDto(),
                 Sale = dto.Sale?.ToSalesDto(),

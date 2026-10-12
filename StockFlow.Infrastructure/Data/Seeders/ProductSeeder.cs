@@ -35,7 +35,6 @@ namespace StockFlow.Infrastructure.Data.Seeders
                 Guid duravitBrand = new Guid("6b1d0d22-a35b-4656-b420-000000000018");
                 Guid geberitBrand = new Guid("6b1d0d22-a35b-4656-b420-000000000019");
 
-                // Shelf ids (from ShelfSeeder)
                 Guid flexaShelf = new Guid("55ad0d22-a35b-4656-b420-ed3e7398cde3");
                 Guid sigmaShelf = new Guid("55ad0d22-a35b-4656-b420-ed3e7398cde4");
                 Guid historShelf = new Guid("55ad0d22-a35b-4656-b420-ed3e7398cde5");
@@ -54,7 +53,6 @@ namespace StockFlow.Infrastructure.Data.Seeders
 
                 IEnumerable<Product> Products = new List<Product>()
                 {
-                    // Flexa shelf
                     new Product()
                     {
                         Id = new Guid("8d3f0d22-a35b-4656-b420-000000000001"),
@@ -185,7 +183,6 @@ namespace StockFlow.Infrastructure.Data.Seeders
                         BrandId = levisBrand,
                         ShelfId = flexaShelf
                     },
-                    // Sigma shelf
                     new Product()
                     {
                         Id = new Guid("8d3f0d22-a35b-4656-b420-00000000000b"),
@@ -316,7 +313,6 @@ namespace StockFlow.Infrastructure.Data.Seeders
                         BrandId = levisBrand,
                         ShelfId = sigmaShelf
                     },
-                    // Histor shelf
                     new Product()
                     {
                         Id = new Guid("8d3f0d22-a35b-4656-b420-000000000015"),
@@ -447,7 +443,6 @@ namespace StockFlow.Infrastructure.Data.Seeders
                         BrandId = levisBrand,
                         ShelfId = historShelf
                     },
-                    // Screws shelf
                     new Product()
                     {
                         Id = new Guid("8d3f0d22-a35b-4656-b420-00000000001f"),
@@ -578,7 +573,6 @@ namespace StockFlow.Infrastructure.Data.Seeders
                         BrandId = facomBrand,
                         ShelfId = screwsShelf
                     },
-                    // Nails shelf
                     new Product()
                     {
                         Id = new Guid("8d3f0d22-a35b-4656-b420-000000000029"),
@@ -709,7 +703,6 @@ namespace StockFlow.Infrastructure.Data.Seeders
                         BrandId = facomBrand,
                         ShelfId = nailsShelf
                     },
-                    // Locks shelf
                     new Product()
                     {
                         Id = new Guid("8d3f0d22-a35b-4656-b420-000000000033"),
@@ -840,7 +833,6 @@ namespace StockFlow.Infrastructure.Data.Seeders
                         BrandId = facomBrand,
                         ShelfId = locksShelf
                     },
-                    // Sockets shelf
                     new Product()
                     {
                         Id = new Guid("8d3f0d22-a35b-4656-b420-00000000003d"),
@@ -971,7 +963,6 @@ namespace StockFlow.Infrastructure.Data.Seeders
                         BrandId = abbBrand,
                         ShelfId = socketsShelf
                     },
-                    // Plugs shelf
                     new Product()
                     {
                         Id = new Guid("8d3f0d22-a35b-4656-b420-000000000047"),
@@ -1102,7 +1093,6 @@ namespace StockFlow.Infrastructure.Data.Seeders
                         BrandId = abbBrand,
                         ShelfId = plugsShelf
                     },
-                    // Wires shelf
                     new Product()
                     {
                         Id = new Guid("8d3f0d22-a35b-4656-b420-000000000051"),
@@ -1233,7 +1223,6 @@ namespace StockFlow.Infrastructure.Data.Seeders
                         BrandId = abbBrand,
                         ShelfId = wiresShelf
                     },
-                    // Planks shelf
                     new Product()
                     {
                         Id = new Guid("8d3f0d22-a35b-4656-b420-00000000005b"),
@@ -1364,7 +1353,6 @@ namespace StockFlow.Infrastructure.Data.Seeders
                         BrandId = timberproBrand,
                         ShelfId = planksShelf
                     },
-                    // Beams shelf
                     new Product()
                     {
                         Id = new Guid("8d3f0d22-a35b-4656-b420-000000000065"),
@@ -1495,7 +1483,6 @@ namespace StockFlow.Infrastructure.Data.Seeders
                         BrandId = timberproBrand,
                         ShelfId = beamsShelf
                     },
-                    // Impregnated Wood shelf
                     new Product()
                     {
                         Id = new Guid("8d3f0d22-a35b-4656-b420-00000000006f"),
@@ -1626,7 +1613,6 @@ namespace StockFlow.Infrastructure.Data.Seeders
                         BrandId = timberproBrand,
                         ShelfId = impregnatedWoodShelf
                     },
-                    // Showers shelf
                     new Product()
                     {
                         Id = new Guid("8d3f0d22-a35b-4656-b420-000000000079"),
@@ -1757,7 +1743,6 @@ namespace StockFlow.Infrastructure.Data.Seeders
                         BrandId = geberitBrand,
                         ShelfId = showersShelf
                     },
-                    // Water Tap shelf
                     new Product()
                     {
                         Id = new Guid("8d3f0d22-a35b-4656-b420-000000000083"),
@@ -1888,7 +1873,6 @@ namespace StockFlow.Infrastructure.Data.Seeders
                         BrandId = geberitBrand,
                         ShelfId = waterTapShelf
                     },
-                    // Shower Mats shelf
                     new Product()
                     {
                         Id = new Guid("8d3f0d22-a35b-4656-b420-00000000008d"),

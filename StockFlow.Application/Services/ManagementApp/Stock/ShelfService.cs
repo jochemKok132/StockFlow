@@ -11,6 +11,8 @@ using StockFlow.Domain.Entities.Stock;
 using System;
 using System.Collections.Generic;
 using System.Text;
+using StockFlow.Application.Validations;
+using StockFlow.Application.Validations.Stock;
 
 namespace StockFlow.Application.Services.ManagementApp.Stock
 {
@@ -18,13 +20,15 @@ namespace StockFlow.Application.Services.ManagementApp.Stock
     {
         public async Task CreateShelfAsync(CreateShelfDto shelf, Guid employeeId)
         {
-            if (shelf == null) throw new ArgumentNullException("Shelf cant be null.");
+            shelf.Validate();
             await stockLogsService.CreateStockLogsAsync(shelf.ToCreateStockLogsDto(employeeId));
             await shelfRepository.AddAsync(shelf.ToShelfEntity());
         }
 
         public async Task<List<ShelfDto>> GetAllShelvesAsync(ShelfPaginationDto pagination)
         {
+            pagination.Validate();
+
             var shelves = await shelfRepository.GetAllShelvesAsync(pagination);
 
             var result = new List<ShelfDto>();
@@ -46,6 +50,8 @@ namespace StockFlow.Application.Services.ManagementApp.Stock
 
         public async Task UpdateShelfAsync(UpdateShelfDto shelfDto, Guid employeeId)
         {
+            shelfDto.Validate();
+
             var shelf = await shelfRepository.GetByIdAsync(shelfDto.Id);
             if (shelf == null) throw new KeyNotFoundException($"Shelf with the id {shelfDto.Id} not found.");
             var log = shelfDto.ToUpdateStockLogsDto(shelf, employeeId);

@@ -1,4 +1,5 @@
-﻿using StockFlow.Application.DTOs.Pagination;
+﻿using StockFlow.Application.DTOs.Enums;
+using StockFlow.Application.DTOs.Pagination;
 using StockFlow.Application.DTOs.Stock.Product;
 using StockFlow.Application.Interfaces.ManagementApp.AuditLogs;
 using StockFlow.Application.Interfaces.ManagementApp.Stock;
@@ -11,6 +12,8 @@ using StockFlow.Domain.Entities.Stock;
 using System;
 using System.Collections.Generic;
 using System.Text;
+using StockFlow.Application.Validations;
+using StockFlow.Application.Validations.Stock;
 
 namespace StockFlow.Application.Services.ManagementApp.Stock
 {
@@ -19,7 +22,8 @@ namespace StockFlow.Application.Services.ManagementApp.Stock
 
         public async Task CreateProductAsync(CreateProductDto product, Guid employeeId)
         {
-            if (product == null) throw new ArgumentNullException("Product cant be null.");
+            product.Validate();
+            await EnsureBrandAndShelfExistAsync(product.BrandId, product.ShelfId);
 
             var productEntity = product.ToProductEntity();
 
@@ -36,8 +40,21 @@ namespace StockFlow.Application.Services.ManagementApp.Stock
             await stockLogsService.CreateStockLogsAsync(product.ToCreateStockLogsDto(employeeId, productEntity.Barcode));
         }
 
+        private async Task EnsureBrandAndShelfExistAsync(Guid brandId, Guid shelfId)
+        {
+            var brand = await productBrandRepository.GetByIdAsync(brandId);
+            if (brand is null || brand.SoftDeleted)
+                throw new ArgumentException("The chosen brand doesn't exist.");
+
+            var shelf = await shelfRepository.GetByIdAsync(shelfId);
+            if (shelf is null || shelf.SoftDeleted)
+                throw new ArgumentException("The chosen shelf doesn't exist.");
+        }
+
         public async Task<List<ProductBulkViewDto>> GetAllProductsAsync(ProductPaginationDto pagination)
         {
+            pagination.Validate();
+
             var products = await productRepository.GetAllProductsAsync(pagination);
 
             var result = new List<ProductBulkViewDto>();
@@ -58,6 +75,9 @@ namespace StockFlow.Application.Services.ManagementApp.Stock
 
         public async Task UpdateProductAsync(UpdateProductDto productDto, Guid employeeId)
         {
+            productDto.Validate();
+            await EnsureBrandAndShelfExistAsync(productDto.BrandId, productDto.ShelfId);
+
             var product = await productRepository.GetByIdAsync(productDto.Id);
             if (product == null) throw new KeyNotFoundException($"Product with the id {productDto.Id} not found.");
 
@@ -99,12 +119,14 @@ namespace StockFlow.Application.Services.ManagementApp.Stock
             return productDto;
         }
 
-        public async Task UpdateProductStockAsync(Guid id, int amount, Guid employeeId)
+        public async Task UpdateProductStockAsync(Guid id, int amount, Guid employeeId, LogTypeDto logType = LogTypeDto.Sold)
         {
+            ProductValidation.ValidateStockChange(amount);
+
             var product = await productRepository.GetByIdAsync(id);
             if (product == null) throw new KeyNotFoundException($"Product with the id {id} not found.");
 
-            var log = product.ChangeStock(amount, employeeId);
+            var log = product.ChangeStock(amount, employeeId, logType);
 
             product.ChangeStock(amount);
 

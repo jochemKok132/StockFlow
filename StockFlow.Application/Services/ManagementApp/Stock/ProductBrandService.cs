@@ -10,6 +10,8 @@ using StockFlow.Domain.Entities.Stock;
 using System;
 using System.Collections.Generic;
 using System.Text;
+using StockFlow.Application.Validations;
+using StockFlow.Application.Validations.Stock;
 
 namespace StockFlow.Application.Services.ManagementApp.Stock
 {
@@ -17,13 +19,15 @@ namespace StockFlow.Application.Services.ManagementApp.Stock
     {
         public async Task CreateProductBrandAsync(CreateProductBrandDto productBrand, Guid employeeId)
         {
-            if (productBrand == null) throw new ArgumentNullException("ProductBrand cant be null.");
+            productBrand.Validate();
             await productBrandRepository.AddAsync(productBrand.ToProductBrandEntity());
             await stockLogsService.CreateStockLogsAsync(productBrand.ToCreateStockLogsDto(employeeId));
         }
 
         public async Task<List<ProductBrandDto>> GetAllProductBrandsAsync(ProductBrandPaginationDto pagination)
         {
+            pagination.Validate();
+
             var productBrands = await productBrandRepository.GetAllProductBrandsAsync(pagination);
 
             var result = new List<ProductBrandDto>();
@@ -45,6 +49,8 @@ namespace StockFlow.Application.Services.ManagementApp.Stock
 
         public async Task UpdateProductBrandAsync(UpdateProductBrandDto productBrandDto, Guid employeeId)
         {
+            productBrandDto.Validate();
+
             var productBrand = await productBrandRepository.GetByIdAsync(productBrandDto.Id);
             if (productBrand == null) throw new KeyNotFoundException($"ProductBrand with the id {productBrandDto.Id} not found.");
 

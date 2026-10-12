@@ -94,7 +94,7 @@
                         <td>@log.LogType.ToString()</td>
                         <td>@log.StockLogType.ToString()</td>
                         <td>
-                            @if (log.LogType == LogTypeDto.Update || log.LogType == LogTypeDto.Sold)
+                            @if (log.LogType == LogTypeDto.Update || log.LogType == LogTypeDto.Sold || log.LogType == LogTypeDto.Returned)
                             {
                                 <button class="btn-edit" @onclick="() => OpenDetails(log.Messages)"><i class="bi bi-eye"></i> Open message</button>
                             }

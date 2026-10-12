@@ -1,9 +1,9 @@
-﻿using StockFlow.Application.DTOs.Pagination;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using StockFlow.Application.Common;
+using StockFlow.Application.DTOs.Pagination;
 using StockFlow.Application.DTOs.Stock.Sales;
 using StockFlow.Application.Interfaces.ManagementApp.Stock;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
-using System.Security.Claims;
 
 namespace StockFlow.API.Controllers
 {
@@ -13,76 +13,74 @@ namespace StockFlow.API.Controllers
     {
         [Authorize]
         [HttpGet("GetAll")]
-        public async Task<IActionResult> GetAllSalesAsync([FromQuery] SalesPaginationDto pagination)
+        public async Task<IActionResult> GetAllAsync([FromQuery] SalesPaginationDto pagination)
         {
             try
             {
-                var sales = await salesService.GetAllSalesAsync(pagination);
-                return Ok(sales);
+                List<SalesDto> items = await salesService.GetAllSalesAsync(pagination);
+                return Ok(ApiResponse<List<SalesDto>>.Ok(items));
             }
-            catch (ArgumentException)
+            catch (ArgumentException exception)
             {
-                return BadRequest("There has been an unforseen error.");
+                return BadRequest(ApiResponse<List<SalesDto>>.Fail(exception.Message));
             }
         }
 
         [Authorize(Roles = "Manager,Admin")]
         [HttpPost("Create")]
-        public async Task<IActionResult> CreateSalesAsync(CreateSalesDto sale)
+        public async Task<IActionResult> CreateAsync(CreateSalesDto request)
         {
-            var userId = Request.HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (!User.TryGetUserId(out Guid userId))
+                return Unauthorized(ApiResponse<object>.Fail(ApiMessages.NotLoggedIn));
+
             try
             {
-                await salesService.CreateSalesAsync(sale, Guid.Parse(userId));
-                return NoContent();
+                await salesService.CreateSalesAsync(request, userId);
+                return Ok(ApiResponse<object>.Ok(message: "Sale created."));
             }
-            catch (ArgumentNullException exception)
+            catch (ArgumentException exception)
             {
-                return BadRequest(exception.Message);
-            }
-            catch (ArgumentException)
-            {
-                return BadRequest("There has been an unforseen error.");
+                return BadRequest(ApiResponse<object>.Fail(exception.Message));
             }
         }
 
         [Authorize(Roles = "Manager,Admin")]
         [HttpPut("Update")]
-        public async Task<IActionResult> UpdateSalesAsync(UpdateSalesDto sale)
+        public async Task<IActionResult> UpdateAsync(UpdateSalesDto request)
         {
-            var userId = Request.HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (!User.TryGetUserId(out Guid userId))
+                return Unauthorized(ApiResponse<object>.Fail(ApiMessages.NotLoggedIn));
+
             try
             {
-                await salesService.UpdateSalesAsync(sale, Guid.Parse(userId));
-                return NoContent();
+                await salesService.UpdateSalesAsync(request, userId);
+                return Ok(ApiResponse<object>.Ok(message: "Sale updated."));
+            }
+            catch (ArgumentException exception)
+            {
+                return BadRequest(ApiResponse<object>.Fail(exception.Message));
             }
             catch (KeyNotFoundException exception)
             {
-                return BadRequest(exception.Message);
-            }
-            catch (ArgumentException)
-            {
-                return BadRequest("There has been an unforseen error.");
+                return NotFound(ApiResponse<object>.Fail(exception.Message));
             }
         }
 
         [Authorize(Roles = "Manager,Admin")]
-        [HttpDelete("SoftDelete/{id}")]
-        public async Task<IActionResult> SoftDeleteSalesAsync(Guid id)
+        [HttpDelete("SoftDelete/{id:guid}")]
+        public async Task<IActionResult> SoftDeleteAsync(Guid id)
         {
-            var userId = Request.HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (!User.TryGetUserId(out Guid userId))
+                return Unauthorized(ApiResponse<object>.Fail(ApiMessages.NotLoggedIn));
+
             try
             {
-                await salesService.SoftDeleteSalesAsync(id, Guid.Parse(userId));
-                return NoContent();
+                await salesService.SoftDeleteSalesAsync(id, userId);
+                return Ok(ApiResponse<object>.Ok(message: "Sale deleted."));
             }
             catch (KeyNotFoundException exception)
             {
-                return BadRequest(exception.Message);
-            }
-            catch (ArgumentException)
-            {
-                return BadRequest("There has been an unforseen error.");
+                return NotFound(ApiResponse<object>.Fail(exception.Message));
             }
         }
     }

@@ -27,8 +27,6 @@
     --RadiusLarge: 4px;
 }
 
-/* ---------- Base ---------- */
-
 html,
 body,
 #app {
@@ -46,8 +44,6 @@ body {
 #blazor-error-ui {
     display: none;
 }
-
-/* ---------- Blazor boot loader ---------- */
 
 .loading-progress {
     position: relative;
@@ -86,8 +82,6 @@ body {
     height: 100%;
     color: var(--AccentColor);
 }
-
-/* ---------- Layout ---------- */
 
 .ml-page {
     display: flex;
@@ -218,8 +212,6 @@ body {
     padding: 24px;
 }
 
-/* ---------- Page header & card ---------- */
-
 .tasks-header {
     display: flex;
     align-items: flex-start;
@@ -280,8 +272,6 @@ body {
         color: var(--MutedText);
     }
 
-/* ---------- Filters ---------- */
-
 .filters-bar {
     display: flex;
     align-items: flex-end;
@@ -336,8 +326,6 @@ body {
             border-color: var(--AccentColor);
             box-shadow: 0 0 0 2px var(--AccentColorSoft);
         }
-
-/* ---------- Table ---------- */
 
 .tasks-table {
     width: 100%;
@@ -400,6 +388,12 @@ body {
     color: var(--MutedText);
 }
 
+.id-cell {
+    font-weight: 600;
+    white-space: nowrap;
+    color: var(--MutedText);
+}
+
 .date-cell {
     white-space: nowrap;
     color: var(--MutedText);
@@ -415,8 +409,6 @@ body {
     justify-content: flex-end;
     gap: 8px;
 }
-
-/* ---------- Buttons ---------- */
 
 .btn-save,
 .btn-cancel,
@@ -456,7 +448,6 @@ body {
         cursor: not-allowed;
     }
 
-/* Primary: Save, + New ... */
 .btn-save {
     background: var(--ButtonColor);
     border-color: var(--ButtonColor);
@@ -468,7 +459,6 @@ body {
         border-color: var(--ButtonColorHover);
     }
 
-/* Secondary: Cancel, Edit, Open message */
 .btn-cancel,
 .btn-edit {
     background: var(--TaskbarColor);
@@ -482,7 +472,6 @@ body {
         color: var(--AccentColor);
     }
 
-/* Destructive */
 .btn-delete {
     background: var(--TaskbarColor);
     border-color: var(--DangerBorder);
@@ -494,7 +483,6 @@ body {
         border-color: var(--DangerText);
     }
 
-/* Compact variant for buttons inside table rows */
 .tasks-table .btn-edit,
 .tasks-table .btn-delete {
     padding: 4px 12px;
@@ -502,7 +490,6 @@ body {
     gap: 4px;
 }
 
-/* Square icon button (close) */
 .btn-icon {
     display: inline-flex;
     align-items: center;
@@ -523,8 +510,6 @@ body {
         border-color: var(--AccentColor);
         color: var(--AccentColor);
     }
-
-/* ---------- Pagination ---------- */
 
 .pagination {
     display: flex;
@@ -591,8 +576,6 @@ body {
             box-shadow: 0 0 0 2px var(--AccentColorSoft);
         }
 
-/* ---------- Feedback ---------- */
-
 .alert-danger {
     background: var(--DangerBg);
     color: var(--DangerText);
@@ -617,8 +600,6 @@ body {
     padding: 32px 0;
     text-align: center;
 }
-
-/* ---------- Modals & side panels ---------- */
 
 .modal-overlay {
     position: fixed;
@@ -703,8 +684,6 @@ body {
 .form-actions {
     justify-content: flex-end;
 }
-
-/* ---------- Badges ---------- */
 
 .sale-badge {
     display: inline-flex;

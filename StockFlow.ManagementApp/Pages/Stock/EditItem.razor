@@ -21,16 +21,24 @@
             {
                 <div class="loading">Loading details...</div>
             }
-            else if (!string.IsNullOrWhiteSpace(Error))
-            {
-                <div class="alert-danger">@Error</div>
-            }
             else if (item is null)
             {
-                <div class="empty-state">No details available.</div>
+                @if (!string.IsNullOrWhiteSpace(Error))
+                {
+                    <div class="alert-danger">@Error</div>
+                }
+                else
+                {
+                    <div class="empty-state">No details available.</div>
+                }
             }
             else
             {
+                @if (!string.IsNullOrWhiteSpace(Error))
+                {
+                    <div class="alert-danger">@Error</div>
+                }
+
                 <div class="form-grid">
                     @foreach (var prop in EditableProperties.Where(p => !IsHidden(p)))
                     {
@@ -79,7 +87,9 @@
                             }
                             else
                             {
-                                <input id="@prop.Name" type="@GetInputType(prop.PropertyType)" class="form-input"
+                                <input id="@prop.Name" type="@(prop.Name.Contains("Password") ? "password" : GetInputType(prop.PropertyType))" class="form-input"
+                                       autocomplete="@(prop.Name.Contains("Password") ? "new-password" : null)"
+                                       placeholder="@(prop.Name == "NewPassword" ? "Leave empty to keep the current password" : null)"
                                        value="@GetValueAsString(prop)"
                                        readonly="@ReadMode"
                                        @onchange="e => SetValueFromString(prop, e.Value?.ToString() ?? string.Empty)" />
@@ -111,7 +121,7 @@
     [Parameter] public EventCallback OnClose { get; set; }
     [Parameter] public EventCallback<object?> OnSave { get; set; }
 
-    private const long MaxFileSizeBytes = 5 * 1024 * 1024; // 5 MB
+    private const long MaxFileSizeBytes = 5 * 1024 * 1024;
 
     private IEnumerable<PropertyInfo> EditableProperties =>
         item?.GetType()
@@ -131,7 +141,6 @@
         return false;
     }
 
-    // "CreateProductDto" -> "Create product", "UpdateShelfDto" -> "Update shelf"
     private string Title
     {
         get

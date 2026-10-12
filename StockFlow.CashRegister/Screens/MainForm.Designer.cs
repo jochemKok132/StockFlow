@@ -30,9 +30,6 @@ namespace StockFlow.CashRegister
             headerPanel.SuspendLayout();
             headerLayout.SuspendLayout();
             SuspendLayout();
-            //
-            // headerPanel
-            //
             headerPanel.BottomBorderOnly = true;
             headerPanel.Controls.Add(headerLayout);
             headerPanel.Dock = DockStyle.Top;
@@ -40,9 +37,6 @@ namespace StockFlow.CashRegister
             headerPanel.Padding = new Padding(20, 0, 20, 1);
             headerPanel.Size = new Size(1280, 60);
             headerPanel.TabIndex = 0;
-            //
-            // headerLayout
-            //
             headerLayout.ColumnCount = 3;
             headerLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
             headerLayout.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
@@ -55,38 +49,23 @@ namespace StockFlow.CashRegister
             headerLayout.RowCount = 1;
             headerLayout.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
             headerLayout.TabIndex = 0;
-            //
-            // lblTitle
-            //
             lblTitle.Dock = DockStyle.Fill;
             lblTitle.Name = "lblTitle";
             lblTitle.Text = "StockFlow Kassa";
             lblTitle.TextAlign = ContentAlignment.MiddleLeft;
-            //
-            // lblStatusInfo
-            //
             lblStatusInfo.AutoSize = true;
             lblStatusInfo.Dock = DockStyle.Fill;
             lblStatusInfo.Margin = new Padding(3, 3, 16, 3);
             lblStatusInfo.Name = "lblStatusInfo";
             lblStatusInfo.TextAlign = ContentAlignment.MiddleRight;
-            //
-            // btnLogout
-            //
             btnLogout.Anchor = AnchorStyles.None;
             btnLogout.Name = "btnLogout";
             btnLogout.Size = new Size(110, 36);
             btnLogout.TabIndex = 0;
             btnLogout.Text = "Uitloggen";
-            //
-            // contentPanel
-            //
             contentPanel.Dock = DockStyle.Fill;
             contentPanel.Name = "contentPanel";
             contentPanel.TabIndex = 1;
-            //
-            // MainForm
-            //
             ClientSize = new Size(1280, 800);
             Controls.Add(contentPanel);
             Controls.Add(headerPanel);

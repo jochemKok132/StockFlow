@@ -9,21 +9,26 @@ using StockFlow.Domain.Enums;
 using System;
 using System.Collections.Generic;
 using System.Text;
+using StockFlow.Application.Validations;
+using StockFlow.Application.Validations.AuditLogs;
+using StockFlow.Application.Common;
 
 namespace StockFlow.Application.Services.ManagementApp.AuditLogs
 {
-    // Uses the product repository (not IProductService) because ProductService already depends on this service.
     public class StockLogsService(IStockLogsRepository stockLogsRepository, IProductRepository productRepository) : IStockLogsService
     {
         public async Task CreateStockLogsAsync(CreateStockLogsDto log)
         {
-            if (log == null) throw new ArgumentNullException("StockLog cant be null.");
+            log.Validate();
 
             await stockLogsRepository.AddAsync(log.ToStockLogsEntity());
         }
 
         public async Task<ProductStockHistoryDto> GetProductStockHistoryAsync(int barcode)
         {
+            if (!IdentifierFormats.IsProductBarcode(barcode.ToString()))
+                throw new ArgumentException($"A product barcode must be {IdentifierFormats.ProductBarcodeLength} digits.");
+
             var product = await productRepository.GetProductByBarcodeAsync(barcode);
             if (product == null) throw new KeyNotFoundException($"Product with the barcode {barcode} not found.");
 
@@ -42,6 +47,8 @@ namespace StockFlow.Application.Services.ManagementApp.AuditLogs
 
         public async Task<List<StockLogsDto>> GetAllStockLogsAsync(StockLogsPaginationDto pagination)
         {
+            pagination.Validate();
+
             var stockLogs = await stockLogsRepository.GetAllStockLogsAsync(pagination);
 
             var result = new List<StockLogsDto>();

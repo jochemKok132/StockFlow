@@ -31,9 +31,6 @@ namespace StockFlow.CashRegister.Screens
             btnLogin = new Button();
             card.SuspendLayout();
             SuspendLayout();
-            //
-            // card
-            //
             card.Controls.Add(lblBrand);
             card.Controls.Add(lblSubtitle);
             card.Controls.Add(lblUsername);
@@ -46,68 +43,41 @@ namespace StockFlow.CashRegister.Screens
             card.Name = "card";
             card.Size = new Size(340, 348);
             card.TabIndex = 0;
-            //
-            // lblBrand
-            //
             lblBrand.AutoSize = true;
             lblBrand.Location = new Point(24, 24);
             lblBrand.Name = "lblBrand";
             lblBrand.Text = "StockFlow Kassa";
-            //
-            // lblSubtitle
-            //
             lblSubtitle.AutoSize = true;
             lblSubtitle.Location = new Point(24, 58);
             lblSubtitle.Name = "lblSubtitle";
             lblSubtitle.Text = "Log in om de kassa te openen";
-            //
-            // lblUsername
-            //
             lblUsername.AutoSize = true;
             lblUsername.Location = new Point(24, 102);
             lblUsername.Name = "lblUsername";
             lblUsername.Text = "GEBRUIKERSNAAM";
-            //
-            // txtUsername
-            //
             txtUsername.Location = new Point(24, 124);
             txtUsername.Name = "txtUsername";
             txtUsername.Size = new Size(292, 27);
             txtUsername.TabIndex = 1;
-            //
-            // lblPassword
-            //
             lblPassword.AutoSize = true;
             lblPassword.Location = new Point(24, 166);
             lblPassword.Name = "lblPassword";
             lblPassword.Text = "WACHTWOORD";
-            //
-            // txtPassword
-            //
             txtPassword.Location = new Point(24, 188);
             txtPassword.Name = "txtPassword";
             txtPassword.Size = new Size(292, 27);
             txtPassword.TabIndex = 2;
             txtPassword.UseSystemPasswordChar = true;
-            //
-            // lblError
-            //
             lblError.Location = new Point(24, 232);
             lblError.Name = "lblError";
             lblError.Size = new Size(292, 36);
             lblError.Visible = false;
-            //
-            // btnLogin
-            //
             btnLogin.Location = new Point(24, 280);
             btnLogin.Name = "btnLogin";
             btnLogin.Size = new Size(292, 44);
             btnLogin.TabIndex = 3;
             btnLogin.Text = "Inloggen";
             btnLogin.Click += btnLogin_Click;
-            //
-            // LoginForm
-            //
             AcceptButton = btnLogin;
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;

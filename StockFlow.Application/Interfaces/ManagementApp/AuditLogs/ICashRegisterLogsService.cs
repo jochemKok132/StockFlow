@@ -10,6 +10,7 @@ namespace StockFlow.Application.Interfaces.ManagementApp.AuditLogs
     public interface ICashRegisterLogsService
     {
         Task<List<CashRegisterLogsDto>> GetAllCashRegisterLogsAsync(CashRegisterLogsPaginationDto pagination);
-        Task CreateCashRegisterLogsAsync(CreateCashRegisterLogsDto log);
+        Task<string> CreateCashRegisterLogsAsync(CreateCashRegisterLogsDto log);
+        Task<CashRegisterLogsDto> GetByReceiptIdAsync(string receiptId);
     }
 }

@@ -32,7 +32,6 @@ namespace StockFlow.Application.Mappings.People
             entity.HouseNumber = dto.HouseNumber;
             entity.PostalCode = dto.PostalCode;
             entity.Email = dto.Email;
-            entity.HashedPassword = dto.HashedPassword;
             entity.SavedPoints = dto.SavedPoints;
         }
     }

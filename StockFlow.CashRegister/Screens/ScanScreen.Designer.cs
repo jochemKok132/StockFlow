@@ -28,6 +28,10 @@ namespace StockFlow.CashRegister
             txtBarcode = new TextBox();
             btnAdd = new Button();
             lblMessage = new Label();
+            customerCard = new CardPanel();
+            lblCustomer = new Label();
+            btnRemoveCustomer = new Button();
+            btnUsePoints = new Button();
             gridCard = new CardPanel();
             gridItems = new DataGridView();
             colBarcode = new DataGridViewTextBoxColumn();
@@ -51,6 +55,7 @@ namespace StockFlow.CashRegister
             btnCheckout = new Button();
             mainLayout.SuspendLayout();
             leftPanel.SuspendLayout();
+            customerCard.SuspendLayout();
             scanBoxPanel.SuspendLayout();
             gridCard.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)gridItems).BeginInit();
@@ -58,9 +63,6 @@ namespace StockFlow.CashRegister
             rightPanel.SuspendLayout();
             buttonGrid.SuspendLayout();
             SuspendLayout();
-            //
-            // mainLayout
-            //
             mainLayout.ColumnCount = 2;
             mainLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 64F));
             mainLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 36F));
@@ -72,27 +74,23 @@ namespace StockFlow.CashRegister
             mainLayout.RowCount = 1;
             mainLayout.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
             mainLayout.TabIndex = 0;
-            //
-            // leftPanel
-            //
             leftPanel.ColumnCount = 1;
             leftPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
             leftPanel.Controls.Add(scanBoxPanel, 0, 0);
             leftPanel.Controls.Add(lblMessage, 0, 1);
-            leftPanel.Controls.Add(gridCard, 0, 2);
-            leftPanel.Controls.Add(totalCard, 0, 3);
+            leftPanel.Controls.Add(customerCard, 0, 2);
+            leftPanel.Controls.Add(gridCard, 0, 3);
+            leftPanel.Controls.Add(totalCard, 0, 4);
             leftPanel.Dock = DockStyle.Fill;
             leftPanel.Margin = new Padding(0, 0, 16, 0);
             leftPanel.Name = "leftPanel";
-            leftPanel.RowCount = 4;
+            leftPanel.RowCount = 5;
             leftPanel.RowStyles.Add(new RowStyle(SizeType.Absolute, 76F));
+            leftPanel.RowStyles.Add(new RowStyle(SizeType.AutoSize));
             leftPanel.RowStyles.Add(new RowStyle(SizeType.AutoSize));
             leftPanel.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
             leftPanel.RowStyles.Add(new RowStyle(SizeType.Absolute, 124F));
             leftPanel.TabIndex = 0;
-            //
-            // scanBoxPanel
-            //
             scanBoxPanel.ColumnCount = 2;
             scanBoxPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
             scanBoxPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 130F));
@@ -107,86 +105,70 @@ namespace StockFlow.CashRegister
             scanBoxPanel.RowStyles.Add(new RowStyle(SizeType.Absolute, 22F));
             scanBoxPanel.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
             scanBoxPanel.TabIndex = 0;
-            //
-            // lblScan
-            //
             lblScan.Dock = DockStyle.Fill;
             lblScan.Margin = new Padding(0);
             lblScan.Name = "lblScan";
-            lblScan.Text = "SCAN / INVOER";
+            lblScan.Text = "SCAN / INVOER  (PRODUCT: 9 CIJFERS, KLANT: 8 CIJFERS, BON: 10 CIJFERS)";
             lblScan.TextAlign = ContentAlignment.MiddleLeft;
-            //
-            // txtBarcode
-            //
             txtBarcode.Anchor = AnchorStyles.Left | AnchorStyles.Right;
             txtBarcode.Margin = new Padding(0, 0, 8, 0);
             txtBarcode.MaxLength = 9;
             txtBarcode.Name = "txtBarcode";
             txtBarcode.TabIndex = 0;
-            //
-            // btnAdd
-            //
             btnAdd.Dock = DockStyle.Fill;
             btnAdd.Margin = new Padding(0);
             btnAdd.Name = "btnAdd";
             btnAdd.TabIndex = 1;
             btnAdd.Text = "Toevoegen";
-            //
-            // lblMessage
-            //
             lblMessage.Dock = DockStyle.Fill;
             lblMessage.Margin = new Padding(0, 0, 0, 8);
             lblMessage.Name = "lblMessage";
             lblMessage.Size = new Size(0, 40);
-            //
-            // gridCard
-            //
+            customerCard.Controls.Add(lblCustomer);
+            customerCard.Controls.Add(btnRemoveCustomer);
+            customerCard.Controls.Add(btnUsePoints);
+            customerCard.Dock = DockStyle.Fill;
+            customerCard.Margin = new Padding(0, 0, 0, 8);
+            customerCard.Name = "customerCard";
+            customerCard.Padding = new Padding(16, 8, 8, 8);
+            customerCard.Size = new Size(0, 56);
+            customerCard.Visible = false;
+            lblCustomer.Dock = DockStyle.Fill;
+            lblCustomer.Name = "lblCustomer";
+            lblCustomer.TextAlign = ContentAlignment.MiddleLeft;
+            btnRemoveCustomer.Dock = DockStyle.Right;
+            btnRemoveCustomer.Name = "btnRemoveCustomer";
+            btnRemoveCustomer.Size = new Size(190, 40);
+            btnRemoveCustomer.Text = "Klant verwijderen [F3]";
+            btnUsePoints.Dock = DockStyle.Right;
+            btnUsePoints.Name = "btnUsePoints";
+            btnUsePoints.Size = new Size(210, 40);
+            btnUsePoints.Text = "Punten gebruiken [F4]";
             gridCard.Controls.Add(gridItems);
             gridCard.Dock = DockStyle.Fill;
             gridCard.Margin = new Padding(0, 0, 0, 8);
             gridCard.Name = "gridCard";
             gridCard.Padding = new Padding(1);
             gridCard.TabIndex = 2;
-            //
-            // gridItems
-            //
             gridItems.Columns.AddRange(new DataGridViewColumn[] { colBarcode, colDescription, colQty, colPrice, colTotal });
             gridItems.Dock = DockStyle.Fill;
             gridItems.Name = "gridItems";
             gridItems.TabIndex = 0;
-            //
-            // colBarcode
-            //
             colBarcode.FillWeight = 70F;
             colBarcode.HeaderText = "BARCODE";
             colBarcode.Name = "colBarcode";
-            //
-            // colDescription
-            //
             colDescription.FillWeight = 160F;
             colDescription.HeaderText = "OMSCHRIJVING";
             colDescription.Name = "colDescription";
-            //
-            // colQty
-            //
             colQty.FillWeight = 45F;
             colQty.HeaderText = "AANTAL";
             colQty.Name = "colQty";
-            //
-            // colPrice
-            //
             colPrice.FillWeight = 65F;
             colPrice.HeaderText = "PRIJS";
             colPrice.Name = "colPrice";
-            //
-            // colTotal
-            //
             colTotal.FillWeight = 65F;
             colTotal.HeaderText = "TOTAAL";
             colTotal.Name = "colTotal";
-            //
-            // totalCard
-            //
             totalCard.Controls.Add(lblItemCount);
             totalCard.Controls.Add(lblSubtotal);
             totalCard.Controls.Add(lblVat);
@@ -196,42 +178,24 @@ namespace StockFlow.CashRegister
             totalCard.Name = "totalCard";
             totalCard.Padding = new Padding(20);
             totalCard.TabIndex = 3;
-            //
-            // lblItemCount
-            //
             lblItemCount.AutoSize = true;
             lblItemCount.Location = new Point(20, 18);
             lblItemCount.Name = "lblItemCount";
-            //
-            // lblSubtotal
-            //
             lblSubtotal.AutoSize = true;
             lblSubtotal.Location = new Point(20, 46);
             lblSubtotal.Name = "lblSubtotal";
-            //
-            // lblVat
-            //
             lblVat.AutoSize = true;
             lblVat.Location = new Point(20, 74);
             lblVat.Name = "lblVat";
-            //
-            // lblTotalAmount
-            //
             lblTotalAmount.Dock = DockStyle.Right;
             lblTotalAmount.Name = "lblTotalAmount";
             lblTotalAmount.Size = new Size(300, 84);
             lblTotalAmount.TextAlign = ContentAlignment.MiddleRight;
-            //
-            // rightPanel
-            //
             rightPanel.Controls.Add(buttonGrid);
             rightPanel.Dock = DockStyle.Fill;
             rightPanel.Margin = new Padding(0);
             rightPanel.Name = "rightPanel";
             rightPanel.TabIndex = 1;
-            //
-            // buttonGrid
-            //
             buttonGrid.ColumnCount = 2;
             buttonGrid.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50F));
             buttonGrid.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50F));
@@ -251,65 +215,41 @@ namespace StockFlow.CashRegister
             buttonGrid.RowStyles.Add(new RowStyle(SizeType.Percent, 20F));
             buttonGrid.RowStyles.Add(new RowStyle(SizeType.Percent, 40F));
             buttonGrid.TabIndex = 0;
-            //
-            // btnSearch
-            //
             btnSearch.Dock = DockStyle.Fill;
             btnSearch.Margin = new Padding(0, 0, 6, 12);
             btnSearch.Name = "btnSearch";
             btnSearch.TabIndex = 0;
             btnSearch.Text = "Zoeken\r\n[F1]";
-            //
-            // btnQuantity
-            //
             btnQuantity.Dock = DockStyle.Fill;
             btnQuantity.Margin = new Padding(6, 0, 0, 12);
             btnQuantity.Name = "btnQuantity";
             btnQuantity.TabIndex = 1;
             btnQuantity.Text = "Aantal\r\n[F2]";
-            //
-            // btnDeleteLine
-            //
             btnDeleteLine.Dock = DockStyle.Fill;
             btnDeleteLine.Margin = new Padding(0, 0, 6, 12);
             btnDeleteLine.Name = "btnDeleteLine";
             btnDeleteLine.TabIndex = 2;
             btnDeleteLine.Text = "Wis regel\r\n[F6]";
-            //
-            // btnCancel
-            //
             btnCancel.Dock = DockStyle.Fill;
             btnCancel.Margin = new Padding(6, 0, 0, 12);
             btnCancel.Name = "btnCancel";
             btnCancel.TabIndex = 3;
             btnCancel.Text = "Annuleren\r\n[F5]";
-            //
-            // btnPark
-            //
             btnPark.Dock = DockStyle.Fill;
             btnPark.Margin = new Padding(0, 0, 6, 12);
             btnPark.Name = "btnPark";
             btnPark.TabIndex = 4;
             btnPark.Text = "Parkeren\r\n[F7]";
-            //
-            // btnRecall
-            //
             btnRecall.Dock = DockStyle.Fill;
             btnRecall.Margin = new Padding(6, 0, 0, 12);
             btnRecall.Name = "btnRecall";
             btnRecall.TabIndex = 5;
             btnRecall.Text = "Heropenen\r\n[F8]";
-            //
-            // btnCheckout
-            //
             btnCheckout.Dock = DockStyle.Fill;
             btnCheckout.Margin = new Padding(0);
             btnCheckout.Name = "btnCheckout";
             btnCheckout.TabIndex = 6;
             btnCheckout.Text = "AFREKENEN  [F10]";
-            //
-            // ScanScreen
-            //
             Controls.Add(mainLayout);
             Name = "ScanScreen";
             Size = new Size(1280, 740);
@@ -318,6 +258,7 @@ namespace StockFlow.CashRegister
             leftPanel.PerformLayout();
             scanBoxPanel.ResumeLayout(false);
             scanBoxPanel.PerformLayout();
+            customerCard.ResumeLayout(false);
             gridCard.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)gridItems).EndInit();
             totalCard.ResumeLayout(false);
@@ -336,6 +277,10 @@ namespace StockFlow.CashRegister
         private TextBox txtBarcode;
         private Button btnAdd;
         private Label lblMessage;
+        private CardPanel customerCard;
+        private Label lblCustomer;
+        private Button btnRemoveCustomer;
+        private Button btnUsePoints;
         private CardPanel gridCard;
         private DataGridView gridItems;
         private DataGridViewTextBoxColumn colBarcode;

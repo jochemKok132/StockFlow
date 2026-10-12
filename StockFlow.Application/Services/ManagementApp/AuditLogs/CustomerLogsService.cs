@@ -7,6 +7,8 @@ using StockFlow.Application.Mappings.AuditLogs;
 using System;
 using System.Collections.Generic;
 using System.Text;
+using StockFlow.Application.Validations;
+using StockFlow.Application.Validations.AuditLogs;
 
 namespace StockFlow.Application.Services.ManagementApp.AuditLogs
 {
@@ -14,13 +16,15 @@ namespace StockFlow.Application.Services.ManagementApp.AuditLogs
     {
         public async Task CreateCustomerLogsAsync(CreateCustomerLogsDto log)
         {
-            if (log == null) throw new ArgumentNullException("CustomerLog cant be null.");
+            log.Validate();
 
             await customerLogsRepository.AddAsync(log.ToCustomerLogsEntity());
         }
 
         public async Task<List<CustomerLogsDto>> GetAllCustomerLogsAsync(CustomerLogsPaginationDto pagination)
         {
+            pagination.Validate();
+
             var customerLogs = await customerLogsRepository.GetAllCustomerLogsAsync(pagination);
 
             var result = new List<CustomerLogsDto>();

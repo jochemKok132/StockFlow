@@ -40,6 +40,7 @@ namespace StockFlow.Infrastructure.Repositories.Stock
                 .AsNoTracking()
                 .Include(e => e.Customer)
                 .Where(e =>
+                    e.Customer.CustomerId.Contains(pagination.CustomerId ?? string.Empty) &&
                     e.Customer.FullName.Contains(pagination.CustomerName ?? string.Empty) &&
                     e.Customer.Email.Contains(pagination.Email ?? string.Empty) &&
                     (pagination.LogType == null || e.LogType.ToDto() == pagination.LogType));
@@ -48,12 +49,14 @@ namespace StockFlow.Infrastructure.Repositories.Stock
                 ? pagination.OrderBy switch
                 {
                     CustomerLogsOrderBy.CustomerName => query.OrderByDescending(p => p.Customer.FullName),
+                    CustomerLogsOrderBy.CustomerId => query.OrderByDescending(p => p.Customer.CustomerId),
                     CustomerLogsOrderBy.CreatedAt => query.OrderByDescending(p => p.CreatedAt),
                     _ => query.OrderByDescending(p => p.CreatedAt),
                 }
                 : pagination.OrderBy switch
                 {
                     CustomerLogsOrderBy.CustomerName => query.OrderBy(p => p.Customer.FullName),
+                    CustomerLogsOrderBy.CustomerId => query.OrderBy(p => p.Customer.CustomerId),
                     CustomerLogsOrderBy.CreatedAt => query.OrderBy(p => p.CreatedAt),
                     _ => query.OrderBy(p => p.CreatedAt),
                 };

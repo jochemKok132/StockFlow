@@ -12,32 +12,53 @@ namespace StockFlow.Application.Services
 {
     public class AuthenticationService(IConfiguration configuration) : IAuthenticationService
     {
+        public const string CustomerRole = "Customer";
+
         public DTOs.Employee.EmployeeAuthentication.Token GenerateToken(Employee user)
         {
-            ClaimsIdentity claims = new ClaimsIdentity(
-                new List<Claim>()
-                {
-                    new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
-                    new Claim(ClaimTypes.Name, user.FullName ?? ""),
-                    new Claim(ClaimTypes.Thumbprint, user.EmployeeId ?? ""),
-                    new Claim(ClaimTypes.Role, user.Role.ToString())
-                }
-            );
+            var (jwt, expiresOn) = CreateToken(new List<Claim>()
+            {
+                new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
+                new Claim(ClaimTypes.Name, user.FullName ?? ""),
+                new Claim(ClaimTypes.Thumbprint, user.EmployeeId ?? ""),
+                new Claim(ClaimTypes.Role, user.Role.ToString())
+            });
+
+            return new DTOs.Employee.EmployeeAuthentication.Token() { JWT = jwt, ExpiresOn = expiresOn };
+        }
+
+        public DTOs.Customer.CustomerAuthentication.Token GenerateToken(Customer user)
+        {
+            var (jwt, expiresOn) = CreateToken(new List<Claim>()
+            {
+                new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
+                new Claim(ClaimTypes.Name, user.FullName ?? ""),
+                new Claim(ClaimTypes.Email, user.Email ?? ""),
+                new Claim(ClaimTypes.Thumbprint, user.CustomerId ?? ""),
+                new Claim(ClaimTypes.Role, CustomerRole)
+            });
+
+            return new DTOs.Customer.CustomerAuthentication.Token() { JWT = jwt, ExpiresOn = expiresOn };
+        }
+
+        private (string jwt, DateTime expiresOn) CreateToken(List<Claim> claimList)
+        {
+            ClaimsIdentity claims = new ClaimsIdentity(claimList);
 
             string? jwtKey = configuration["JWT:Key"];
             if (string.IsNullOrWhiteSpace(jwtKey))
-                throw new ArgumentException("The JWT secret key is empty!");
+                throw new InvalidOperationException("The JWT secret key is empty!");
 
             string? issuer = configuration["JWT:Issuer"];
             if (string.IsNullOrWhiteSpace(issuer))
-                throw new ArgumentException("The JWT issuer is empty!");
+                throw new InvalidOperationException("The JWT issuer is empty!");
 
             string? expiryConfig = configuration["JWT:ExpiryMinutes"];
             if (string.IsNullOrWhiteSpace(expiryConfig))
-                throw new ArgumentException("The JWT expiry minutes is empty!");
+                throw new InvalidOperationException("The JWT expiry minutes is empty!");
 
             if (!double.TryParse(expiryConfig, out double expiryMinutes) || expiryMinutes <= 0)
-                throw new ArgumentException("The JWT expiry minutes is invalid!");
+                throw new InvalidOperationException("The JWT expiry minutes is invalid!");
 
             SymmetricSecurityKey key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey));
             SigningCredentials credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
@@ -52,12 +73,7 @@ namespace StockFlow.Application.Services
             };
 
             string token = new JsonWebTokenHandler().CreateToken(descriptor);
-            return new DTOs.Employee.EmployeeAuthentication.Token() { JWT = token, ExpiresOn = expiresOn };
-        }
-
-        public DTOs.Customer.CustomerAuthentication.Token GenerateToken(Customer user)
-        {
-            throw new NotImplementedException();
+            return (token, expiresOn);
         }
     }
 }

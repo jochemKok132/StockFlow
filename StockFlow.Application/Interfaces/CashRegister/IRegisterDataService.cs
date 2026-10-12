@@ -8,6 +8,7 @@ namespace StockFlow.Application.Interfaces.CashRegister
 {
     public interface IRegisterDataService
     {
-        Task FinalizePurchase(Purchase purchase, Guid employeeId);
+        Task<string> FinalizePurchase(Purchase purchase, Guid employeeId);
+        Task<ReturnResult> ProcessReturn(ReturnRequest request, Guid employeeId);
     }
 }

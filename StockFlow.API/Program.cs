@@ -1,6 +1,8 @@
 using Microsoft.OpenApi;
 using StockFlow.Application;
+using Microsoft.EntityFrameworkCore;
 using StockFlow.Infrastructure;
+using StockFlow.Infrastructure.Data;
 using System.Collections.Generic;
 namespace StockFlow.API
 {
@@ -48,7 +50,11 @@ namespace StockFlow.API
             });
             var app = builder.Build();
 
-            // Configure the HTTP request pipeline.
+            using (var scope = app.Services.CreateScope())
+            {
+                scope.ServiceProvider.GetRequiredService<ApplicationDBContext>().Database.Migrate();
+            }
+
             if (app.Environment.IsDevelopment())
             {
                 app.UseSwagger(options =>
@@ -60,6 +66,8 @@ namespace StockFlow.API
                     options.SwaggerEndpoint("/v1/specifications.json", "api");
                 });
             }
+
+            app.UseExceptionHandler("/error");
 
             app.UseCors("frontend-dev");
 

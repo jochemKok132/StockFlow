@@ -5,11 +5,16 @@
 <div class="tasks-header">
     <div>
         <h2>Customer management</h2>
+        <p>All registered customers.</p>
     </div>
 </div>
 <div class="card">
     <div class="filters-bar">
         <div class="filters">
+            <div class="filter-group">
+                <label>Customer ID</label>
+                <input type="text" inputmode="numeric" maxlength="8" @bind="pagination.CustomerId" @bind:event="oninput" @bind:after="ResetAndLoad" placeholder="e.g. 80000001" />
+            </div>
             <div class="filter-group">
                 <label>Customer name</label>
                 <input type="text" @bind="pagination.CustomerName" @bind:event="oninput" @bind:after="ResetAndLoad" placeholder="e.g. John" />
@@ -33,6 +38,9 @@
     <table class="tasks-table">
         <thead>
             <tr>
+                <th @onclick="() => OrderBy(CustomerOrderBy.CustomerId)" class="sortable">
+                    Customer ID @SortingArrow(CustomerOrderBy.CustomerId)
+                </th>
                 <th @onclick="() => OrderBy(CustomerOrderBy.FullName)" class="sortable">
                     Full name @SortingArrow(CustomerOrderBy.FullName)
                 </th>
@@ -66,6 +74,7 @@
                 @foreach (var customer in customers)
                 {
                     <tr>
+                        <td class="id-cell">@customer.CustomerId</td>
                         <td><strong>@customer.FullName</strong></td>
                         <td>@customer.Email</td>
                         <td>@customer.PostalCode</td>
@@ -111,6 +120,7 @@
         OrderType = OrderType.Ascending,
         PageNumber = 1,
         PageSize = 25,
+        CustomerId = null,
         CustomerName = null,
         Email = null,
         HouseNumber = null,

@@ -1,8 +1,9 @@
-﻿using StockFlow.Application.DTOs.AuditLogs.Customer;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using StockFlow.Application.Common;
 using StockFlow.Application.DTOs.Pagination;
 using StockFlow.Application.Interfaces.ManagementApp.AuditLogs;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
+using StockFlow.Application.DTOs.AuditLogs.Customer;
 
 namespace StockFlow.API.Controllers
 {
@@ -12,35 +13,31 @@ namespace StockFlow.API.Controllers
     {
         [Authorize(Roles = "Manager,Admin")]
         [HttpGet("GetAll")]
-        public async Task<IActionResult> GetAllCustomerLogsAsync([FromQuery] CustomerLogsPaginationDto pagination)
+        public async Task<IActionResult> GetAllAsync([FromQuery] CustomerLogsPaginationDto pagination)
         {
             try
             {
-                var customerLogs = await customerLogsService.GetAllCustomerLogsAsync(pagination);
-                return Ok(customerLogs);
+                List<CustomerLogsDto> logs = await customerLogsService.GetAllCustomerLogsAsync(pagination);
+                return Ok(ApiResponse<List<CustomerLogsDto>>.Ok(logs));
             }
-            catch (ArgumentException)
+            catch (ArgumentException exception)
             {
-                return BadRequest("There has been an unforseen error.");
+                return BadRequest(ApiResponse<List<CustomerLogsDto>>.Fail(exception.Message));
             }
         }
 
         [Authorize(Roles = "Manager,Admin")]
         [HttpPost("Create")]
-        public async Task<IActionResult> CreateCustomerLogsAsync(CreateCustomerLogsDto log)
+        public async Task<IActionResult> CreateAsync(CreateCustomerLogsDto log)
         {
             try
             {
                 await customerLogsService.CreateCustomerLogsAsync(log);
-                return NoContent();
+                return Ok(ApiResponse<object>.Ok(message: "Log created."));
             }
-            catch (ArgumentNullException exception)
+            catch (ArgumentException exception)
             {
-                return BadRequest(exception.Message);
-            }
-            catch (ArgumentException)
-            {
-                return BadRequest("There has been an unforseen error.");
+                return BadRequest(ApiResponse<object>.Fail(exception.Message));
             }
         }
     }

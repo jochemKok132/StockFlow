@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using StockFlow.Application.Common;
 using StockFlow.Application.DTOs.Enums;
 using StockFlow.Application.DTOs.Pagination;
 using StockFlow.Application.Interfaces.Repositories.EfRepositories;
@@ -42,6 +43,7 @@ namespace StockFlow.Infrastructure.Repositories.Stock
             var employeeName = pagination.EmployeeName?.ToLower() ?? string.Empty;
             var email = pagination.Email?.ToLower() ?? string.Empty;
             var customerName = pagination.CustomerName?.ToLower() ?? string.Empty;
+            var receiptId = pagination.ReceiptId?.Trim() ?? string.Empty;
 
             var noCustomerFilter = email.Length == 0 && customerName.Length == 0;
 
@@ -52,6 +54,7 @@ namespace StockFlow.Infrastructure.Repositories.Stock
                 .Include(e => e.Customer)
                 .Include(e => e.Employee)
                 .Where(e =>
+                    e.ReceiptId.Contains(receiptId) &&
                     e.Employee.EmployeeId.ToLower().Contains(employeeId) &&
                     e.Employee.FullName.ToLower().Contains(employeeName) &&
                     (e.Customer == null
@@ -83,6 +86,39 @@ namespace StockFlow.Infrastructure.Repositories.Stock
                 .Skip((pagination.PageNumber - 1) * pagination.PageSize)
                 .Take(pagination.PageSize)
                 .ToListAsync();
+        }
+
+        public async Task<CashRegisterLogs?> GetByReceiptIdAsync(string receiptId, bool track = false)
+        {
+            var query = _context.CashRegisterLogs
+                .Include(e => e.ProductsSold).ThenInclude(e => e.Product)
+                .Include(e => e.ProductsSold).ThenInclude(e => e.Sale)
+                .Include(e => e.Customer)
+                .Include(e => e.Employee)
+                .AsQueryable();
+
+            if (!track)
+                query = query.AsNoTracking();
+
+            return await query.FirstOrDefaultAsync(e => e.ReceiptId == receiptId);
+        }
+
+        public async Task<string> GetNewReceiptIdAsync()
+        {
+            var highest = await _context.CashRegisterLogs
+                .AsNoTracking()
+                .Where(e => e.ReceiptId.Length == IdentifierFormats.ReceiptIdLength)
+                .OrderByDescending(e => e.ReceiptId)
+                .Select(e => e.ReceiptId)
+                .FirstOrDefaultAsync();
+
+            long last = long.TryParse(highest, out var number) ? number : IdentifierFormats.FirstReceiptId - 1;
+            long next = Math.Max(last, IdentifierFormats.FirstReceiptId - 1) + 1;
+
+            if (next > IdentifierFormats.LastReceiptId)
+                throw new InvalidOperationException("There are no receipt ids left.");
+
+            return next.ToString();
         }
     }
 }

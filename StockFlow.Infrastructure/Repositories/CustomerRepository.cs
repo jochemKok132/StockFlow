@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using StockFlow.Application.Common;
 using StockFlow.Application.DTOs.Enums;
 using StockFlow.Application.DTOs.Pagination;
 using StockFlow.Application.Interfaces.Repositories.EfRepositories;
@@ -40,7 +41,27 @@ namespace StockFlow.Infrastructure.Repositories
 
         public Task<Customer?> GetCustomerByEmailAsync(string email)
         {
-            return _context.Customers.FirstOrDefaultAsync(e => e.Email == email);
+            var normalized = email.Trim().ToLower();
+            return _context.Customers.FirstOrDefaultAsync(e => !e.SoftDeleted && e.Email.ToLower() == normalized);
+        }
+        public async Task<string> GetNewCustomerIdAsync()
+        {
+            var ids = await _context.Customers
+                .Select(e => e.CustomerId)
+                .Where(id => id.Length == IdentifierFormats.CustomerIdLength)
+                .ToListAsync();
+
+            var highest = ids
+                .Select(id => int.TryParse(id, out var number) ? number : 0)
+                .DefaultIfEmpty(IdentifierFormats.FirstCustomerId - 1)
+                .Max();
+
+            return (Math.Max(highest, IdentifierFormats.FirstCustomerId - 1) + 1).ToString();
+        }
+
+        public Task<Customer?> GetCustomerByCustomerIdAsync(string customerId)
+        {
+            return _context.Customers.FirstOrDefaultAsync(e => !e.SoftDeleted && e.CustomerId == customerId);
         }
         public async Task<IEnumerable<Customer>> GetAllCustomersAsync(CustomerPaginationDto pagination)
         {
@@ -48,6 +69,7 @@ namespace StockFlow.Infrastructure.Repositories
                 .AsNoTracking()
                 .Where(e =>
                 !e.SoftDeleted &&
+                e.CustomerId.Contains(pagination.CustomerId ?? string.Empty) &&
                 e.FullName.ToLower().Contains((pagination.CustomerName ?? string.Empty).ToLower()) &&
                 e.HouseNumber.ToLower().Contains((pagination.HouseNumber ?? string.Empty).ToLower()) &&
                 e.PostalCode.ToLower().Contains((pagination.PostalCode ?? string.Empty).ToLower()) &&
@@ -57,6 +79,7 @@ namespace StockFlow.Infrastructure.Repositories
                 ? pagination.OrderBy switch
                 {
                     CustomerOrderBy.FullName => query.OrderByDescending(p => p.FullName),
+                    CustomerOrderBy.CustomerId => query.OrderByDescending(p => p.CustomerId),
                     CustomerOrderBy.SavedPoints => query.OrderByDescending(p => p.SavedPoints),
                     CustomerOrderBy.CreatedAt => query.OrderByDescending(p => p.CreatedAt),
                     CustomerOrderBy.UpdatedAt => query.OrderByDescending(p => p.UpdatedAt),
@@ -65,6 +88,7 @@ namespace StockFlow.Infrastructure.Repositories
                 : pagination.OrderBy switch
                 {
                     CustomerOrderBy.FullName => query.OrderBy(p => p.FullName),
+                    CustomerOrderBy.CustomerId => query.OrderBy(p => p.CustomerId),
                     CustomerOrderBy.SavedPoints => query.OrderBy(p => p.SavedPoints),
                     CustomerOrderBy.CreatedAt => query.OrderBy(p => p.CreatedAt),
                     CustomerOrderBy.UpdatedAt => query.OrderBy(p => p.UpdatedAt),

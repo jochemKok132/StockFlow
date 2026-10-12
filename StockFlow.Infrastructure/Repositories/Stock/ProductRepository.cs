@@ -126,8 +126,8 @@ namespace StockFlow.Infrastructure.Repositories.Stock
 
         public async Task<int> GetNewBarcode()
         {
-            var count = await _context.Products.CountAsync();
-            return 500000 + (count + 1);
+            var highest = await _context.Products.MaxAsync(p => (int?)p.Barcode) ?? 500000000;
+            return highest + 1;
         }
     }
 }

@@ -10,6 +10,7 @@ namespace StockFlow.Domain.Entities.CashRegister
         public Guid Id { get; set; }
         public Guid CashregisterLogId { get; set; }
         public int Amount { get; set; }
+        public int ReturnedAmount { get; set; }
         public decimal PriceAtTimeOfSale { get; set; }
 
         public Guid? ProductId { get; set; }

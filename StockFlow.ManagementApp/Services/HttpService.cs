@@ -1,4 +1,5 @@
-﻿using StockFlow.Application.Common;
+﻿using System.Text.Json;
+using StockFlow.Application.Common;
 using StockFlow.ManagementApp.Interfaces;
 using System.Net.Http.Json;
 
@@ -68,26 +69,19 @@ namespace StockFlow.ManagementApp.Services
 
 		private static async Task<ApiResponse<TResponse>> ReadAnswer<TResponse>(HttpResponseMessage response)
 		{
-
-			if (!response.IsSuccessStatusCode)
+			try
 			{
-				string message = await response.Content.ReadAsStringAsync();
-				return ApiResponse<TResponse>.Fail(string.IsNullOrWhiteSpace(message) ? Error : message);
+				var result = await response.Content.ReadFromJsonAsync<ApiResponse<TResponse>>();
+				if (result is not null)
+					return result;
+			}
+			catch (Exception exception) when (exception is JsonException or NotSupportedException)
+			{
 			}
 
-			if (response.StatusCode == System.Net.HttpStatusCode.NoContent
-				|| (response.Content.Headers.ContentLength ?? 0) == 0)
-				return ApiResponse<TResponse>.Success(default!);
-
-			var data = await response.Content.ReadFromJsonAsync<TResponse>();
-			if (data == null)
-				return ApiResponse<TResponse>.Fail(Error);
-
-			return ApiResponse<TResponse>.Success(data);
-
+			return response.IsSuccessStatusCode
+				? ApiResponse<TResponse>.Ok()
+				: ApiResponse<TResponse>.Fail(Error);
 		}
-
-
-
 	}
 }

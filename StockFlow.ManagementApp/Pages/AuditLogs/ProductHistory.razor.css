@@ -22,8 +22,6 @@
         color: var(--BorderStrongColor);
     }
 
-/* ---------- Product summary ---------- */
-
 .product-summary {
     display: flex;
     align-items: center;
@@ -134,8 +132,6 @@
     color: var(--MutedText);
 }
 
-/* ---------- History ---------- */
-
 .history-toolbar {
     display: flex;
     align-items: center;
@@ -211,6 +207,11 @@
 .badge-sold {
     background: var(--WarningBg);
     color: var(--WarningText);
+}
+
+.badge-returned {
+    background: var(--SurfaceColor);
+    color: var(--TextColor);
 }
 
 .badge-delete {

@@ -1,8 +1,9 @@
-﻿using StockFlow.Application.DTOs.AuditLogs.Stock;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using StockFlow.Application.Common;
 using StockFlow.Application.DTOs.Pagination;
 using StockFlow.Application.Interfaces.ManagementApp.AuditLogs;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
+using StockFlow.Application.DTOs.AuditLogs.Stock;
 
 namespace StockFlow.API.Controllers
 {
@@ -12,54 +13,50 @@ namespace StockFlow.API.Controllers
     {
         [Authorize(Roles = "ServiceDesk,ShiftLeader,Manager,Admin")]
         [HttpGet("GetAll")]
-        public async Task<IActionResult> GetAllStockLogsAsync([FromQuery] StockLogsPaginationDto pagination)
+        public async Task<IActionResult> GetAllAsync([FromQuery] StockLogsPaginationDto pagination)
         {
             try
             {
-                var stockLogs = await stockLogsService.GetAllStockLogsAsync(pagination);
-                return Ok(stockLogs);
+                List<StockLogsDto> logs = await stockLogsService.GetAllStockLogsAsync(pagination);
+                return Ok(ApiResponse<List<StockLogsDto>>.Ok(logs));
             }
-            catch (ArgumentException)
+            catch (ArgumentException exception)
             {
-                return BadRequest("There has been an unforseen error.");
+                return BadRequest(ApiResponse<List<StockLogsDto>>.Fail(exception.Message));
             }
         }
 
         [Authorize(Roles = "ServiceDesk,ShiftLeader,Manager,Admin")]
         [HttpGet("ProductHistory/{barcode:int}")]
-        public async Task<IActionResult> GetProductStockHistoryAsync(int barcode)
+        public async Task<IActionResult> GetProductHistoryAsync(int barcode)
         {
             try
             {
-                var history = await stockLogsService.GetProductStockHistoryAsync(barcode);
-                return Ok(history);
+                ProductStockHistoryDto history = await stockLogsService.GetProductStockHistoryAsync(barcode);
+                return Ok(ApiResponse<ProductStockHistoryDto>.Ok(history));
+            }
+            catch (ArgumentException exception)
+            {
+                return BadRequest(ApiResponse<ProductStockHistoryDto>.Fail(exception.Message));
             }
             catch (KeyNotFoundException exception)
             {
-                return NotFound(exception.Message);
-            }
-            catch (ArgumentException)
-            {
-                return BadRequest("There has been an unforseen error.");
+                return NotFound(ApiResponse<ProductStockHistoryDto>.Fail(exception.Message));
             }
         }
 
         [Authorize(Roles = "Manager,Admin")]
         [HttpPost("Create")]
-        public async Task<IActionResult> CreateStockLogsAsync(CreateStockLogsDto log)
+        public async Task<IActionResult> CreateAsync(CreateStockLogsDto log)
         {
             try
             {
                 await stockLogsService.CreateStockLogsAsync(log);
-                return NoContent();
+                return Ok(ApiResponse<object>.Ok(message: "Log created."));
             }
-            catch (ArgumentNullException exception)
+            catch (ArgumentException exception)
             {
-                return BadRequest(exception.Message);
-            }
-            catch (ArgumentException)
-            {
-                return BadRequest("There has been an unforseen error.");
+                return BadRequest(ApiResponse<object>.Fail(exception.Message));
             }
         }
     }

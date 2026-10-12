@@ -11,9 +11,11 @@ namespace StockFlow.Application.Interfaces
     {
         Task<Token> LoginAsync(LoginRequest request);
         Task UpdateCustomerAsync(UpdateCustomerDto dto);
-        Task RegisterCustomerAsync(RegisterRequest register);
+        Task ChangePasswordAsync(Guid customerId, ChangePasswordRequest request);
+        Task<Token> RegisterCustomerAsync(RegisterRequest register);
         Task<CustomerDto> GetCustomerByEmailAsync(string id);
         Task<CustomerDto> GetCustomerByIdAsync(Guid id);
+        Task<CustomerDto> GetCustomerByCustomerIdAsync(string customerId);
         Task<List<CustomerDto>> GetAllCustomersAsync(CustomerPaginationDto pagination);
     }
 }

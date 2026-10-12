@@ -219,13 +219,20 @@
 
         try
         {
+            string result = "";
             if (isCreateMode && item is CreateShelfDto createDto)
             {
-                await shelfService.CreateShelfAsync(createDto);
+                result = await shelfService.CreateShelfAsync(createDto);
             }
             else if (!isCreateMode && item is UpdateShelfDto updateDto)
             {
-                await shelfService.UpdateShelfAsync(updateDto);
+                result = await shelfService.UpdateShelfAsync(updateDto);
+            }
+
+            if (result.StartsWith("Error:"))
+            {
+                changesError = result["Error:".Length..].Trim();
+                return;
             }
 
             showChanges = false;

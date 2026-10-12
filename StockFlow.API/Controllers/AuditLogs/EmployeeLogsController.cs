@@ -1,47 +1,43 @@
-﻿using StockFlow.Application.DTOs.AuditLogs.Stock;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using StockFlow.Application.Common;
 using StockFlow.Application.DTOs.Pagination;
 using StockFlow.Application.Interfaces.ManagementApp.AuditLogs;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
 using StockFlow.Application.DTOs.AuditLogs.Employee;
 
 namespace StockFlow.API.Controllers
 {
     [ApiController]
     [Route("[controller]")]
-    public class EmployeeLogsController(IEmployeeLogsService EmployeeLogsService) : ControllerBase
+    public class EmployeeLogsController(IEmployeeLogsService employeeLogsService) : ControllerBase
     {
         [Authorize(Roles = "ServiceDesk,ShiftLeader,Manager,Admin")]
         [HttpGet("GetAll")]
-        public async Task<IActionResult> GetAllEmployeeLogsAsync([FromQuery] EmployeeLogsPaginationDto pagination)
+        public async Task<IActionResult> GetAllAsync([FromQuery] EmployeeLogsPaginationDto pagination)
         {
             try
             {
-                var EmployeeLogs = await EmployeeLogsService.GetAllEmployeeLogsAsync(pagination);
-                return Ok(EmployeeLogs);
+                List<EmployeeLogsDto> logs = await employeeLogsService.GetAllEmployeeLogsAsync(pagination);
+                return Ok(ApiResponse<List<EmployeeLogsDto>>.Ok(logs));
             }
-            catch (ArgumentException)
+            catch (ArgumentException exception)
             {
-                return BadRequest("There has been an unforseen error.");
+                return BadRequest(ApiResponse<List<EmployeeLogsDto>>.Fail(exception.Message));
             }
         }
 
         [Authorize(Roles = "Manager,Admin")]
         [HttpPost("Create")]
-        public async Task<IActionResult> CreateEmployeeLogsAsync(CreateEmployeeLogsDto log)
+        public async Task<IActionResult> CreateAsync(CreateEmployeeLogsDto log)
         {
             try
             {
-                await EmployeeLogsService.CreateEmployeeLogsAsync(log);
-                return NoContent();
+                await employeeLogsService.CreateEmployeeLogsAsync(log);
+                return Ok(ApiResponse<object>.Ok(message: "Log created."));
             }
-            catch (ArgumentNullException exception)
+            catch (ArgumentException exception)
             {
-                return BadRequest(exception.Message);
-            }
-            catch (ArgumentException)
-            {
-                return BadRequest("There has been an unforseen error.");
+                return BadRequest(ApiResponse<object>.Fail(exception.Message));
             }
         }
     }

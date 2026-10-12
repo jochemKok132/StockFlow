@@ -13,6 +13,7 @@ namespace StockFlow.Application.DTOs.CashRegister
         public Guid? CustomerId { get; set; }
         public double TotalPrice { get; set; }
         public double TotalOff { get; set; }
+        public int PointsUsed { get; set; }
         public IEnumerable<RegisterItemDetailDto> ProductsSold { get; set; } = [];
     }
 }

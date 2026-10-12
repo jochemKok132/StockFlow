@@ -15,6 +15,7 @@ namespace StockFlow.ManagementApp.Services.People
                 $"&pageSize={pagination.PageSize}" +
                 $"&orderBy={pagination.OrderBy}" +
                 $"&orderType={pagination.OrderType}" +
+                $"&customerId={pagination.CustomerId}" +
                 $"&email={pagination.Email}" +
                 $"&houseNumber={pagination.HouseNumber}" +
                 $"&postalCode={pagination.PostalCode}" +

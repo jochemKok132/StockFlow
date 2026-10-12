@@ -1,9 +1,9 @@
-﻿using StockFlow.Application.DTOs.Pagination;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using StockFlow.Application.Common;
+using StockFlow.Application.DTOs.Pagination;
 using StockFlow.Application.DTOs.Stock.Shelf;
 using StockFlow.Application.Interfaces.ManagementApp.Stock;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
-using System.Security.Claims;
 
 namespace StockFlow.API.Controllers
 {
@@ -13,76 +13,74 @@ namespace StockFlow.API.Controllers
     {
         [Authorize]
         [HttpGet("GetAll")]
-        public async Task<IActionResult> GetAllShelvesAsync([FromQuery] ShelfPaginationDto pagination)
+        public async Task<IActionResult> GetAllAsync([FromQuery] ShelfPaginationDto pagination)
         {
             try
             {
-                var shelves = await shelfService.GetAllShelvesAsync(pagination);
-                return Ok(shelves);
+                List<ShelfDto> items = await shelfService.GetAllShelvesAsync(pagination);
+                return Ok(ApiResponse<List<ShelfDto>>.Ok(items));
             }
-            catch (ArgumentException)
+            catch (ArgumentException exception)
             {
-                return BadRequest("There has been an unforseen error.");
+                return BadRequest(ApiResponse<List<ShelfDto>>.Fail(exception.Message));
             }
         }
 
         [Authorize(Roles = "Manager,Admin")]
         [HttpPost("Create")]
-        public async Task<IActionResult> CreateShelfAsync(CreateShelfDto shelf)
+        public async Task<IActionResult> CreateAsync(CreateShelfDto request)
         {
-            var userId = Request.HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (!User.TryGetUserId(out Guid userId))
+                return Unauthorized(ApiResponse<object>.Fail(ApiMessages.NotLoggedIn));
+
             try
             {
-                await shelfService.CreateShelfAsync(shelf, Guid.Parse(userId));
-                return NoContent();
+                await shelfService.CreateShelfAsync(request, userId);
+                return Ok(ApiResponse<object>.Ok(message: "Shelf created."));
             }
-            catch (ArgumentNullException exception)
+            catch (ArgumentException exception)
             {
-                return BadRequest(exception.Message);
-            }
-            catch (ArgumentException)
-            {
-                return BadRequest("There has been an unforseen error.");
+                return BadRequest(ApiResponse<object>.Fail(exception.Message));
             }
         }
 
         [Authorize(Roles = "Manager,Admin")]
         [HttpPut("Update")]
-        public async Task<IActionResult> UpdateShelfAsync(UpdateShelfDto shelf)
+        public async Task<IActionResult> UpdateAsync(UpdateShelfDto request)
         {
-            var userId = Request.HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (!User.TryGetUserId(out Guid userId))
+                return Unauthorized(ApiResponse<object>.Fail(ApiMessages.NotLoggedIn));
+
             try
             {
-                await shelfService.UpdateShelfAsync(shelf, Guid.Parse(userId));
-                return NoContent();
+                await shelfService.UpdateShelfAsync(request, userId);
+                return Ok(ApiResponse<object>.Ok(message: "Shelf updated."));
+            }
+            catch (ArgumentException exception)
+            {
+                return BadRequest(ApiResponse<object>.Fail(exception.Message));
             }
             catch (KeyNotFoundException exception)
             {
-                return BadRequest(exception.Message);
-            }
-            catch (ArgumentException)
-            {
-                return BadRequest("There has been an unforseen error.");
+                return NotFound(ApiResponse<object>.Fail(exception.Message));
             }
         }
 
         [Authorize(Roles = "Manager,Admin")]
-        [HttpDelete("SoftDelete/{id}")]
-        public async Task<IActionResult> SoftDeleteShelfAsync(Guid id)
+        [HttpDelete("SoftDelete/{id:guid}")]
+        public async Task<IActionResult> SoftDeleteAsync(Guid id)
         {
-            var userId = Request.HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (!User.TryGetUserId(out Guid userId))
+                return Unauthorized(ApiResponse<object>.Fail(ApiMessages.NotLoggedIn));
+
             try
             {
-                await shelfService.SoftDeleteShelfAsync(id, Guid.Parse(userId));
-                return NoContent();
+                await shelfService.SoftDeleteShelfAsync(id, userId);
+                return Ok(ApiResponse<object>.Ok(message: "Shelf deleted."));
             }
             catch (KeyNotFoundException exception)
             {
-                return BadRequest(exception.Message);
-            }
-            catch (ArgumentException)
-            {
-                return BadRequest("There has been an unforseen error.");
+                return NotFound(ApiResponse<object>.Fail(exception.Message));
             }
         }
     }

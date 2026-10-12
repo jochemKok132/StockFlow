@@ -24,8 +24,11 @@ namespace StockFlow.Application.Mappings.AuditLogs
                 CreatedAt = log.CreatedAt,
                 EmployeeId = log.EmployeeId,
                 Id = log.Id,
+                ReceiptId = log.ReceiptId,
                 ProductsSold = log.ProductsSold.Select(p => p.ToRegisterItemDetailDto()),
                 TotalOff = log.TotalOff,
+                PointsUsed = log.PointsUsed,
+                PointsEarned = log.PointsEarned,
                 TotalPrice = log.TotalPrice,
             };
         }
@@ -38,14 +41,16 @@ namespace StockFlow.Application.Mappings.AuditLogs
                 Id = Guid.NewGuid(),
                 ProductsSold = dto.ProductsSold.Select(e => e.ToRegisterItemDetailEntity()),
                 TotalOff = dto.TotalOff,
+                PointsUsed = dto.PointsUsed,
                 TotalPrice = dto.TotalPrice,
             };
         }
-        public static CashRegisterLogs ToCashRegisterLogsEntity(this CreateCashRegisterLogsDto dto)
+        public static CashRegisterLogs ToCashRegisterLogsEntity(this CreateCashRegisterLogsDto dto, string receiptId)
         {
             var newId = Guid.NewGuid();
             return new CashRegisterLogs()
             {
+                ReceiptId = receiptId,
                 CustomerId = dto.CustomerId,
                 EmployeeId = dto.EmployeeId,
                 Id = newId,
@@ -57,6 +62,8 @@ namespace StockFlow.Application.Mappings.AuditLogs
                     })
                     .ToList(),
                 TotalOff = dto.TotalOff,
+                PointsUsed = dto.PointsUsed,
+                PointsEarned = dto.PointsEarned,
                 TotalPrice = dto.TotalPrice,
             };
         }
