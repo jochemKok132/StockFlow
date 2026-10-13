@@ -13,7 +13,7 @@ namespace StockFlow.Application.Interfaces.Repositories.ManagementApp.Stock
         IEfCreatableRepository<Product>, 
         IEfSoftDeletableRepository<Product>
     {
-        Task<Product> GetProductByBarcodeAsync(int barcode);
+        Task<Product?> GetProductByBarcodeAsync(int barcode);
         Task<IEnumerable<Product>> GetAllProductsAsync(ProductPaginationDto pagination);
         Task<IEnumerable<Product>> GetAllProductsWithTagsAsync(List<string> tags);
         Task<int> GetNewBarcode();

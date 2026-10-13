@@ -38,7 +38,7 @@ StockFlow is an inventory management system for a (Dutch) hardware store. It con
 | `StockFlow.API` | ASP.NET Core Web API | Controllers, JWT authentication, `ErrorController`, Swagger. |
 | `StockFlow.ManagementApp` | Blazor WebAssembly | Office application: inventory, brands, sales, shelves, logs, employees and customers. |
 | `StockFlow.CashRegister` | WinForms (.NET, Windows) | Point of sale: scan products, attach customers, take payment, take returns. |
-| `StockFlow.UnitTests` | xUnit test project | Tests for the shared rules (points, refunds, identifiers) and the purchase / return validation. |
+| `StockFlow.UnitTests` | xUnit + Moq test project | Tests for every service, validator, mapping, shared rule, repository (in-memory SQLite) and the main controllers. |
 
 The solution file is `StockFlow.slnx` (folders `Backend` and `Frontend`; `StockFlow.Shared` is under `Backend`).
 
@@ -50,7 +50,7 @@ StockFlow.Infrastructure  ──► Application, Domain
 StockFlow.API             ──► Application, Infrastructure, Shared
 StockFlow.ManagementApp   ──► Shared
 StockFlow.CashRegister    ──► Shared
-StockFlow.UnitTests       ──► Application, Domain, Shared
+StockFlow.UnitTests       ──► API, Application, Domain, Infrastructure, Shared
 ```
 
 ---
@@ -166,6 +166,7 @@ Blazor WebAssembly app (`StockFlow.ManagementApp`). Log in with an employee id a
 
 | Page | Route | Features |
 |---|---|---|
+| Releases | `/` (home, also the version link at the bottom of the sidebar) | The versions of the management app and the API next to the latest release (*Up to date* / *Update available*), a download card for the newest cash register zip, and every GitHub release with its notes, badges (*Latest*, *Pre-release*, *Running here*) and download links. |
 | Inventory | `/inventory` | Paged and sortable product list with filters. Click a row for the product details panel (image, price incl. sale, location, stock, tags, brand, description). Create, edit and delete for managers. In the create / edit form, brand and shelf are searchable selects and sales tags are a searchable multi-select that shows which sale each tag belongs to. |
 | Brands | `/productbrands` | List, create, edit, delete brands. |
 | Sales | `/sales` | List, create, edit, delete sales (percentage off + sales tags). Sales tags are a searchable multi-select with the tags already in use; new tags can be added by typing them. |
@@ -289,6 +290,7 @@ Both clients read this envelope in their `HttpService.ReadAnswer`.
 | `CashRegisterLogs` | `GET GetAll` (filters include `receiptId`), `POST Create` (returns the receipt id) |
 | `CustomerLogs` | `GET GetAll`, `POST Create` |
 | `EmployeeLogs` | `GET GetAll`, `POST Create` |
+| `Releases` | `GET` (employees: all GitHub releases with notes and assets), `GET Latest` (anonymous: newest non-pre-release, used by the cash register's update check), `GET Version` (anonymous: the running API version) |
 
 List endpoints take paging via the query string: `pageNumber`, `pageSize`, `orderBy`, `orderType` plus the filters of that list (for example `customerId`, `customerName`, `email`).
 
@@ -379,6 +381,9 @@ Seeders: `EmployeeSeeder`, `CustomerSeeder`, `ShelfSeeder`, `ProductBrandSeeder`
 | `JWT:Issuer` | Token issuer |
 | `JWT:Key` | Signing key; keep it secret and long enough for HMAC-SHA256 |
 | `JWT:ExpiryMinutes` | Token lifetime |
+| `Releases:Repository` | GitHub repository the releases page reads (`owner/name`, default `jochemKok132/StockFlow`) |
+| `Releases:Token` | Optional GitHub token. Only needed if the repository is private (a fine-grained token with read access to *Contents*); it also raises GitHub's rate limit |
+| `Releases:CacheMinutes` | How long the API keeps the release list before asking GitHub again (default 10). If GitHub is unreachable the last known list is used |
 
 - Every key can be overridden with an environment variable using `__`, for example `JWT__Key` or `Cors__AllowedOrigins__0`. Production secrets go in environment variables, never in `appsettings.json`.
 - **Management app:** the API address is `ApiBaseUrl` in `wwwroot/appsettings.json` (`/stockflow/api/`; the Docker image writes this file from the `API_BASE_URL` build argument) and `wwwroot/appsettings.Development.json` (`https://localhost:7037/`, used by the dev server).
@@ -406,17 +411,21 @@ The cash register mirrors the same palette in `Screens/Theme.cs`.
 
 ## Tests
 
-`StockFlow.UnitTests` (xUnit). Run with `dotnet test` from the repository root or the Test Explorer.
+`StockFlow.UnitTests` (xUnit + Moq, about 300 tests). Run with `dotnet test` from the repository root or the Test Explorer. The release workflow runs them before anything is published.
 
-| Test class | Covers |
+| Folder | Covers |
 |---|---|
-| `LoyaltyPointsTests` | Points earned per whole euro (1.99 → 1, 2.00 → 2), all-or-nothing redeeming, euro value, welcome points |
-| `ReturnRulesTests` | Paid share and proportional refunds, rounding |
-| `IdentifierFormatsTests` | Barcode (9 digits), customer id (8, starts with 8), receipt id (10, starts with 9) |
-| `PurchaseValidationTests` | Empty purchase, sales and points without a customer, partial points, too many points, valid purchases |
-| `ReturnValidationTests` | Receipt id format, empty returns, amounts |
+| `Services/` | Every Application service with mocked repositories: `CustomerService` (login, registration with welcome points, password change, update), `EmployeeService` (create, login, update, password reset), `ProductService`, `ProductBrandService`, `SalesService`, `ShelfService` (create, update, soft delete, not-found paths, sales/product re-linking), `RegisterDataService` (purchases, stock changes, points earned/used, returns, refunds, points taken back) and `AuthenticationService` (JWT claims, expiry, missing configuration) |
+| `Services/AuditLogs/` | `CashRegisterLogsService` (receipt ids), `CustomerLogsService`, `EmployeeLogsService`, `StockLogsService` (product history) |
+| `Validations/` | All validation rules: customers, employees, passwords, products, sales, shelves, brands, pagination, logs, purchases and returns |
+| `Mappings/` | `DifferenceFinder` (log messages), enum mappings, entity ↔ DTO mappings |
+| `Common/` | Shared rules: `LoyaltyPoints`, `ReturnRules`, `IdentifierFormats`, `AppVersion` (display, comparing versions) |
+| `Infrastructure/` | `GitHubReleaseService` against a fake GitHub (mapping, drafts skipped, cash register asset, caching, stale fallback, errors), BCrypt `Password`, and the repositories against a real in-memory SQLite database (new customer / employee / receipt ids, barcodes, tag matching, soft delete, receipt filter, unique receipt ids) |
+| `Api/` | Controllers: status codes and `ApiResponse` envelopes for the cash register, customer, employee and releases endpoints (200 / 400 / 401 / 404 / 503) |
 
-Naming follows `MethodName_Scenario_ExpectedResult`, with Arrange / Act / Assert blocks.
+Conventions: one `Mock<T>` per constructor dependency, system under test in `_sut`, names like `MethodName_Scenario_ExpectedResult`, Arrange / Act / Assert blocks, `[Theory]` for input ranges. `Helpers/TestData.cs` builds the sample entities. Repository tests create only the tables (`CreateTables()`), so the seeders do not run and every test starts with an empty database.
+
+The Blazor management app and the WinForms cash register have no automated UI tests; their logic lives in the services and shared rules that are tested here.
 
 ---
 
@@ -445,6 +454,14 @@ Versions are controlled with **GitHub Releases**. Publishing a release starts `.
 3. Follow the progress under **Actions**. When it is done, the images are under **Packages** and the zip is on the release page.
 
 Mark a release as **pre-release** to test it: it gets its version tags but does not move `latest`.
+
+### Versions
+
+- The version comes from the release tag: the workflow builds with `-p:Version=1.2.0` for `v1.2.0`. Local builds use `0.0.0-dev` from `Directory.Build.props` and show as *dev build*.
+- `AppVersion` (`StockFlow.Shared/Common/AppVersion.cs`) reads the version from the assembly and compares versions.
+- **Management app:** the sidebar shows `StockFlow v1.2.0` (links to the releases page); the releases page shows the management app and API versions.
+- **Cash register:** the window title, the login screen and the status bar show the version. On the login screen it asks the API for the latest release (`Releases/Latest`) and shows *Nieuwe versie … beschikbaar* when a newer version exists.
+- The releases page and the update check read GitHub through the API (`GitHubReleaseService`), cached for `Releases:CacheMinutes`, so browsers and registers never call GitHub directly.
 
 ### Where it runs
 
@@ -481,7 +498,7 @@ On the server (over SSH):
    curl -fsSL  https://raw.githubusercontent.com/jochemKok132/StockFlow/master/deploy/.env.example -o .env
    ```
    (If the repository is private, copy the files with `scp` from your computer instead.)
-3. **Fill in `.env`**: `nano .env`. `DOMAIN=jochemkok.nl`, `GHCR_OWNER=jochemkok132`, and a new `JWT_KEY` from `openssl rand -base64 64`.
+3. **Fill in `.env`**: `nano .env`. `DOMAIN=jochemkok.nl`, `GHCR_OWNER=jochemkok132`, and a new `JWT_KEY` from `openssl rand -base64 64`. `GITHUB_RELEASES_TOKEN` stays empty unless the repository is private.
 4. **Log in to GitHub's registry** (only needed while the packages are private), with a personal access token that has `read:packages`:
    ```bash
    echo <token> | docker login ghcr.io -u jochemKok132 --password-stdin
@@ -531,16 +548,17 @@ docker run --rm -v stockflow_stockflow-data:/data -v "$PWD":/backup alpine tar c
 
 ### Cash register on the shop computers
 
-1. Download `StockFlow.CashRegister-vX.Y.Z-win-x64.zip` from the release page.
+1. Download the zip from the **Releases** page in the management app (or the GitHub release page).
 2. Unzip it anywhere, for example `C:\StockFlow\CashRegister`.
 3. If `REGISTER_API_URL` was not set, open `appsettings.json` and set `ApiBaseUrl` to `https://jochemkok.nl/stockflow/api/`.
-4. Start `StockFlow.CashRegister.exe`. To update, download the new zip and replace the files (keep your `appsettings.json`).
+4. Start `StockFlow.CashRegister.exe`. To update, download the new zip and replace the files (keep your `appsettings.json`). The login screen tells you when a newer version is available.
 
 ---
 
 ## Known limitations
 
 - Customer login and registration exist in the API, but there is no customer portal (front end) yet. It is planned at `https://jochemkok.nl/stockflow/public/`: add it as a third image in the release workflow and `docker-compose.yml` (port 5082), and uncomment the `/stockflow/public/` block in `deploy/nginx-stockflow.conf`.
-- The cash register does not update itself; shop computers need the new zip after each release.
+- The cash register does not update itself; it only shows that a new version exists. Shop computers need the new zip after each release.
+- If the GitHub repository is private, the download links on the releases page only work for people who are logged in to GitHub with access to the repository (and the API needs `Releases:Token`).
 - The default Docker setup is single-instance (SQLite + migrate on startup). Moving to multiple API instances needs a server database and migrations as a pipeline step.
 - Points earned before `AddPointsEarned` existed are unknown (0), so returns on those older receipts don't take points back.

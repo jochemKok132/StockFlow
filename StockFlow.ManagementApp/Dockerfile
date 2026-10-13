@@ -1,7 +1,8 @@
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
-ARG VERSION=0.0.0
+ARG VERSION=0.0.0-dev
 WORKDIR /src
 
+COPY Directory.Build.props ./
 COPY StockFlow.ManagementApp/StockFlow.ManagementApp.csproj StockFlow.ManagementApp/
 COPY StockFlow.Shared/StockFlow.Shared.csproj StockFlow.Shared/
 RUN dotnet restore StockFlow.ManagementApp/StockFlow.ManagementApp.csproj

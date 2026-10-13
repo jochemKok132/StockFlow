@@ -1,4 +1,5 @@
 ﻿using StockFlow.Shared.DTOs.CashRegister;
+using StockFlow.Shared.DTOs.Stock.Product;
 using StockFlow.Application.Mappings.Stock;
 using StockFlow.Domain.Entities.CashRegister;
 using System;
@@ -17,7 +18,7 @@ namespace StockFlow.Application.Extensions.CashRegister
                 Amount = dto.Amount,
                 ReturnedAmount = dto.ReturnedAmount,
                 PriceAtTimeOfSale = dto.PriceAtTimeOfSale,
-                Product = dto.Product.ToProductDto(),
+                Product = dto.Product?.ToProductDto() ?? new ProductDto(),
                 Sale = dto.Sale?.ToSalesDto(),
             };
         }

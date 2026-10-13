@@ -3,6 +3,7 @@ using StockFlow.Shared.DTOs.AuditLogs.Stock;
 using StockFlow.Shared.DTOs.CashRegister;
 using StockFlow.Shared.DTOs.Customer;
 using StockFlow.Shared.DTOs.Pagination;
+using StockFlow.Shared.DTOs.Releases;
 using StockFlow.Shared.DTOs.Stock.Product;
 
 namespace StockFlow.CashRegister.Interfaces
@@ -14,6 +15,7 @@ namespace StockFlow.CashRegister.Interfaces
         Task<(CustomerDto?, string error)> GetCustomerAsync(string customerId);
         Task<(CashRegisterLogsDto?, string error)> GetReceiptAsync(string receiptId);
         Task<(ReturnResult?, string error)> ProcessReturnAsync(ReturnRequest request);
+        Task<ReleaseDto?> GetLatestReleaseAsync();
     }
 }
 

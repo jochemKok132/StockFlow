@@ -1,11 +1,12 @@
 ﻿@inherits LayoutComponentBase
+@using StockFlow.Shared.Common
 @inject IAuthService AuthService
 @inject NavigationManager Nav
 <div class="ml-page">
     <nav class="ml-sidebar">
         <NavLink href="" class="ml-brand-link" Match="NavLinkMatch.Prefix">
             <div class="ml-sidebar-brand">
-                <img class="ml-brand-icon" src="/icon-192.png" />
+                <img class="ml-brand-icon" src="icon-192.png" />
                 <span class="ml-brand-name">StockFlow</span>
             </div>
         </NavLink>
@@ -85,6 +86,11 @@
                     <i class="bi bi-box-arrow-right"></i>
                     <span>LogOut</span>
                 </button>
+
+                <NavLink href="" class="ml-version" Match="NavLinkMatch.All" title="Releases">
+                    <i class="bi bi-tag"></i>
+                    <span>StockFlow @AppVersion.Display(version)</span>
+                </NavLink>
             </Authorized>
         </AuthorizeView>
     </nav>
@@ -96,6 +102,8 @@
 
 
 @code {
+    private readonly string version = AppVersion.Of(typeof(Program).Assembly);
+
     private async Task HandleLogout()
     {
         await AuthService.LogoutAsync();

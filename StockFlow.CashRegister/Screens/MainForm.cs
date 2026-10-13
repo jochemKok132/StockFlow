@@ -1,4 +1,5 @@
 ﻿using StockFlow.CashRegister.Authentication;
+using StockFlow.Shared.Common;
 using StockFlow.CashRegister.Interfaces;
 using StockFlow.CashRegister.Screens;
 
@@ -30,6 +31,7 @@ namespace StockFlow.CashRegister
             _clockTimer = new System.Windows.Forms.Timer(components) { Interval = 1000 };
 
             ApplyTheme();
+            Text = $"StockFlow Kassa {AppVersion.Display(Program.Version)}";
 
             ScanView = new ScanScreen(this, cashRegister) { Dock = DockStyle.Fill };
             PurchasingView = new PurchasingScreen(this, cashRegister) { Dock = DockStyle.Fill };
@@ -69,7 +71,7 @@ namespace StockFlow.CashRegister
         private void UpdateStatus()
         {
             string employee = string.IsNullOrEmpty(_employeeName) ? "" : $"{_employeeName}   |   ";
-            lblStatusInfo.Text = $"{employee}{DateTime.Now:dd-MM-yyyy HH:mm:ss}";
+            lblStatusInfo.Text = $"{employee}{AppVersion.Display(Program.Version)}   |   {DateTime.Now:dd-MM-yyyy HH:mm:ss}";
         }
 
         private async void btnLogout_Click(object? sender, EventArgs e)

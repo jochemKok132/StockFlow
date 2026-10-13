@@ -27,8 +27,8 @@ namespace StockFlow.Application.Mappings.Stock
         {
             return new Shelf()
             {
-                ShelfLocation = dto.ShelfLocation,
-                ShelfName = dto.ShelfName,
+                ShelfLocation = dto.ShelfLocation ?? string.Empty,
+                ShelfName = dto.ShelfName ?? string.Empty,
                 Id = Guid.NewGuid(),
                 ShelfHallway = dto.ShelfHallway,
             };

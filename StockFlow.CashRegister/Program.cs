@@ -4,12 +4,14 @@ using StockFlow.CashRegister.Authentication;
 using StockFlow.CashRegister.Interfaces;
 using StockFlow.CashRegister.Screens;
 using StockFlow.CashRegister.Services;
+using StockFlow.Shared.Common;
 
 namespace StockFlow.CashRegister
 {
     static class Program
     {
         public static IServiceProvider ServiceProvider { get; private set; } = null!;
+        public static string Version { get; } = AppVersion.Of(typeof(Program).Assembly);
 
         [STAThread]
         static void Main()

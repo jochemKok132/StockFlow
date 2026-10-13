@@ -48,12 +48,14 @@ namespace StockFlow.Application.Services.ManagementApp
         public async Task<EmployeeDto> GetEmployeeByEmployeeIdAsync(string id)
         {
             var employee = await employeeRepository.GetEmployeeByEmployeeIdAsync(id);
+            if (employee == null) throw new KeyNotFoundException($"Employee with employee id {id} not found.");
             return employee.ToEmployeeDto();
         }
 
         public async Task<EmployeeDto> GetEmployeeByIdAsync(Guid id)
         {
             var employee = await employeeRepository.GetByIdAsync(id);
+            if (employee == null) throw new KeyNotFoundException($"Employee with id {id} not found.");
             return employee.ToEmployeeDto();
         }
 

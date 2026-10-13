@@ -33,7 +33,7 @@ namespace StockFlow.Application.Mappings.People
         }
         public static void ToEmployeeEntity(this Employee entity, UpdateEmployeeDto dto)
         {
-            entity.FullName = dto.FullName;
+            entity.FullName = dto.FullName ?? entity.FullName;
             entity.Role = dto.Role.ToDomain();
         }
     }

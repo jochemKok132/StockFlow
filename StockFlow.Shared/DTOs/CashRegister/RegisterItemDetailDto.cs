@@ -9,7 +9,7 @@ namespace StockFlow.Shared.DTOs.CashRegister
     public class RegisterItemDetailDto
     {
         public Guid Id { get; set; }
-        public ProductDto Product { get; set; }
+        public ProductDto Product { get; set; } = new();
         public int Amount { get; set; }
         public int ReturnedAmount { get; set; }
         public decimal PriceAtTimeOfSale { get; set; }

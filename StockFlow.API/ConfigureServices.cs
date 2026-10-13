@@ -3,6 +3,10 @@ using Microsoft.AspNetCore.Mvc;
 using StockFlow.Shared.Common;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using System.Net.Http.Headers;
+using Microsoft.Extensions.Options;
+using StockFlow.Application.Interfaces;
+using StockFlow.Infrastructure.Releases;
 
 namespace StockFlow.API
 {
@@ -12,6 +16,31 @@ namespace StockFlow.API
         {
             services.RegisterAuthenticationServices(configuration);
             services.RegisterValidationResponses();
+            services.RegisterReleaseServices(configuration);
+
+            return services;
+        }
+
+        public static IServiceCollection RegisterReleaseServices(this IServiceCollection services, IConfiguration configuration)
+        {
+            services.AddOptions<GitHubReleasesOptions>()
+                .Bind(configuration.GetSection(GitHubReleasesOptions.SectionName))
+                .ValidateDataAnnotations()
+                .ValidateOnStart();
+
+            services.AddSingleton<ReleaseCache>();
+            services.AddHttpClient<IReleaseService, GitHubReleaseService>((provider, client) =>
+            {
+                var options = provider.GetRequiredService<IOptions<GitHubReleasesOptions>>().Value;
+
+                client.BaseAddress = new Uri("https://api.github.com/");
+                client.Timeout = TimeSpan.FromSeconds(10);
+                client.DefaultRequestHeaders.UserAgent.ParseAdd("StockFlow");
+                client.DefaultRequestHeaders.Accept.ParseAdd("application/vnd.github+json");
+
+                if (!string.IsNullOrWhiteSpace(options.Token))
+                    client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", options.Token);
+            });
 
             return services;
         }

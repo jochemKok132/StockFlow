@@ -1,10 +1,228 @@
 ﻿@page "/"
 @attribute [Authorize]
+@using System.Text.RegularExpressions
+@using StockFlow.Shared.Common
+@using StockFlow.Shared.DTOs.Releases
+@inject IReleaseService ReleaseService
 
 <div class="tasks-header">
     <div>
-        <h2>Release notes</h2>
-        <p>(W.I.P.) I will put the release notes here.</p>
+        <h2>Releases</h2>
+        <p>Versions of StockFlow, release notes and the cash register download.</p>
     </div>
 </div>
 
+<div class="card version-strip">
+    <div class="version-item">
+        <span class="version-label">Management app</span>
+        <span class="version-value">@AppVersion.Display(managementVersion)</span>
+    </div>
+    <div class="version-item">
+        <span class="version-label">API</span>
+        <span class="version-value">@(apiVersion is null ? "unknown" : AppVersion.Display(apiVersion))</span>
+    </div>
+    <div class="version-item">
+        <span class="version-label">Latest release</span>
+        <span class="version-value">@(latest is null ? "-" : AppVersion.Display(latest.Version))</span>
+    </div>
+    @if (latest is not null && !AppVersion.IsDev(managementVersion))
+    {
+        @if (AppVersion.IsNewer(latest.Version, managementVersion))
+        {
+            <span class="status-badge status-update"><i class="bi bi-arrow-up-circle"></i> Update available</span>
+        }
+        else
+        {
+            <span class="status-badge status-ok"><i class="bi bi-check-circle"></i> Up to date</span>
+        }
+    }
+</div>
+
+@if (loading)
+{
+    <div class="card"><div class="loading">Loading releases...</div></div>
+}
+else if (!string.IsNullOrEmpty(error))
+{
+    <div class="card"><div class="alert-danger">@error</div></div>
+}
+else if (releases.Count == 0)
+{
+    <div class="card"><div class="empty-state">There are no releases yet. Publish one on GitHub to see it here.</div></div>
+}
+else
+{
+    @if (latest?.CashRegister is { } download)
+    {
+        <div class="card download-card">
+            <div class="download-icon"><i class="bi bi-pc-display-horizontal"></i></div>
+            <div class="download-text">
+                <span class="panel-label">Cash register</span>
+                <h3>StockFlow Kassa @AppVersion.Display(latest.Version)</h3>
+                <p>Windows (x64) &middot; @FormatSize(download.Size) &middot; no installation needed. Unzip it and start <code>StockFlow.CashRegister.exe</code>.</p>
+            </div>
+            <a class="btn-save download-button" href="@download.DownloadUrl" target="_blank" rel="noopener">
+                <i class="bi bi-download"></i> Download
+            </a>
+        </div>
+    }
+
+    <div class="release-list">
+        @foreach (var release in releases)
+        {
+            <article class="card release-card">
+                <header class="release-header">
+                    <div>
+                        <h3>@release.Name</h3>
+                        <span class="release-meta">
+                            @release.TagName
+                            @if (release.PublishedAt is { } published)
+                            {
+                                <span>&middot; @published.ToLocalTime().ToString("dd-MM-yyyy HH:mm")</span>
+                            }
+                        </span>
+                    </div>
+                    <div class="release-badges">
+                        @if (release == latest)
+                        {
+                            <span class="status-badge status-ok">Latest</span>
+                        }
+                        @if (release.Prerelease)
+                        {
+                            <span class="status-badge status-update">Pre-release</span>
+                        }
+                        @if (AppVersion.AreSame(release.Version, managementVersion))
+                        {
+                            <span class="status-badge status-running">Running here</span>
+                        }
+                    </div>
+                </header>
+
+                @if (string.IsNullOrWhiteSpace(release.Notes))
+                {
+                    <p class="release-empty">No release notes.</p>
+                }
+                else
+                {
+                    <div class="release-notes">
+                        @foreach (var block in ParseNotes(release.Notes))
+                        {
+                            @if (block.Kind == BlockKind.Heading)
+                            {
+                                <h4>@block.Lines[0]</h4>
+                            }
+                            else if (block.Kind == BlockKind.List)
+                            {
+                                <ul>
+                                    @foreach (var line in block.Lines)
+                                    {
+                                        <li>@line</li>
+                                    }
+                                </ul>
+                            }
+                            else
+                            {
+                                <p>@string.Join(" ", block.Lines)</p>
+                            }
+                        }
+                    </div>
+                }
+
+                <footer class="release-footer">
+                    @foreach (var asset in release.Assets)
+                    {
+                        <a class="asset-link" href="@asset.DownloadUrl" target="_blank" rel="noopener">
+                            <i class="bi bi-file-earmark-zip"></i>
+                            <span>@asset.Name</span>
+                            <span class="asset-meta">@FormatSize(asset.Size) &middot; @asset.DownloadCount downloads</span>
+                        </a>
+                    }
+                    <a class="asset-link" href="@release.Url" target="_blank" rel="noopener">
+                        <i class="bi bi-github"></i>
+                        <span>View on GitHub</span>
+                    </a>
+                </footer>
+            </article>
+        }
+    </div>
+}
+
+@code {
+    private readonly string managementVersion = AppVersion.Of(typeof(Program).Assembly);
+    private string? apiVersion;
+    private List<ReleaseDto> releases = [];
+    private ReleaseDto? latest;
+    private bool loading = true;
+    private string error = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        var versionTask = ReleaseService.GetApiVersionAsync();
+        var releasesTask = ReleaseService.GetReleasesAsync();
+
+        apiVersion = await versionTask;
+        (releases, error) = await releasesTask;
+        latest = releases.FirstOrDefault(r => !r.Prerelease);
+        loading = false;
+    }
+
+    private static string FormatSize(long bytes) => bytes switch
+    {
+        >= 1024 * 1024 => $"{bytes / 1024d / 1024d:0.0} MB",
+        >= 1024 => $"{bytes / 1024d:0} KB",
+        _ => $"{bytes} B",
+    };
+
+    private enum BlockKind { Heading, List, Paragraph }
+
+    private record Block(BlockKind Kind, List<string> Lines);
+
+    private static readonly Regex LinkPattern = new(@"\[([^\]]+)\]\([^)]+\)");
+
+    private static string Clean(string text) =>
+        LinkPattern.Replace(text, "$1").Replace("**", "").Replace("`", "").Trim();
+
+    private static List<Block> ParseNotes(string notes)
+    {
+        var blocks = new List<Block>();
+        Block? current = null;
+
+        foreach (var raw in notes.Replace("\r\n", "\n").Split('\n'))
+        {
+            var line = raw.Trim();
+
+            if (line.Length == 0)
+            {
+                current = null;
+                continue;
+            }
+
+            if (line.StartsWith('#'))
+            {
+                blocks.Add(new Block(BlockKind.Heading, [Clean(line.TrimStart('#'))]));
+                current = null;
+                continue;
+            }
+
+            if (line.StartsWith("- ") || line.StartsWith("* "))
+            {
+                if (current?.Kind != BlockKind.List)
+                {
+                    current = new Block(BlockKind.List, []);
+                    blocks.Add(current);
+                }
+                current.Lines.Add(Clean(line[2..]));
+                continue;
+            }
+
+            if (current?.Kind != BlockKind.Paragraph)
+            {
+                current = new Block(BlockKind.Paragraph, []);
+                blocks.Add(current);
+            }
+            current.Lines.Add(Clean(line));
+        }
+
+        return blocks;
+    }
+}

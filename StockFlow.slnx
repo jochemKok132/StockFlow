@@ -19,6 +19,7 @@
     <File Path="deploy/docker-compose.yml" />
     <File Path="deploy/nginx-stockflow.conf" />
     <File Path=".gitignore" />
+    <File Path="Directory.Build.props" />
     <File Path="README.md" />
   </Folder>
 </Solution>

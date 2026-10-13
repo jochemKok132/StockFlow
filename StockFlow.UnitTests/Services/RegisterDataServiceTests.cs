@@ -1,0 +1,259 @@
+﻿using StockFlow.Application.Services.CashRegister;
+using StockFlow.UnitTests.Helpers;
+
+namespace StockFlow.UnitTests.Services
+{
+    public class RegisterDataServiceTests
+    {
+        private const string ReceiptId = "9000000001";
+
+        private readonly Mock<IProductService> _productService = new();
+        private readonly Mock<ICashRegisterLogsService> _cashRegisterLogsService = new();
+        private readonly Mock<ICustomerRepository> _customerRepository = new();
+        private readonly Mock<ICustomerLogsService> _customerLogsService = new();
+        private readonly Mock<ICashRegisterLogsRepository> _cashRegisterLogsRepository = new();
+        private readonly RegisterDataService _sut;
+        private readonly Guid _employeeId = Guid.NewGuid();
+
+        public RegisterDataServiceTests()
+        {
+            _sut = new RegisterDataService(_productService.Object, _cashRegisterLogsService.Object, _customerRepository.Object, _customerLogsService.Object, _cashRegisterLogsRepository.Object);
+            _cashRegisterLogsService.Setup(s => s.CreateCashRegisterLogsAsync(It.IsAny<CreateCashRegisterLogsDto>())).ReturnsAsync(ReceiptId);
+        }
+
+        private static RegisterItemDetailDto Line(Guid productId, decimal price, int amount) => new()
+        {
+            Product = new ProductDto { Id = productId, ProductName = "Hamer" },
+            PriceAtTimeOfSale = price,
+            Amount = amount,
+        };
+
+        private static Purchase Purchase(Guid? customerId, int pointsUsed, params RegisterItemDetailDto[] lines) => new()
+        {
+            CustomerId = customerId,
+            PointsUsed = pointsUsed,
+            TotalPrice = (double)(lines.Sum(l => l.PriceAtTimeOfSale * l.Amount) - LoyaltyPoints.ToEuros(pointsUsed)),
+            ProductsSold = lines,
+        };
+
+        [Fact]
+        public async Task FinalizePurchase_NullPurchase_ThrowsArgumentException()
+        {
+            await Assert.ThrowsAsync<ArgumentException>(() => _sut.FinalizePurchase(null!, _employeeId));
+        }
+
+        [Fact]
+        public async Task FinalizePurchase_WalkIn_LowersStockPerLineAndReturnsReceiptId()
+        {
+            var hammer = Guid.NewGuid();
+            var saw = Guid.NewGuid();
+            CreateCashRegisterLogsDto? log = null;
+            _cashRegisterLogsService.Setup(s => s.CreateCashRegisterLogsAsync(It.IsAny<CreateCashRegisterLogsDto>()))
+                .Callback<CreateCashRegisterLogsDto>(l => log = l).ReturnsAsync(ReceiptId);
+
+            var result = await _sut.FinalizePurchase(Purchase(null, 0, Line(hammer, 10m, 2), Line(saw, 5m, 1)), _employeeId);
+
+            Assert.Equal(ReceiptId, result);
+            _productService.Verify(p => p.UpdateProductStockAsync(hammer, -2, _employeeId, LogTypeDto.Sold), Times.Once);
+            _productService.Verify(p => p.UpdateProductStockAsync(saw, -1, _employeeId, LogTypeDto.Sold), Times.Once);
+            Assert.Equal(0, log?.PointsEarned);
+            _customerRepository.Verify(r => r.UpdateAsync(It.IsAny<Customer>()), Times.Never);
+        }
+
+        [Fact]
+        public async Task FinalizePurchase_SoftDeletedCustomer_ThrowsArgumentException()
+        {
+            var customer = TestData.Customer(softDeleted: true);
+            _customerRepository.Setup(r => r.GetByIdAsync(customer.Id)).ReturnsAsync(customer);
+
+            await Assert.ThrowsAsync<ArgumentException>(() => _sut.FinalizePurchase(Purchase(customer.Id, 0, Line(Guid.NewGuid(), 10m, 1)), _employeeId));
+            _productService.Verify(p => p.UpdateProductStockAsync(It.IsAny<Guid>(), It.IsAny<int>(), It.IsAny<Guid>(), It.IsAny<LogTypeDto>()), Times.Never);
+        }
+
+        [Fact]
+        public async Task FinalizePurchase_CustomerWithoutPoints_EarnsOnePointPerWholeEuro()
+        {
+            var customer = TestData.Customer(savedPoints: 0);
+            CreateCashRegisterLogsDto? log = null;
+            CreateCustomerLogsDto? customerLog = null;
+            _customerRepository.Setup(r => r.GetByIdAsync(customer.Id)).ReturnsAsync(customer);
+            _cashRegisterLogsService.Setup(s => s.CreateCashRegisterLogsAsync(It.IsAny<CreateCashRegisterLogsDto>()))
+                .Callback<CreateCashRegisterLogsDto>(l => log = l).ReturnsAsync(ReceiptId);
+            _customerLogsService.Setup(s => s.CreateCustomerLogsAsync(It.IsAny<CreateCustomerLogsDto>())).Callback<CreateCustomerLogsDto>(l => customerLog = l);
+
+            await _sut.FinalizePurchase(Purchase(customer.Id, 0, Line(Guid.NewGuid(), 1.99m, 2)), _employeeId);
+
+            Assert.Equal(3, customer.SavedPoints);
+            Assert.Equal(3, log?.PointsEarned);
+            _customerRepository.Verify(r => r.UpdateAsync(customer), Times.Once);
+            Assert.NotNull(customerLog);
+            Assert.Contains("SavedPoints: New: 3. Old: 0", customerLog.Messages);
+            Assert.Contains($"Receipt: {ReceiptId}", customerLog.Messages);
+            Assert.Contains("PointsEarned: 3", customerLog.Messages);
+        }
+
+        [Fact]
+        public async Task FinalizePurchase_AllPointsUsed_SubtractsUsedAndAddsEarnedOnRemainder()
+        {
+            var customer = TestData.Customer(savedPoints: 1000);
+            CreateCustomerLogsDto? customerLog = null;
+            _customerRepository.Setup(r => r.GetByIdAsync(customer.Id)).ReturnsAsync(customer);
+            _customerLogsService.Setup(s => s.CreateCustomerLogsAsync(It.IsAny<CreateCustomerLogsDto>())).Callback<CreateCustomerLogsDto>(l => customerLog = l);
+
+            await _sut.FinalizePurchase(Purchase(customer.Id, 1000, Line(Guid.NewGuid(), 12.50m, 1)), _employeeId);
+
+            Assert.Equal(2, customer.SavedPoints);
+            Assert.NotNull(customerLog);
+            Assert.Contains(customerLog.Messages, m => m.StartsWith("PointsUsed: 1000"));
+            Assert.Contains("PointsEarned: 2", customerLog.Messages);
+        }
+
+        [Fact]
+        public async Task FinalizePurchase_PartialPoints_ThrowsArgumentException()
+        {
+            var customer = TestData.Customer(savedPoints: 1000);
+            _customerRepository.Setup(r => r.GetByIdAsync(customer.Id)).ReturnsAsync(customer);
+
+            await Assert.ThrowsAsync<ArgumentException>(() => _sut.FinalizePurchase(Purchase(customer.Id, 500, Line(Guid.NewGuid(), 12.50m, 1)), _employeeId));
+        }
+
+        [Fact]
+        public async Task FinalizePurchase_PointsCancelOut_StillLogsUnchangedBalance()
+        {
+            var customer = TestData.Customer(savedPoints: 50);
+            CreateCustomerLogsDto? customerLog = null;
+            _customerRepository.Setup(r => r.GetByIdAsync(customer.Id)).ReturnsAsync(customer);
+            _customerLogsService.Setup(s => s.CreateCustomerLogsAsync(It.IsAny<CreateCustomerLogsDto>())).Callback<CreateCustomerLogsDto>(l => customerLog = l);
+
+            await _sut.FinalizePurchase(Purchase(customer.Id, 50, Line(Guid.NewGuid(), 50.50m, 1)), _employeeId);
+
+            Assert.Equal(50, customer.SavedPoints);
+            _customerRepository.Verify(r => r.UpdateAsync(It.IsAny<Customer>()), Times.Never);
+            Assert.NotNull(customerLog);
+            Assert.Contains("SavedPoints: Unchanged (50)", customerLog.Messages);
+        }
+
+        private CashRegisterLogs Receipt(Guid productId, int amount, int returned, decimal price, int pointsEarned = 0, Guid? customerId = null, double? totalPaid = null)
+        {
+            var log = new CashRegisterLogs
+            {
+                Id = Guid.NewGuid(),
+                ReceiptId = ReceiptId,
+                CustomerId = customerId,
+                PointsEarned = pointsEarned,
+                TotalPrice = totalPaid ?? (double)(price * amount),
+                ProductsSold =
+                [
+                    new RegisterItemDetail { Id = Guid.NewGuid(), ProductId = productId, Product = TestData.Product(), Amount = amount, ReturnedAmount = returned, PriceAtTimeOfSale = price },
+                ],
+            };
+            _cashRegisterLogsRepository.Setup(r => r.GetByReceiptIdAsync(ReceiptId, true)).ReturnsAsync(log);
+            return log;
+        }
+
+        private static ReturnRequest ReturnOf(Guid productId, int amount) => new()
+        {
+            ReceiptId = ReceiptId,
+            Items = [new ReturnItem { ProductId = productId, Amount = amount }],
+        };
+
+        [Fact]
+        public async Task ProcessReturn_InvalidReceiptId_ThrowsArgumentException()
+        {
+            var request = new ReturnRequest { ReceiptId = "123", Items = [new ReturnItem { ProductId = Guid.NewGuid(), Amount = 1 }] };
+
+            await Assert.ThrowsAsync<ArgumentException>(() => _sut.ProcessReturn(request, _employeeId));
+        }
+
+        [Fact]
+        public async Task ProcessReturn_ReceiptNotFound_ThrowsKeyNotFoundException()
+        {
+            _cashRegisterLogsRepository.Setup(r => r.GetByReceiptIdAsync(ReceiptId, true)).ReturnsAsync((CashRegisterLogs?)null);
+
+            await Assert.ThrowsAsync<KeyNotFoundException>(() => _sut.ProcessReturn(ReturnOf(Guid.NewGuid(), 1), _employeeId));
+        }
+
+        [Fact]
+        public async Task ProcessReturn_ProductNotOnReceipt_ThrowsArgumentException()
+        {
+            Receipt(Guid.NewGuid(), 2, 0, 5m);
+
+            await Assert.ThrowsAsync<ArgumentException>(() => _sut.ProcessReturn(ReturnOf(Guid.NewGuid(), 1), _employeeId));
+        }
+
+        [Fact]
+        public async Task ProcessReturn_MoreThanStillReturnable_ThrowsArgumentException()
+        {
+            var productId = Guid.NewGuid();
+            Receipt(productId, 3, 2, 5m);
+
+            await Assert.ThrowsAsync<ArgumentException>(() => _sut.ProcessReturn(ReturnOf(productId, 2), _employeeId));
+            _cashRegisterLogsRepository.Verify(r => r.SaveChangesAsync(), Times.Never);
+        }
+
+        [Fact]
+        public async Task ProcessReturn_AlreadyFullyReturned_ThrowsArgumentException()
+        {
+            var productId = Guid.NewGuid();
+            Receipt(productId, 2, 2, 5m);
+
+            await Assert.ThrowsAsync<ArgumentException>(() => _sut.ProcessReturn(ReturnOf(productId, 1), _employeeId));
+        }
+
+        [Fact]
+        public async Task ProcessReturn_ValidReturn_MarksReturnedRaisesStockAndRefunds()
+        {
+            var productId = Guid.NewGuid();
+            var receipt = Receipt(productId, 3, 1, 4m);
+
+            var result = await _sut.ProcessReturn(ReturnOf(productId, 2), _employeeId);
+
+            Assert.Equal(3, receipt.ProductsSold.Single().ReturnedAmount);
+            Assert.Equal(8.00m, result.RefundAmount);
+            Assert.Equal(2, result.ItemsReturned);
+            Assert.Equal(ReceiptId, result.ReceiptId);
+            _cashRegisterLogsRepository.Verify(r => r.SaveChangesAsync(), Times.Once);
+            _productService.Verify(p => p.UpdateProductStockAsync(productId, 2, _employeeId, LogTypeDto.Returned), Times.Once);
+        }
+
+        [Fact]
+        public async Task ProcessReturn_ReceiptPaidPartlyWithPoints_RefundsProportionally()
+        {
+            var productId = Guid.NewGuid();
+            Receipt(productId, 2, 0, 10m, totalPaid: 15);
+
+            var result = await _sut.ProcessReturn(ReturnOf(productId, 1), _employeeId);
+
+            Assert.Equal(7.50m, result.RefundAmount);
+        }
+
+        [Fact]
+        public async Task ProcessReturn_CustomerEarnedPoints_DeductsPointsForReturnedItems()
+        {
+            var productId = Guid.NewGuid();
+            var customer = TestData.Customer(savedPoints: 20);
+            var receipt = Receipt(productId, 3, 0, 4m, pointsEarned: 12, customerId: customer.Id);
+            _customerRepository.Setup(r => r.GetByIdAsync(customer.Id)).ReturnsAsync(customer);
+
+            var result = await _sut.ProcessReturn(ReturnOf(productId, 2), _employeeId);
+
+            Assert.Equal(8, result.PointsDeducted);
+            Assert.Equal(4, receipt.PointsEarned);
+            Assert.Equal(12, customer.SavedPoints);
+            _customerLogsService.Verify(s => s.CreateCustomerLogsAsync(It.Is<CreateCustomerLogsDto>(l => l.Messages.Contains("PointsDeducted: 8"))), Times.Once);
+        }
+
+        [Fact]
+        public async Task ProcessReturn_CustomerSpentEarnedPoints_NeverGoesBelowZero()
+        {
+            var productId = Guid.NewGuid();
+            var customer = TestData.Customer(savedPoints: 3);
+            Receipt(productId, 1, 0, 10m, pointsEarned: 10, customerId: customer.Id);
+            _customerRepository.Setup(r => r.GetByIdAsync(customer.Id)).ReturnsAsync(customer);
+
+            await _sut.ProcessReturn(ReturnOf(productId, 1), _employeeId);
+
+            Assert.Equal(0, customer.SavedPoints);
+        }
+    }
+}

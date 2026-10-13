@@ -71,8 +71,8 @@ namespace StockFlow.Infrastructure.Repositories
                 !e.SoftDeleted &&
                 e.CustomerId.Contains(pagination.CustomerId ?? string.Empty) &&
                 e.FullName.ToLower().Contains((pagination.CustomerName ?? string.Empty).ToLower()) &&
-                e.HouseNumber.ToLower().Contains((pagination.HouseNumber ?? string.Empty).ToLower()) &&
-                e.PostalCode.ToLower().Contains((pagination.PostalCode ?? string.Empty).ToLower()) &&
+                e.HouseNumber!.ToLower().Contains((pagination.HouseNumber ?? string.Empty).ToLower()) &&
+                e.PostalCode!.ToLower().Contains((pagination.PostalCode ?? string.Empty).ToLower()) &&
                 e.Email.ToLower().Contains((pagination.Email ?? string.Empty).ToLower()));
 
             query = pagination.OrderType == OrderType.Descending

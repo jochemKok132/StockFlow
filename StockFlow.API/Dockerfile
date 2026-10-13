@@ -1,7 +1,8 @@
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
-ARG VERSION=0.0.0
+ARG VERSION=0.0.0-dev
 WORKDIR /src
 
+COPY Directory.Build.props ./
 COPY StockFlow.API/StockFlow.API.csproj StockFlow.API/
 COPY StockFlow.Application/StockFlow.Application.csproj StockFlow.Application/
 COPY StockFlow.Domain/StockFlow.Domain.csproj StockFlow.Domain/

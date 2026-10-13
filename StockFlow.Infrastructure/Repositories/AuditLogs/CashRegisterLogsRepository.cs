@@ -55,8 +55,8 @@ namespace StockFlow.Infrastructure.Repositories.Stock
                 .Include(e => e.Employee)
                 .Where(e =>
                     e.ReceiptId.Contains(receiptId) &&
-                    e.Employee.EmployeeId.ToLower().Contains(employeeId) &&
-                    e.Employee.FullName.ToLower().Contains(employeeName) &&
+                    e.Employee!.EmployeeId.ToLower().Contains(employeeId) &&
+                    e.Employee!.FullName.ToLower().Contains(employeeName) &&
                     (e.Customer == null
                         ? noCustomerFilter
                         : e.Customer.Email.ToLower().Contains(email) &&
@@ -65,7 +65,7 @@ namespace StockFlow.Infrastructure.Repositories.Stock
             query = pagination.OrderType == OrderType.Descending
                 ? pagination.OrderBy switch
                 {
-                    CashRegisterLogsOrderBy.CustomerName => query.OrderByDescending(p => p.Customer.FullName),
+                    CashRegisterLogsOrderBy.CustomerName => query.OrderByDescending(p => p.Customer!.FullName),
                     CashRegisterLogsOrderBy.TotalOff => query.OrderByDescending(p => p.TotalOff),
                     CashRegisterLogsOrderBy.TotalProducts => query.OrderByDescending(p => p.ProductsSold),
                     CashRegisterLogsOrderBy.EmployeeId => query.OrderByDescending(p => p.EmployeeId),
@@ -74,7 +74,7 @@ namespace StockFlow.Infrastructure.Repositories.Stock
                 }
                 : pagination.OrderBy switch
                 {
-                    CashRegisterLogsOrderBy.CustomerName => query.OrderBy(p => p.Customer.FullName),
+                    CashRegisterLogsOrderBy.CustomerName => query.OrderBy(p => p.Customer!.FullName),
                     CashRegisterLogsOrderBy.TotalOff => query.OrderBy(p => p.TotalOff),
                     CashRegisterLogsOrderBy.TotalProducts => query.OrderBy(p => p.ProductsSold),
                     CashRegisterLogsOrderBy.EmployeeId => query.OrderBy(p => p.EmployeeId),

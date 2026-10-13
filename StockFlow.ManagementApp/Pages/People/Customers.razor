@@ -107,12 +107,8 @@
     private List<CustomerDto> customers = new List<CustomerDto>();
 
     private bool loading = false;
-    private bool detailsLoading = false;
-    private string detailsError = "";
-    private bool showDetails = false;
     private bool noAccess = false;
     private string error = "";
-    private CustomerDto? selectedCustomer; 
 
     private CustomerPaginationDto pagination = new CustomerPaginationDto
     {

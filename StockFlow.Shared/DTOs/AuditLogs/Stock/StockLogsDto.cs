@@ -11,7 +11,7 @@ namespace StockFlow.Shared.DTOs.AuditLogs.Stock
         public Guid Id { get; set; }
         public DateTime CreatedAt { get; set; }
         public List<string> Messages { get; set; } = [];
-        public string Identifier { get; set; }
+        public string Identifier { get; set; } = string.Empty;
         public StockLogTypeDto StockLogType { get; set; }
         public LogTypeDto LogType { get; set; }
         public Guid EmployeeId { get; set; }

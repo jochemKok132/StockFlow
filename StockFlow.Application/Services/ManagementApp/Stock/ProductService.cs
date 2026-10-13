@@ -103,8 +103,8 @@ namespace StockFlow.Application.Services.ManagementApp.Stock
             var product = await productRepository.GetByIdAsync(id);
             if (product == null) throw new KeyNotFoundException($"Product with the id {id} not found.");
             var productDto = product.ToProductDto();
-            productDto.Brand = (await productBrandRepository.GetByIdAsync(productDto.BrandId)).ToProductBrandDto();
-            productDto.Shelf = (await shelfRepository.GetByIdAsync(productDto.ShelfId)).ToShelfDto();
+            productDto.Brand = (await productBrandRepository.GetByIdAsync(productDto.BrandId))?.ToProductBrandDto();
+            productDto.Shelf = (await shelfRepository.GetByIdAsync(productDto.ShelfId))?.ToShelfDto();
             return productDto;
 
         }
@@ -114,8 +114,8 @@ namespace StockFlow.Application.Services.ManagementApp.Stock
             var product = await productRepository.GetProductByBarcodeAsync(barcode);
             if (product == null) throw new KeyNotFoundException($"Product with the barcode {barcode} not found.");
             var productDto = product.ToProductDto();
-            productDto.Brand = (await productBrandRepository.GetByIdAsync(productDto.BrandId)).ToProductBrandDto();
-            productDto.Shelf = (await shelfRepository.GetByIdAsync(productDto.ShelfId)).ToShelfDto();
+            productDto.Brand = (await productBrandRepository.GetByIdAsync(productDto.BrandId))?.ToProductBrandDto();
+            productDto.Shelf = (await shelfRepository.GetByIdAsync(productDto.ShelfId))?.ToShelfDto();
             return productDto;
         }
 

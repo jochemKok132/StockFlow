@@ -69,13 +69,13 @@ namespace StockFlow.Application.Mappings.Stock
                 Id = product.Id,
                 ProductName = product.ProductName,
                 Barcode = product.Barcode,
-                Location = $"{product.Shelf.ShelfLocation}-{product.Location}",
+                Location = $"{product.Shelf?.ShelfLocation}-{product.Location}",
                 Price = product.Sales.Any()
                     ? Math.Round(product.Price * (1 - (product.Sales.Max(s => s.PercentageOff) / 100.0m)), 2)
                     : product.Price,
                 Sale = product.Sales.Any(),
                 Stock = product.Stock,
-                BrandName = product.Brand.BrandName,
+                BrandName = product.Brand?.BrandName ?? string.Empty,
             };
         }
     }

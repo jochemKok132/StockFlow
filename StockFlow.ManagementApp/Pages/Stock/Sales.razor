@@ -111,9 +111,6 @@
     private List<SalesDto> sales = new List<SalesDto>();
 
     private bool loading = false;
-    private bool detailsLoading = false;
-    private string detailsError = "";
-    private bool showDetails = false;
     private bool noAccess = false;
     private string error = "";
     private SalesDto? selectedSale; 
@@ -144,20 +141,13 @@
     }
     private async Task OpenDetails(SalesDto dto)
     {
-        showDetails = true;
-        detailsLoading = true;
-        detailsError = "";
         selectedSale = null;
         await InvokeAsync(StateHasChanged);
 
         selectedSale = dto;
-        detailsLoading = false;
     }
     private void CloseDetails()
     {
-        showDetails = false;
-        detailsLoading = false;
-        detailsError = "";
         selectedSale = null;
     }
     private async Task DeleteItem(SalesDto product)

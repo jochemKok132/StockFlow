@@ -698,3 +698,17 @@ body {
     background: var(--AccentColorSoft);
     border-radius: var(--RadiusSmall);
 }
+
+.ml-version {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 10px 0 10px;
+    font-size: 12px;
+    color: var(--MutedText);
+    text-decoration: none;
+}
+
+    .ml-version:hover {
+        color: var(--AccentColor);
+    }

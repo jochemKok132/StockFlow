@@ -115,9 +115,6 @@
     private List<ShelfDto> shelves = new List<ShelfDto>();
 
     private bool loading = false;
-    private bool detailsLoading = false;
-    private string detailsError = "";
-    private bool showDetails = false;
     private bool noAccess = false;
     private string error = "";
     private ShelfDto? selectedshelf;
@@ -147,20 +144,13 @@
     }
     private async Task OpenDetails(ShelfDto dto)
     {
-        showDetails = true;
-        detailsLoading = true;
-        detailsError = "";
         selectedshelf = null;
         await InvokeAsync(StateHasChanged);
 
         selectedshelf = dto;
-        detailsLoading = false;
     }
     private void CloseDetails()
     {
-        showDetails = false;
-        detailsLoading = false;
-        detailsError = "";
         selectedshelf = null;
     }
     private async Task DeleteItem(ShelfDto shelf)

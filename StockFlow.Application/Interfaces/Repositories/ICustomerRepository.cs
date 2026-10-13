@@ -17,7 +17,7 @@ namespace StockFlow.Application.Interfaces.Repositories.ManagementApp
         Task<Customer?> GetCustomerByEmailAsync(string email);
         Task<Customer?> GetCustomerByCustomerIdAsync(string customerId);
         Task<string> GetNewCustomerIdAsync();
-        Task<IEnumerable<Customer>?> GetAllCustomersAsync(CustomerPaginationDto pagination);
+        Task<IEnumerable<Customer>> GetAllCustomersAsync(CustomerPaginationDto pagination);
 
     }
 }

@@ -2,6 +2,7 @@
 using StockFlow.Shared.DTOs.AuditLogs.Customer;
 using StockFlow.Shared.DTOs.CashRegister;
 using StockFlow.Shared.DTOs.Customer;
+using StockFlow.Shared.DTOs.Releases;
 using StockFlow.Shared.DTOs.Stock.Product;
 using StockFlow.CashRegister.Interfaces;
 
@@ -68,6 +69,12 @@ namespace StockFlow.CashRegister.Services
                 return (null, "Error: De retour kon niet worden verwerkt.");
 
             return (response.Value, "");
+        }
+
+        public async Task<ReleaseDto?> GetLatestReleaseAsync()
+        {
+            var response = await httpService.GetAsync<ReleaseDto>("Releases/Latest");
+            return response.Succeeded ? response.Value : null;
         }
     }
 }

@@ -133,7 +133,7 @@ namespace StockFlow.Application.Mappings.AuditLogs
         {
             return new CreateStockLogsDto()
             {
-                Identifier = dto.ShelfName.ToString(),
+                Identifier = dto.ShelfName ?? string.Empty,
                 Id = Guid.NewGuid(),
                 LogType = LogTypeDto.Create,
                 Messages = [],

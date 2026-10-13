@@ -37,7 +37,7 @@ namespace StockFlow.Infrastructure.Repositories.Stock
         public Task UpdateAsync(Product entity) => _updatable.UpdateAsync(entity);
         public Task SoftDeleteAsync(Product entity) => _softDeletable.SoftDeleteAsync(entity);
 
-        public async Task<Product?> GetByIdAsync(Guid id)
+        public new async Task<Product?> GetByIdAsync(Guid id)
         {
             return await _context.Products
                 .Include(p => p.Brand)
@@ -81,12 +81,12 @@ namespace StockFlow.Infrastructure.Repositories.Stock
                     e.Barcode.ToString().Contains(pagination.Barcode.ToString()) &&
                     (
                         (hasCombo &&
-                            e.Shelf.ShelfLocation.ToString().StartsWith(shelfLocation ?? string.Empty) &&
+                            e.Shelf!.ShelfLocation.ToString().StartsWith(shelfLocation ?? string.Empty) &&
                             e.Location.ToString().StartsWith(productLocation ?? string.Empty))
                         ||
                         (!hasCombo &&
                             (e.Location.ToString().StartsWith(pagination.Location) ||
-                             e.Shelf.ShelfLocation.ToString().StartsWith(pagination.Location)))
+                             e.Shelf!.ShelfLocation.ToString().StartsWith(pagination.Location)))
                     ));
 
             query = pagination.OrderType == OrderType.Descending
@@ -94,8 +94,8 @@ namespace StockFlow.Infrastructure.Repositories.Stock
                 {
                     ProductOrderBy.ProductName => query.OrderByDescending(p => p.ProductName),
                     ProductOrderBy.Stock => query.OrderByDescending(p => p.Stock),
-                    ProductOrderBy.Brand => query.OrderByDescending(p => p.Brand.BrandName),
-                    ProductOrderBy.Shelf => query.OrderByDescending(p => p.Shelf.ShelfName),
+                    ProductOrderBy.Brand => query.OrderByDescending(p => p.Brand!.BrandName),
+                    ProductOrderBy.Shelf => query.OrderByDescending(p => p.Shelf!.ShelfName),
                     ProductOrderBy.CreatedAt => query.OrderByDescending(p => p.CreatedAt),
                     ProductOrderBy.UpdatedAt => query.OrderByDescending(p => p.UpdatedAt),
                     _ => query.OrderByDescending(p => p.CreatedAt),
@@ -104,8 +104,8 @@ namespace StockFlow.Infrastructure.Repositories.Stock
                 {
                     ProductOrderBy.ProductName => query.OrderBy(p => p.ProductName),
                     ProductOrderBy.Stock => query.OrderBy(p => p.Stock),
-                    ProductOrderBy.Brand => query.OrderBy(p => p.Brand.BrandName),
-                    ProductOrderBy.Shelf => query.OrderBy(p => p.Shelf.ShelfName),
+                    ProductOrderBy.Brand => query.OrderBy(p => p.Brand!.BrandName),
+                    ProductOrderBy.Shelf => query.OrderBy(p => p.Shelf!.ShelfName),
                     ProductOrderBy.CreatedAt => query.OrderBy(p => p.CreatedAt),
                     ProductOrderBy.UpdatedAt => query.OrderBy(p => p.UpdatedAt),
                     _ => query.OrderBy(p => p.CreatedAt),

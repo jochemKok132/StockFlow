@@ -7,8 +7,8 @@ namespace StockFlow.Shared.DTOs.Stock.Product
 {
     public class CreateProductDto
     {
-        public string ProductName { get; set; }
-        public string Description { get; set; }
+        public string ProductName { get; set; } = string.Empty;
+        public string Description { get; set; } = string.Empty;
         public int Stock { get; set; }
         public int Location { get; set; }
         public decimal Price { get; set; }

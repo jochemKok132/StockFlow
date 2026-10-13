@@ -17,7 +17,6 @@ using System.Collections.Generic;
 using System.Text;
 using StockFlow.Application.Validations.CashRegister;
 using StockFlow.Application.Interfaces.Repositories.ManagementApp;
-using StockFlow.Application.Interfaces.Repositories.ManagementApp.Stock;
 
 namespace StockFlow.Application.Services.CashRegister
 {

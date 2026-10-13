@@ -7,6 +7,8 @@ services:
       JWT__Key: ${JWT_KEY:?Set JWT_KEY in .env}
       JWT__Issuer: https://${DOMAIN}/stockflow/api
       Cors__AllowedOrigins__0: https://${DOMAIN}
+      Releases__Repository: ${RELEASES_REPOSITORY:-jochemKok132/StockFlow}
+      Releases__Token: ${GITHUB_RELEASES_TOKEN:-}
     ports:
       - "127.0.0.1:5080:8080"
     volumes:
