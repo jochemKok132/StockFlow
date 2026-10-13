@@ -1,5 +1,5 @@
-﻿using StockFlow.Application.DTOs.AuditLogs.Stock;
-using StockFlow.Application.DTOs.Pagination;
+﻿using StockFlow.Shared.DTOs.AuditLogs.Stock;
+using StockFlow.Shared.DTOs.Pagination;
 using StockFlow.Application.Interfaces.ManagementApp.AuditLogs;
 using StockFlow.Application.Interfaces.ManagementApp.Stock;
 using StockFlow.Application.Interfaces.Repositories.ManagementApp.Stock;
@@ -11,7 +11,7 @@ using System.Collections.Generic;
 using System.Text;
 using StockFlow.Application.Validations;
 using StockFlow.Application.Validations.AuditLogs;
-using StockFlow.Application.Common;
+using StockFlow.Shared.Common;
 
 namespace StockFlow.Application.Services.ManagementApp.AuditLogs
 {

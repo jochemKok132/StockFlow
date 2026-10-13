@@ -1,7 +1,7 @@
-﻿using StockFlow.Application.DTOs.Employee;
-using StockFlow.Application.DTOs.Employee.EmployeeAuthentication;
-using StockFlow.Application.DTOs.Pagination;
-using StockFlow.Application.DTOs.Stock.Shelf;
+﻿using StockFlow.Shared.DTOs.Employee;
+using StockFlow.Shared.DTOs.Employee.EmployeeAuthentication;
+using StockFlow.Shared.DTOs.Pagination;
+using StockFlow.Shared.DTOs.Stock.Shelf;
 using StockFlow.Application.Interfaces;
 using StockFlow.Application.Interfaces.Helpers;
 using StockFlow.Application.Interfaces.ManagementApp;

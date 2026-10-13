@@ -4,6 +4,7 @@
     <Project Path="StockFlow.Application/StockFlow.Application.csproj" />
     <Project Path="StockFlow.Domain/StockFlow.Domain.csproj" />
     <Project Path="StockFlow.Infrastructure/StockFlow.Infrastructure.csproj" />
+    <Project Path="StockFlow.Shared/StockFlow.Shared.csproj" />
   </Folder>
   <Folder Name="/Frontend/">
     <Project Path="StockFlow.CashRegister/StockFlow.CashRegister.csproj" Id="88d97335-541c-4f06-a52f-461cb8a50b0b" />

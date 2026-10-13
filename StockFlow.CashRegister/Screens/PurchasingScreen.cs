@@ -1,6 +1,6 @@
-﻿using StockFlow.Application.DTOs.CashRegister;
-using StockFlow.Application.Common;
-using StockFlow.Application.DTOs.Customer;
+﻿using StockFlow.Shared.DTOs.CashRegister;
+using StockFlow.Shared.Common;
+using StockFlow.Shared.DTOs.Customer;
 using StockFlow.CashRegister.Interfaces;
 using StockFlow.CashRegister.Screens;
 

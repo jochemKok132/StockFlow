@@ -1,4 +1,4 @@
-﻿using StockFlow.Application.DTOs.Employee.EmployeeAuthentication;
+﻿using StockFlow.Shared.DTOs.Employee.EmployeeAuthentication;
 using StockFlow.CashRegister.Interfaces;
 
 namespace StockFlow.CashRegister.Screens

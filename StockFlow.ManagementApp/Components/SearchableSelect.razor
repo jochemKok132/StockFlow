@@ -1,0 +1,130 @@
+﻿<div class="searchable-select @(Disabled ? "is-disabled" : "")" @onfocusout="Close">
+    <div class="select-control @(open ? "is-open" : "")">
+        <input id="@Id"
+               class="select-input"
+               type="text"
+               autocomplete="off"
+               value="@(open ? search : SelectedLabel)"
+               placeholder="@(open ? SelectedLabel ?? Placeholder : Placeholder)"
+               readonly="@Disabled"
+               @onfocus="Open"
+               @onclick="Open"
+               @oninput="OnInput"
+               @onkeydown="OnKeyDown" />
+        <i class="bi bi-chevron-down select-caret"></i>
+    </div>
+
+    @if (open && !Disabled)
+    {
+        <ul class="select-list" role="listbox">
+            @if (Filtered.Count == 0)
+            {
+                <li class="select-empty">No matches for "@search"</li>
+            }
+            @for (int i = 0; i < Filtered.Count; i++)
+            {
+                var option = Filtered[i];
+                var index = i;
+                <li class="select-option @(index == highlight ? "is-highlighted" : "") @(option.Value == Value ? "is-selected" : "")"
+                    role="option"
+                    @onmousedown="() => SelectAsync(option)"
+                    @onmousedown:preventDefault="true"
+                    @onmouseover="() => highlight = index">
+                    <span class="option-label">@option.Label</span>
+                    @if (!string.IsNullOrWhiteSpace(option.Detail))
+                    {
+                        <span class="option-detail">@option.Detail</span>
+                    }
+                </li>
+            }
+        </ul>
+    }
+</div>
+
+@code {
+    [Parameter] public string? Id { get; set; }
+    [Parameter] public List<SelectOption> Options { get; set; } = [];
+    [Parameter] public string? Value { get; set; }
+    [Parameter] public EventCallback<string> ValueChanged { get; set; }
+    [Parameter] public string Placeholder { get; set; } = "Search...";
+    [Parameter] public bool Disabled { get; set; }
+
+    private bool open;
+    private string search = "";
+    private int highlight;
+
+    private string? SelectedLabel
+    {
+        get
+        {
+            if (string.IsNullOrWhiteSpace(Value)) return null;
+            var match = Options.FirstOrDefault(o => o.Value == Value);
+            return match?.Label ?? $"Unknown ({Value})";
+        }
+    }
+
+    private List<SelectOption> Filtered =>
+        string.IsNullOrWhiteSpace(search)
+            ? Options
+            : Options.Where(o => Matches(o, search.Trim())).ToList();
+
+    private static bool Matches(SelectOption option, string term) =>
+        option.Label.Contains(term, StringComparison.OrdinalIgnoreCase) ||
+        (option.Detail?.Contains(term, StringComparison.OrdinalIgnoreCase) ?? false);
+
+    private void Open()
+    {
+        if (Disabled || open) return;
+
+        open = true;
+        search = "";
+        int selected = Options.FindIndex(o => o.Value == Value);
+        highlight = selected < 0 ? 0 : selected;
+    }
+
+    private void Close()
+    {
+        open = false;
+        search = "";
+    }
+
+    private void OnInput(ChangeEventArgs e)
+    {
+        search = e.Value?.ToString() ?? "";
+        highlight = 0;
+        open = true;
+    }
+
+    private async Task OnKeyDown(KeyboardEventArgs e)
+    {
+        if (Disabled) return;
+
+        switch (e.Key)
+        {
+            case "ArrowDown":
+                if (!open) Open();
+                else if (Filtered.Count > 0) highlight = (highlight + 1) % Filtered.Count;
+                break;
+            case "ArrowUp":
+                if (open && Filtered.Count > 0) highlight = (highlight - 1 + Filtered.Count) % Filtered.Count;
+                break;
+            case "Enter":
+                if (open && highlight >= 0 && highlight < Filtered.Count)
+                    await SelectAsync(Filtered[highlight]);
+                break;
+            case "Escape":
+            case "Tab":
+                Close();
+                break;
+        }
+    }
+
+    private async Task SelectAsync(SelectOption option)
+    {
+        Close();
+        if (option.Value == Value) return;
+
+        Value = option.Value;
+        await ValueChanged.InvokeAsync(option.Value);
+    }
+}

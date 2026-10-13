@@ -2,6 +2,7 @@
 @attribute [Authorize]
 @inject AuthenticationStateProvider AuthStateProvider
 @inject ISalesService salesService
+@inject ILookupService LookupService
 
 <div class="tasks-header">
     <div>
@@ -100,6 +101,7 @@
           EditMode="true"
           ReadMode="false"
           item="itemType"
+          Lookups="lookups"
           Loading="changesLoading"
           Error="@changesError"
           OnClose="CloseChanges"
@@ -174,6 +176,7 @@
         changesLoading = true;
         changesError = "";
         await InvokeAsync(StateHasChanged);
+        await LoadLookupsAsync();
 
         itemType = new UpdateSalesDto
         {
@@ -188,15 +191,30 @@
         changesLoading = false;
     }
 
-    private void OpenCreate(CreateSalesDto item)
+    private async Task OpenCreate(CreateSalesDto item)
     {
         if (!canManage) return;
 
         isCreateMode = true;
         showChanges = true;
-        changesLoading = false;
+        changesLoading = true;
         changesError = "";
         itemType = item;
+        await InvokeAsync(StateHasChanged);
+
+        await LoadLookupsAsync();
+        changesLoading = false;
+    }
+
+    private Dictionary<string, List<SelectOption>> lookups = new();
+
+    private async Task LoadLookupsAsync()
+    {
+        var (tags, error) = await LookupService.GetSalesTagOptionsAsync();
+        lookups = new() { [nameof(CreateSalesDto.SalesTags)] = tags };
+
+        if (!string.IsNullOrEmpty(error))
+            changesError = error.StartsWith("Error:") ? error["Error:".Length..].Trim() : error;
     }
 
     private async Task HandleSave(object? item)

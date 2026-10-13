@@ -1,7 +1,7 @@
-﻿using StockFlow.Application.DTOs.AuditLogs.CashRegister;
-using StockFlow.Application.DTOs.AuditLogs.Customer;
-using StockFlow.Application.DTOs.AuditLogs.Employee;
-using StockFlow.Application.DTOs.AuditLogs.Stock;
+﻿using StockFlow.Shared.DTOs.AuditLogs.CashRegister;
+using StockFlow.Shared.DTOs.AuditLogs.Customer;
+using StockFlow.Shared.DTOs.AuditLogs.Employee;
+using StockFlow.Shared.DTOs.AuditLogs.Stock;
 
 namespace StockFlow.Application.Validations.AuditLogs
 {

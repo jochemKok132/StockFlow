@@ -1,4 +1,4 @@
-﻿using StockFlow.Application.DTOs.CashRegister;
+﻿using StockFlow.Shared.DTOs.CashRegister;
 using StockFlow.Application.Mappings.Stock;
 using StockFlow.Domain.Entities.CashRegister;
 using System;

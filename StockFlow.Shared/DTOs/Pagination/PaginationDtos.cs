@@ -1,0 +1,70 @@
+﻿using StockFlow.Shared.DTOs.Enums;
+
+namespace StockFlow.Shared.DTOs.Pagination
+{
+    public class ProductPaginationDto : Pagination<ProductOrderBy> 
+    {
+        public string? ProductName { get; set; }
+        public int Barcode { get; set; }
+        public string? Location { get; set; }
+    }
+    public class ProductBrandPaginationDto : Pagination<ProductBrandOrderBy>
+    {
+        public string? BrandName { get; set; }
+    }
+    public class SalesPaginationDto : Pagination<SalesOrderBy>
+    {
+        public string? SalesName { get; set; }
+    }
+    public class ShelfPaginationDto : Pagination<ShelfOrderBy>
+    {
+        public string? ShelfName { get; set; }
+        public string? Location { get; set; }
+    }
+    public class CustomerPaginationDto : Pagination<CustomerOrderBy>
+    {
+        public string? CustomerId { get; set; }
+        public string? CustomerName { get; set; }
+        public string? Email { get; set; }
+        public string? PostalCode { get; set; }
+        public string? HouseNumber { get; set; }
+    }
+    public class EmployeePaginationDto : Pagination<EmployeeOrderBy>
+    {
+        public string? EmployeeName { get; set; }
+        public string? EmployeeId { get; set; }
+        public EmployeeRoleDto? Role { get; set; }
+    }
+    public class CashRegisterLogsPaginationDto : Pagination<CashRegisterLogsOrderBy>
+    {
+        public string? ReceiptId { get; set; }
+        public string? EmployeeName { get; set; }
+        public string? EmployeeId { get; set; }
+        public string? CustomerName { get; set; }
+        public string? Email { get; set; }
+    }
+    public class StockLogsPaginationDto : Pagination<StockLogsOrderBy>
+    {
+        public string? EmployeeName { get; set; }
+        public string? EmployeeId { get; set; }
+        public string? Identifier { get; set; }
+        public StockLogTypeDto? StockLogType { get; set; }
+        public LogTypeDto? LogType { get; set; }
+    }
+    public class EmployeeLogsPaginationDto : Pagination<EmployeeLogsOrderBy>
+    {
+        public string? EmployeeName { get; set; }
+        public string? EmployeeId { get; set; }
+        public string? Identifier { get; set; }
+        public StockLogTypeDto? StockLogType { get; set; }
+        public LogTypeDto? LogType { get; set; }
+    }
+    public class CustomerLogsPaginationDto : Pagination<CustomerLogsOrderBy>
+    {
+        public string? CustomerId { get; set; }
+        public string? CustomerName { get; set; }
+        public string? Email { get; set; }
+        public LogTypeDto? LogType { get; set; }
+
+    }
+}

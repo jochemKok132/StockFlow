@@ -30,20 +30,23 @@ StockFlow is an inventory management system for a (Dutch) hardware store. It con
 | Project | Type | Responsibility |
 |---|---|---|
 | `StockFlow.Domain` | Class library | Entities (`Product`, `ProductBrand`, `Shelf`, `Sales`, `Employee`, `Customer`, audit logs, `RegisterItemDetail`) and enums. Depends on nothing. |
-| `StockFlow.Application` | Class library | Services, DTOs, mappings (`Extensions/`), validations (`Validations/`), repository and service interfaces, `ApiResponse<T>`, `IdentifierFormats`. |
+| `StockFlow.Application` | Class library | Services, mappings (`Extensions/`), validations (`Validations/`), repository and service interfaces. Depends on Domain and Shared. |
+| `StockFlow.Shared` | Class library | Everything that crosses a process boundary: request/response DTOs (`DTOs/`), DTO enums, pagination types and order-by enums, `ApiResponse<T>`, and the rules both server and cash register need (`Common/`: `IdentifierFormats`, `LoyaltyPoints`, `ReturnRules`). References nothing. |
 | `StockFlow.Infrastructure` | Class library | EF Core `ApplicationDBContext` (SQLite), repositories, migrations, seeders, BCrypt password hashing. |
 | `StockFlow.API` | ASP.NET Core Web API | Controllers, JWT authentication, `ErrorController`, Swagger. |
 | `StockFlow.ManagementApp` | Blazor WebAssembly | Office application: inventory, brands, sales, shelves, logs, employees and customers. |
 | `StockFlow.CashRegister` | WinForms (.NET, Windows) | Point of sale: scan products, attach customers, take payment, take returns. |
 
-The solution file is `StockFlow.slnx` (folders `Backend` and `Frontend`).
+The solution file is `StockFlow.slnx` (folders `Backend` and `Frontend`; `StockFlow.Shared` is under `Backend`).
 
 ```
-StockFlow.API ──► StockFlow.Application ──► StockFlow.Domain
-      │                    ▲
-      └──► StockFlow.Infrastructure ┘
-StockFlow.ManagementApp ──► StockFlow.Application (DTOs, ApiResponse)
-StockFlow.CashRegister  ──► StockFlow.Application (DTOs, ApiResponse)
+StockFlow.Domain          ──► (nothing)
+StockFlow.Shared          ──► (nothing)
+StockFlow.Application     ──► Domain, Shared
+StockFlow.Infrastructure  ──► Application, Domain
+StockFlow.API             ──► Application, Infrastructure, Shared
+StockFlow.ManagementApp   ──► Shared
+StockFlow.CashRegister    ──► Shared
 ```
 
 ---
@@ -114,7 +117,7 @@ All employee passwords are **`001273`**.
 
 ## Identifiers
 
-All rules live in `StockFlow.Application/Common/IdentifierFormats.cs` and are shared by the API, the cash register and the seeders.
+All rules live in `StockFlow.Shared/Common/IdentifierFormats.cs` and are shared by the API, the cash register and the seeders.
 
 | Identifier | Format | Example |
 |---|---|---|
@@ -159,19 +162,21 @@ Blazor WebAssembly app (`StockFlow.ManagementApp`). Log in with an employee id a
 
 | Page | Route | Features |
 |---|---|---|
-| Inventory | `/inventory` | Paged and sortable product list with filters. Click a row for the product details panel (image, price incl. sale, location, stock, tags, brand, description). Create, edit and delete for managers. |
+| Inventory | `/inventory` | Paged and sortable product list with filters. Click a row for the product details panel (image, price incl. sale, location, stock, tags, brand, description). Create, edit and delete for managers. In the create / edit form, brand and shelf are searchable selects and sales tags are a searchable multi-select that shows which sale each tag belongs to. |
 | Brands | `/productbrands` | List, create, edit, delete brands. |
-| Sales | `/sales` | List, create, edit, delete sales (percentage off + sales tags). |
+| Sales | `/sales` | List, create, edit, delete sales (percentage off + sales tags). Sales tags are a searchable multi-select with the tags already in use; new tags can be added by typing them. |
 | Shelves | `/shelves` | List, create, edit, delete shelves. |
 | Cash register logs | `/cashregisterlogs` | Every purchase with its receipt id, customer and employee; filterable by receipt id. The products column also shows how many items were returned. Click **Products** to see what was sold, the amounts, how many were returned per product, the price per item, applied sales, the discount and the total. Click a product to open its details. |
 | Stock logs | `/stocklogs` | Every create / update / sale / return / delete of products, brands, sales and shelves. **Open message** shows what changed (old → new). |
 | Product history | `/producthistory?barcode=…` | Enter a barcode to see the product, current stock, units sold, units returned, units added and the full history. Toggle between all changes and stock changes only. The barcode is kept in the URL so searches can be bookmarked or linked. |
 | Customer logs | `/customerlogs` | Customer changes, filterable by customer id, name, email and log type. |
 | Employee logs | `/employeelogs` | Employee changes and logins. |
-| Employees | `/employees` | List, create (with password), edit (optional password reset). |
+| Employees | `/employees` | List, create (with password), edit (optional password reset). The role is a searchable select. |
 | Customers | `/customers` | Customer list with customer id, filterable and sortable. |
 
 Forms are generated by the reusable `EditItem` component from the DTO type. Validation errors from the API are shown above the form and the form stays open.
+
+**Updates only with changes:** when an edit form opens (any DTO with a non-empty `Id`), `EditItem` takes a snapshot of the editable fields. **Save** stays disabled with the hint *No changes to save.* until something actually differs from that snapshot, and a save without differences is never sent to the API. The comparison ignores leading/trailing spaces, the order of tags, empty tags and trailing zeros in prices (12.50 = 12.5), so typing a value back to what it was counts as no change. While you are typing in a text field Save is clickable, because the value is only applied when the field loses focus; the check runs again when you click it. Create forms are not affected.
 
 ---
 
@@ -193,7 +198,7 @@ On completion the stock of every product is lowered by the sold amount (stock ma
 
 - **Earning:** a customer attached to a purchase earns **1 point per whole euro paid**, rounded down: €1.99 gives 1 point, €2.00 gives 2. "Paid" is the receipt total after sales and after points used, so points spent don't earn new points. The server calculates this from the receipt lines, stores it as `PointsEarned` on the cash register log and adds it to the customer's saved points. Walk-in purchases earn nothing.
 - **Welcome points:** every new account made through `Customer/Register` starts with 250 points (`LoyaltyPoints.WelcomePoints`). The *Create* entry in the customer logs mentions them.
-- **Spending:** **100 points = €1**, so 1 point = €0.01. The rules live in `StockFlow.Application/Common/LoyaltyPoints.cs`.
+- **Spending:** **100 points = €1**, so 1 point = €0.01. The rules live in `StockFlow.Shared/Common/LoyaltyPoints.cs`.
 - **All or nothing, no minimum:** pressing F4 spends as many points as possible: all of the customer's points, or exactly the receipt total if the customer has more. The cashier can't pick a smaller amount. Examples: 1,250 points on an €8.40 receipt uses 840 points and leaves €0.00 to pay (410 points stay); 50 points on a €10.00 receipt uses all 50 (−€0.50); any number of points can pay a €0.05 receipt (5 points).
 - When the points cover the whole receipt, the payment screen can be completed without choosing PIN or cash.
 - The button is enabled when a customer with at least 1 point is attached. Pressing F4 again turns it off; changing or removing the customer resets it.
@@ -213,7 +218,7 @@ Items can only be returned with the receipt.
 
 When a return is completed the server checks everything again, raises `ReturnedAmount` on the receipt lines (so the same items can't be returned twice), raises the stock of each product, writes a stock log entry of type *Returned* per product and takes back the points earned on the returned items.
 
-- **Refund**: the price per item on the receipt (including sales). If points were used on the receipt, the refund is reduced in the same proportion as the points reduced the total (`ReturnRules` in `StockFlow.Application/Common/ReturnRules.cs`), so points are never paid out as cash. Points are not given back.
+- **Refund**: the price per item on the receipt (including sales). If points were used on the receipt, the refund is reduced in the same proportion as the points reduced the total (`ReturnRules` in `StockFlow.Shared/Common/ReturnRules.cs`), so points are never paid out as cash. Points are not given back.
 - **Points on returns:** the points earned on the receipt are recalculated for the items the customer keeps (1 per whole euro of the value kept), and the difference is taken off the customer's saved points (never below 0). `PointsEarned` on the receipt is lowered to match, so returning in several steps never takes off more than was earned. The confirmation shows how many points were taken off, and the customer log entry contains `SavedPoints: New: x. Old: y`, `Return: Receipt <receipt id>` and `PointsDeducted: n`.
 - Customer ids, other receipts, parking and points can't be used while in return mode.
 - A receipt whose items have all been returned can't be opened for a return again.
@@ -243,7 +248,7 @@ Base URL `https://localhost:7037`, Swagger at `/api`. All endpoints except the l
 
 ### Response format
 
-Every response, including errors, uses the same envelope (`StockFlow.Application/Common/ApiResponse.cs`):
+Every response, including errors, uses the same envelope (`StockFlow.Shared/Common/ApiResponse.cs`):
 
 ```json
 {
@@ -384,6 +389,8 @@ The management app follows a house style (`wwwroot/css/app.css` plus scoped `.ra
 - No transitions or transforms; flat surfaces with 1 px borders.
 - Light color scheme.
 - Shared building blocks: `.card`, `.tasks-table`, `.filters-bar`, `.pagination`, `.modal-overlay` / `.modal-box` / `.drawer`, `.panel-header`.
+- Searchable selects live in `Components/`: `SearchableSelect` (one value) and `SearchableMultiSelect` (chips, optional custom values), both fed with `SelectOption(Value, Label, Detail)`. Type to filter on label and detail, arrow keys to move, Enter to pick, Esc to close, Backspace on an empty multi-select removes the last chip.
+- `EditItem` picks the control per property: enums always become a `SearchableSelect`; a property listed in its `Lookups` parameter (for example `BrandId`, `ShelfId`) becomes a `SearchableSelect`; string collections (`SalesTags`) become a `SearchableMultiSelect`. Lookup lists are loaded by `ILookupService` (`Services/LookupService.cs`), which pages through the brands, shelves and sales endpoints (100 per page) and skips soft-deleted items.
 - Buttons: `.btn-save` (primary), `.btn-cancel` / `.btn-edit` (secondary), `.btn-delete` (destructive), `.btn-icon` (close).
 
 The cash register mirrors the same palette in `Screens/Theme.cs`.

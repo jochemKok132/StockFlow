@@ -1,10 +1,9 @@
-﻿using StockFlow.Application.DTOs.AuditLogs.CashRegister;
-using StockFlow.Application.DTOs.AuditLogs.Customer;
-using StockFlow.Application.DTOs.CashRegister;
-using StockFlow.Application.DTOs.Customer;
-using StockFlow.Application.DTOs.Stock.Product;
+﻿using StockFlow.Shared.DTOs.AuditLogs.CashRegister;
+using StockFlow.Shared.DTOs.AuditLogs.Customer;
+using StockFlow.Shared.DTOs.CashRegister;
+using StockFlow.Shared.DTOs.Customer;
+using StockFlow.Shared.DTOs.Stock.Product;
 using StockFlow.CashRegister.Interfaces;
-using StockFlow.Domain.Entities.Stock;
 
 namespace StockFlow.CashRegister.Services
 {

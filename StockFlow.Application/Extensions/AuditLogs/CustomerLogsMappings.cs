@@ -1,6 +1,6 @@
-﻿using StockFlow.Application.DTOs.AuditLogs.Customer;
-using StockFlow.Application.DTOs.Customer;
-using StockFlow.Application.DTOs.Enums;
+﻿using StockFlow.Shared.DTOs.AuditLogs.Customer;
+using StockFlow.Shared.DTOs.Customer;
+using StockFlow.Shared.DTOs.Enums;
 using StockFlow.Application.Mappings.Enums;
 using StockFlow.Application.Mappings.People;
 using StockFlow.Domain.Entities.AuditLogs;

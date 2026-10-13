@@ -1,6 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using StockFlow.Application.DTOs.Enums;
-using StockFlow.Application.DTOs.Pagination;
+using StockFlow.Shared.DTOs.Enums;
+using StockFlow.Shared.DTOs.Pagination;
 using StockFlow.Application.Interfaces.Repositories;
 using StockFlow.Application.Interfaces.Repositories.EfRepositories;
 using StockFlow.Application.Interfaces.Repositories.ManagementApp;

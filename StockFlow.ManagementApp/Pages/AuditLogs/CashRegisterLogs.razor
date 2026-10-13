@@ -1,6 +1,6 @@
 ﻿@page "/cashregisterlogs";
 @attribute [Authorize(Roles = "Cashier,ServiceDesk,ShiftLeader,Manager,Admin")]
-@using StockFlow.Application.DTOs.CashRegister
+@using StockFlow.Shared.DTOs.CashRegister
 @inject ICashRegisterLogsService CashRegisterLogsService
 @inject IProductService ProductService
 

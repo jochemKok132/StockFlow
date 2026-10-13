@@ -1,7 +1,7 @@
-﻿using StockFlow.Application.DTOs.Employee;
-using StockFlow.Application.DTOs.Employee.EmployeeAuthentication;
-using StockFlow.Application.DTOs.Enums;
-using StockFlow.Application.DTOs.Pagination;
+﻿using StockFlow.Shared.DTOs.Employee;
+using StockFlow.Shared.DTOs.Employee.EmployeeAuthentication;
+using StockFlow.Shared.DTOs.Enums;
+using StockFlow.Shared.DTOs.Pagination;
 using System;
 using System.Collections.Generic;
 using System.Text;

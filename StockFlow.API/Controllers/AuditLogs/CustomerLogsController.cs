@@ -1,9 +1,9 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using StockFlow.Application.Common;
-using StockFlow.Application.DTOs.Pagination;
+using StockFlow.Shared.Common;
+using StockFlow.Shared.DTOs.Pagination;
 using StockFlow.Application.Interfaces.ManagementApp.AuditLogs;
-using StockFlow.Application.DTOs.AuditLogs.Customer;
+using StockFlow.Shared.DTOs.AuditLogs.Customer;
 
 namespace StockFlow.API.Controllers
 {

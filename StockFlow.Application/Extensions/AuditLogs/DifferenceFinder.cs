@@ -81,7 +81,7 @@ public static class DifferenceFinder
     {
         if (type.IsEnum) return false;
         var ns = type.Namespace ?? "";
-        return ns.StartsWith("StockFlow.Domain.Entities") || ns.StartsWith("StockFlow.Application.DTOs");
+        return ns.StartsWith("StockFlow.Domain.Entities") || ns.StartsWith("StockFlow.Shared.DTOs");
     }
 
     private static readonly Lazy<HashSet<string>> NavigationPropertyNames = new(() =>

@@ -1,5 +1,5 @@
-﻿using StockFlow.Application.DTOs.AuditLogs.CashRegister;
-using StockFlow.Application.DTOs.CashRegister;
+﻿using StockFlow.Shared.DTOs.AuditLogs.CashRegister;
+using StockFlow.Shared.DTOs.CashRegister;
 using System;
 using System.Collections.Generic;
 using System.Text;

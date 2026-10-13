@@ -1,5 +1,5 @@
 ﻿using System.Text.Json;
-using StockFlow.Application.Common;
+using StockFlow.Shared.Common;
 using StockFlow.CashRegister.Interfaces;
 using System.Net.Http.Json;
 

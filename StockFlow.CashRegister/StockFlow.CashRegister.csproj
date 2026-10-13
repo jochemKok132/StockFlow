@@ -14,7 +14,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\StockFlow.Application\StockFlow.Application.csproj" />
+    <ProjectReference Include="..\StockFlow.Shared\StockFlow.Shared.csproj" />
   </ItemGroup>
 
 </Project>

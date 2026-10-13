@@ -1,4 +1,4 @@
-﻿using StockFlow.Application.DTOs.Enums;
+﻿using StockFlow.Shared.DTOs.Enums;
 using StockFlow.Domain.Enums;
 using System;
 using System.Collections.Generic;

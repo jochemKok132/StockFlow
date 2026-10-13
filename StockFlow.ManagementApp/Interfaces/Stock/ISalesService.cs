@@ -1,8 +1,8 @@
-using StockFlow.Application.DTOs.AuditLogs.CashRegister;
-using StockFlow.Application.DTOs.AuditLogs.Stock;
-using StockFlow.Application.DTOs.Pagination;
-using StockFlow.Application.DTOs.Stock.Product;
-using StockFlow.Application.DTOs.Stock.Sales;
+using StockFlow.Shared.DTOs.AuditLogs.CashRegister;
+using StockFlow.Shared.DTOs.AuditLogs.Stock;
+using StockFlow.Shared.DTOs.Pagination;
+using StockFlow.Shared.DTOs.Stock.Product;
+using StockFlow.Shared.DTOs.Stock.Sales;
 
 namespace StockFlow.ManagementApp.Interfaces.Stock
 {

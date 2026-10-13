@@ -1,7 +1,7 @@
-using StockFlow.Application.DTOs.AuditLogs.Customer;
-using StockFlow.Application.DTOs.AuditLogs.Stock;
-using StockFlow.Application.DTOs.Enums;
-using StockFlow.Application.DTOs.Pagination;
+using StockFlow.Shared.DTOs.AuditLogs.Customer;
+using StockFlow.Shared.DTOs.AuditLogs.Stock;
+using StockFlow.Shared.DTOs.Enums;
+using StockFlow.Shared.DTOs.Pagination;
 using StockFlow.ManagementApp.Interfaces;
 using StockFlow.ManagementApp.Interfaces.AuditLogs;
 

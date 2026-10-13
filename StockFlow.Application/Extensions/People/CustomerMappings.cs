@@ -1,5 +1,5 @@
-﻿using StockFlow.Application.DTOs.AuditLogs.Customer;
-using StockFlow.Application.DTOs.Customer;
+﻿using StockFlow.Shared.DTOs.AuditLogs.Customer;
+using StockFlow.Shared.DTOs.Customer;
 using StockFlow.Domain.Entities.People;
 using System;
 using System.Collections.Generic;

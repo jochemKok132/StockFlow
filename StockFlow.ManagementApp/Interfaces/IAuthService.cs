@@ -1,6 +1,6 @@
 
-using StockFlow.Application.Common;
-using StockFlow.Application.DTOs.Employee.EmployeeAuthentication;
+using StockFlow.Shared.Common;
+using StockFlow.Shared.DTOs.Employee.EmployeeAuthentication;
 
 namespace StockFlow.ManagementApp.Interfaces
 {

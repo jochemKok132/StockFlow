@@ -1,5 +1,5 @@
-﻿using StockFlow.Application.DTOs.AuditLogs.CashRegister;
-using StockFlow.Application.DTOs.CashRegister;
+﻿using StockFlow.Shared.DTOs.AuditLogs.CashRegister;
+using StockFlow.Shared.DTOs.CashRegister;
 using StockFlow.Application.Extensions.CashRegister;
 using StockFlow.Application.Mappings.People;
 using StockFlow.Application.Mappings.Stock;
@@ -39,7 +39,7 @@ namespace StockFlow.Application.Mappings.AuditLogs
                 CustomerId = dto.CustomerId,
                 EmployeeId = employeeId,
                 Id = Guid.NewGuid(),
-                ProductsSold = dto.ProductsSold.Select(e => e.ToRegisterItemDetailEntity()),
+                ProductsSold = dto.ProductsSold.ToList(),
                 TotalOff = dto.TotalOff,
                 PointsUsed = dto.PointsUsed,
                 TotalPrice = dto.TotalPrice,
@@ -57,8 +57,9 @@ namespace StockFlow.Application.Mappings.AuditLogs
                 ProductsSold = dto.ProductsSold
                     .Select(e =>
                     {
-                        e.CashregisterLogId = newId;
-                        return e;
+                        var entity = e.ToRegisterItemDetailEntity();
+                        entity.CashregisterLogId = newId;
+                        return entity;
                     })
                     .ToList(),
                 TotalOff = dto.TotalOff,

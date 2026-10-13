@@ -1,4 +1,4 @@
-﻿using StockFlow.Application.Common;
+﻿using StockFlow.Shared.Common;
 
 namespace StockFlow.CashRegister.Interfaces
 {

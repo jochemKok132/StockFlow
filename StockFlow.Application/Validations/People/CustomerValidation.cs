@@ -1,7 +1,7 @@
 ﻿using System.Text.RegularExpressions;
-using StockFlow.Application.DTOs.Customer;
-using StockFlow.Application.DTOs.Customer.CustomerAuthentication;
-using CustomerLogin = StockFlow.Application.DTOs.Customer.CustomerAuthentication.LoginRequest;
+using StockFlow.Shared.DTOs.Customer;
+using StockFlow.Shared.DTOs.Customer.CustomerAuthentication;
+using CustomerLogin = StockFlow.Shared.DTOs.Customer.CustomerAuthentication.LoginRequest;
 
 namespace StockFlow.Application.Validations.People
 {

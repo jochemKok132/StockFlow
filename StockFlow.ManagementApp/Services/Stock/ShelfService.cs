@@ -1,7 +1,7 @@
-﻿using StockFlow.Application.DTOs.AuditLogs.Customer;
-using StockFlow.Application.DTOs.Pagination;
-using StockFlow.Application.DTOs.Stock.Product;
-using StockFlow.Application.DTOs.Stock.Shelf;
+﻿using StockFlow.Shared.DTOs.AuditLogs.Customer;
+using StockFlow.Shared.DTOs.Pagination;
+using StockFlow.Shared.DTOs.Stock.Product;
+using StockFlow.Shared.DTOs.Stock.Shelf;
 using StockFlow.ManagementApp.Interfaces;
 using StockFlow.ManagementApp.Interfaces.Stock;
 

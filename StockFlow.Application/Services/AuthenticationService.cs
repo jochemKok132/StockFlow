@@ -1,8 +1,8 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.JsonWebTokens;
 using Microsoft.IdentityModel.Tokens;
-using StockFlow.Application.DTOs.Customer.CustomerAuthentication;
-using StockFlow.Application.DTOs.Employee.EmployeeAuthentication;
+using StockFlow.Shared.DTOs.Customer.CustomerAuthentication;
+using StockFlow.Shared.DTOs.Employee.EmployeeAuthentication;
 using StockFlow.Application.Interfaces;
 using StockFlow.Domain.Entities.People;
 using System.Security.Claims;
@@ -14,7 +14,7 @@ namespace StockFlow.Application.Services
     {
         public const string CustomerRole = "Customer";
 
-        public DTOs.Employee.EmployeeAuthentication.Token GenerateToken(Employee user)
+        public Shared.DTOs.Employee.EmployeeAuthentication.Token GenerateToken(Employee user)
         {
             var (jwt, expiresOn) = CreateToken(new List<Claim>()
             {
@@ -24,10 +24,10 @@ namespace StockFlow.Application.Services
                 new Claim(ClaimTypes.Role, user.Role.ToString())
             });
 
-            return new DTOs.Employee.EmployeeAuthentication.Token() { JWT = jwt, ExpiresOn = expiresOn };
+            return new Shared.DTOs.Employee.EmployeeAuthentication.Token() { JWT = jwt, ExpiresOn = expiresOn };
         }
 
-        public DTOs.Customer.CustomerAuthentication.Token GenerateToken(Customer user)
+        public Shared.DTOs.Customer.CustomerAuthentication.Token GenerateToken(Customer user)
         {
             var (jwt, expiresOn) = CreateToken(new List<Claim>()
             {
@@ -38,7 +38,7 @@ namespace StockFlow.Application.Services
                 new Claim(ClaimTypes.Role, CustomerRole)
             });
 
-            return new DTOs.Customer.CustomerAuthentication.Token() { JWT = jwt, ExpiresOn = expiresOn };
+            return new Shared.DTOs.Customer.CustomerAuthentication.Token() { JWT = jwt, ExpiresOn = expiresOn };
         }
 
         private (string jwt, DateTime expiresOn) CreateToken(List<Claim> claimList)

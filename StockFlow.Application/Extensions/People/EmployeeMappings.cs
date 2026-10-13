@@ -1,4 +1,4 @@
-﻿using StockFlow.Application.DTOs.Employee;
+﻿using StockFlow.Shared.DTOs.Employee;
 using StockFlow.Application.Mappings.Enums;
 using StockFlow.Domain.Entities.People;
 using System;

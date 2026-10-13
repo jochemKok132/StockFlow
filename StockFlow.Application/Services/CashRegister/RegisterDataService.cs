@@ -1,8 +1,8 @@
-﻿using StockFlow.Application.Common;
-using StockFlow.Application.DTOs.AuditLogs.CashRegister;
-using StockFlow.Application.DTOs.AuditLogs.Customer;
-using StockFlow.Application.DTOs.CashRegister;
-using StockFlow.Application.DTOs.Enums;
+﻿using StockFlow.Shared.Common;
+using StockFlow.Shared.DTOs.AuditLogs.CashRegister;
+using StockFlow.Shared.DTOs.AuditLogs.Customer;
+using StockFlow.Shared.DTOs.CashRegister;
+using StockFlow.Shared.DTOs.Enums;
 using StockFlow.Application.Interfaces.CashRegister;
 using StockFlow.Application.Interfaces.ManagementApp.AuditLogs;
 using StockFlow.Application.Interfaces.ManagementApp.Stock;

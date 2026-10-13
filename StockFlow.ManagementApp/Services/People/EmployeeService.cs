@@ -1,7 +1,7 @@
-﻿using StockFlow.Application.DTOs.Employee;
-using StockFlow.Application.DTOs.Pagination;
-using StockFlow.Application.DTOs.Stock.ProductBrand;
-using StockFlow.Application.DTOs.Stock.Sales;
+﻿using StockFlow.Shared.DTOs.Employee;
+using StockFlow.Shared.DTOs.Pagination;
+using StockFlow.Shared.DTOs.Stock.ProductBrand;
+using StockFlow.Shared.DTOs.Stock.Sales;
 using StockFlow.ManagementApp.Interfaces;
 using StockFlow.ManagementApp.Interfaces.People;
 

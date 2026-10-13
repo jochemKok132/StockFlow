@@ -1,6 +1,6 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using StockFlow.Application.Common;
+using StockFlow.Shared.Common;
 
 namespace StockFlow.API.Controllers
 {

@@ -1,6 +1,6 @@
-﻿using StockFlow.Application.DTOs.Customer;
-using StockFlow.Application.DTOs.Pagination;
-using StockFlow.Application.DTOs.Stock.Sales;
+﻿using StockFlow.Shared.DTOs.Customer;
+using StockFlow.Shared.DTOs.Pagination;
+using StockFlow.Shared.DTOs.Stock.Sales;
 using StockFlow.ManagementApp.Interfaces;
 using StockFlow.ManagementApp.Interfaces.People;
 

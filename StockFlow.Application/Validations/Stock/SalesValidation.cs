@@ -1,4 +1,4 @@
-﻿using StockFlow.Application.DTOs.Stock.Sales;
+﻿using StockFlow.Shared.DTOs.Stock.Sales;
 
 namespace StockFlow.Application.Validations.Stock
 {

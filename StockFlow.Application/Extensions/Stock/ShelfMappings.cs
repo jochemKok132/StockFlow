@@ -1,4 +1,4 @@
-﻿using StockFlow.Application.DTOs.Stock.Shelf;
+﻿using StockFlow.Shared.DTOs.Stock.Shelf;
 using StockFlow.Domain.Entities.Stock;
 using System;
 using System.Collections.Generic;

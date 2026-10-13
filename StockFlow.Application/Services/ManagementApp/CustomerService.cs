@@ -1,7 +1,7 @@
-﻿using StockFlow.Application.DTOs.Customer;
-using StockFlow.Application.Common;
-using StockFlow.Application.DTOs.Customer.CustomerAuthentication;
-using StockFlow.Application.DTOs.Pagination;
+﻿using StockFlow.Shared.DTOs.Customer;
+using StockFlow.Shared.Common;
+using StockFlow.Shared.DTOs.Customer.CustomerAuthentication;
+using StockFlow.Shared.DTOs.Pagination;
 using StockFlow.Application.Interfaces;
 using StockFlow.Application.Interfaces.Helpers;
 using StockFlow.Application.Interfaces.ManagementApp;
@@ -17,8 +17,8 @@ using StockFlow.Application.Interfaces.ManagementApp.AuditLogs;
 using StockFlow.Application.Mappings.AuditLogs;
 using StockFlow.Application.Validations;
 using StockFlow.Application.Validations.People;
-using StockFlow.Application.DTOs.AuditLogs.Customer;
-using StockFlow.Application.DTOs.Enums;
+using StockFlow.Shared.DTOs.AuditLogs.Customer;
+using StockFlow.Shared.DTOs.Enums;
 
 namespace StockFlow.Application.Services.ManagementApp
 {

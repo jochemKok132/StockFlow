@@ -1,9 +1,9 @@
-﻿using StockFlow.Application.DTOs.AuditLogs.Stock;
-using StockFlow.Application.DTOs.Enums;
-using StockFlow.Application.DTOs.Stock.Product;
-using StockFlow.Application.DTOs.Stock.ProductBrand;
-using StockFlow.Application.DTOs.Stock.Sales;
-using StockFlow.Application.DTOs.Stock.Shelf;
+﻿using StockFlow.Shared.DTOs.AuditLogs.Stock;
+using StockFlow.Shared.DTOs.Enums;
+using StockFlow.Shared.DTOs.Stock.Product;
+using StockFlow.Shared.DTOs.Stock.ProductBrand;
+using StockFlow.Shared.DTOs.Stock.Sales;
+using StockFlow.Shared.DTOs.Stock.Shelf;
 using StockFlow.Application.Mappings.Enums;
 using StockFlow.Application.Mappings.People;
 using StockFlow.Application.Mappings.Stock;

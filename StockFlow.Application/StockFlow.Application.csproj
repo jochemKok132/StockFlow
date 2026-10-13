@@ -13,12 +13,12 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Common\" />
     <Folder Include="Interfaces\Repositories\CashRegister\" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\StockFlow.Domain\StockFlow.Domain.csproj" />
+    <ProjectReference Include="..\StockFlow.Shared\StockFlow.Shared.csproj" />
   </ItemGroup>
 
 </Project>

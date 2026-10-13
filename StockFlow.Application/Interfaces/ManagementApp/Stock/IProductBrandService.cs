@@ -1,6 +1,6 @@
-﻿using StockFlow.Application.DTOs.Pagination;
-using StockFlow.Application.DTOs.Stock.Product;
-using StockFlow.Application.DTOs.Stock.ProductBrand;
+﻿using StockFlow.Shared.DTOs.Pagination;
+using StockFlow.Shared.DTOs.Stock.Product;
+using StockFlow.Shared.DTOs.Stock.ProductBrand;
 using System;
 using System.Collections.Generic;
 using System.Text;

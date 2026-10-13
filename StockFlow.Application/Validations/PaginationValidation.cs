@@ -1,4 +1,4 @@
-﻿using StockFlow.Application.DTOs.Pagination;
+﻿using StockFlow.Shared.DTOs.Pagination;
 
 namespace StockFlow.Application.Validations
 {

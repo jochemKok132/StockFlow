@@ -1,6 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Mvc;
-using StockFlow.Application.Common;
+using StockFlow.Shared.Common;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 

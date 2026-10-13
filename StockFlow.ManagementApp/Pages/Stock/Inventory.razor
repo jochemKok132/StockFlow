@@ -1,6 +1,7 @@
 ﻿@page "/inventory";
 @attribute [Authorize]
 @inject IProductService productsService
+@inject ILookupService LookupService
 @inject AuthenticationStateProvider AuthStateProvider
 
 <div class="tasks-header">
@@ -129,6 +130,7 @@
           EditMode="true"
           ReadMode="false"
           item="itemType"
+          Lookups="lookups"
           Loading="changesLoading"
           Error="@changesError"
           OnClose="CloseChanges"
@@ -150,6 +152,7 @@
     private bool showChanges = false;
 
     private object? itemType;
+    private Dictionary<string, List<SelectOption>> lookups = new();
 
     private bool isCreateMode;
 
@@ -204,6 +207,7 @@
         changesLoading = true;
         changesError = "";
         await InvokeAsync(StateHasChanged);
+        await LoadLookupsAsync();
         (var product, detailsError) = await productsService.GetProductDetailsAsync(dto.Id);
 
         itemType = new UpdateProductDto
@@ -224,15 +228,42 @@
         changesLoading = false;
     }
 
-    private void OpenCreate(CreateProductDto item)
+    private async Task OpenCreate(CreateProductDto item)
     {
         if (!canManage) return;
 
         isCreateMode = true;
         showChanges = true;
-        changesLoading = false;
+        changesLoading = true;
         changesError = "";
         itemType = item;
+        await InvokeAsync(StateHasChanged);
+
+        await LoadLookupsAsync();
+        changesLoading = false;
+    }
+
+    private async Task LoadLookupsAsync()
+    {
+        var brandsTask = LookupService.GetBrandOptionsAsync();
+        var shelvesTask = LookupService.GetShelfOptionsAsync();
+        var tagsTask = LookupService.GetSalesTagOptionsAsync();
+        await Task.WhenAll(brandsTask, shelvesTask, tagsTask);
+
+        var (brands, brandError) = brandsTask.Result;
+        var (shelves, shelfError) = shelvesTask.Result;
+        var (tags, tagError) = tagsTask.Result;
+
+        lookups = new()
+        {
+            [nameof(CreateProductDto.BrandId)] = brands,
+            [nameof(CreateProductDto.ShelfId)] = shelves,
+            [nameof(CreateProductDto.SalesTags)] = tags,
+        };
+
+        var error = new[] { brandError, shelfError, tagError }.FirstOrDefault(e => !string.IsNullOrEmpty(e));
+        if (error is not null)
+            changesError = error.StartsWith("Error:") ? error["Error:".Length..].Trim() : error;
     }
 
     private async Task HandleSave(object? item)

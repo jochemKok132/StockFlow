@@ -1,0 +1,175 @@
+﻿<div class="searchable-select @(Disabled ? "is-disabled" : "")" @onfocusout="Close">
+    <div class="select-control multi @(open ? "is-open" : "")" @onclick="FocusInputAsync">
+        @foreach (var value in Values)
+        {
+            <span class="select-chip">
+                @LabelFor(value)
+                @if (!Disabled)
+                {
+                    <button type="button" class="chip-remove" title="Remove"
+                            @onclick="() => RemoveAsync(value)"
+                            @onclick:stopPropagation="true"
+                            @onmousedown:preventDefault="true">
+                        <i class="bi bi-x"></i>
+                    </button>
+                }
+            </span>
+        }
+        <input @ref="input"
+               id="@Id"
+               class="select-input"
+               type="text"
+               autocomplete="off"
+               value="@search"
+               placeholder="@(Values.Count == 0 ? Placeholder : "")"
+               readonly="@Disabled"
+               @onfocus="Open"
+               @oninput="OnInput"
+               @onkeydown="OnKeyDown" />
+    </div>
+
+    @if (open && !Disabled)
+    {
+        <ul class="select-list" role="listbox">
+            @if (Choices.Count == 0)
+            {
+                <li class="select-empty">@(string.IsNullOrWhiteSpace(search) ? "Type to search or add" : $"No matches for \"{search}\"")</li>
+            }
+            @for (int i = 0; i < Choices.Count; i++)
+            {
+                var option = Choices[i];
+                var index = i;
+                <li class="select-option @(index == highlight ? "is-highlighted" : "") @(option.Value == AddValue ? "is-add" : "")"
+                    role="option"
+                    @onmousedown="() => AddAsync(option.Value)"
+                    @onmousedown:preventDefault="true"
+                    @onmouseover="() => highlight = index">
+                    <span class="option-label">@option.Label</span>
+                    @if (!string.IsNullOrWhiteSpace(option.Detail))
+                    {
+                        <span class="option-detail">@option.Detail</span>
+                    }
+                </li>
+            }
+        </ul>
+    }
+</div>
+
+@code {
+    [Parameter] public string? Id { get; set; }
+    [Parameter] public List<SelectOption> Options { get; set; } = [];
+    [Parameter] public List<string> Values { get; set; } = [];
+    [Parameter] public EventCallback<List<string>> ValuesChanged { get; set; }
+    [Parameter] public string Placeholder { get; set; } = "Search...";
+    [Parameter] public bool AllowCustom { get; set; }
+    [Parameter] public bool Disabled { get; set; }
+
+    private ElementReference input;
+    private bool open;
+    private string search = "";
+    private int highlight;
+
+    private string? AddValue
+    {
+        get
+        {
+            var term = search.Trim();
+            if (!AllowCustom || term.Length == 0) return null;
+            if (Values.Contains(term, StringComparer.OrdinalIgnoreCase)) return null;
+            if (Options.Any(o => string.Equals(o.Value, term, StringComparison.OrdinalIgnoreCase))) return null;
+            return term;
+        }
+    }
+
+    private List<SelectOption> Choices
+    {
+        get
+        {
+            var term = search.Trim();
+            var list = Options
+                .Where(o => !Values.Contains(o.Value, StringComparer.OrdinalIgnoreCase))
+                .Where(o => term.Length == 0 ||
+                            o.Label.Contains(term, StringComparison.OrdinalIgnoreCase) ||
+                            (o.Detail?.Contains(term, StringComparison.OrdinalIgnoreCase) ?? false))
+                .ToList();
+
+            if (AddValue is string add)
+                list.Insert(0, new SelectOption(add, $"Add \"{add}\"", "New value"));
+
+            return list;
+        }
+    }
+
+    private string LabelFor(string value) =>
+        Options.FirstOrDefault(o => string.Equals(o.Value, value, StringComparison.OrdinalIgnoreCase))?.Label ?? value;
+
+    private async Task FocusInputAsync()
+    {
+        if (Disabled) return;
+        await input.FocusAsync();
+    }
+
+    private void Open()
+    {
+        if (Disabled) return;
+        open = true;
+        highlight = 0;
+    }
+
+    private void Close()
+    {
+        open = false;
+        search = "";
+    }
+
+    private void OnInput(ChangeEventArgs e)
+    {
+        search = e.Value?.ToString() ?? "";
+        highlight = 0;
+        open = true;
+    }
+
+    private async Task OnKeyDown(KeyboardEventArgs e)
+    {
+        if (Disabled) return;
+
+        switch (e.Key)
+        {
+            case "ArrowDown":
+                open = true;
+                if (Choices.Count > 0) highlight = (highlight + 1) % Choices.Count;
+                break;
+            case "ArrowUp":
+                if (Choices.Count > 0) highlight = (highlight - 1 + Choices.Count) % Choices.Count;
+                break;
+            case "Enter":
+                if (open && highlight >= 0 && highlight < Choices.Count)
+                    await AddAsync(Choices[highlight].Value);
+                break;
+            case "Backspace":
+                if (search.Length == 0 && Values.Count > 0)
+                    await RemoveAsync(Values[^1]);
+                break;
+            case "Escape":
+            case "Tab":
+                Close();
+                break;
+        }
+    }
+
+    private async Task AddAsync(string value)
+    {
+        if (Values.Contains(value, StringComparer.OrdinalIgnoreCase)) return;
+
+        Values = [.. Values, value];
+        search = "";
+        highlight = 0;
+        await ValuesChanged.InvokeAsync(Values);
+    }
+
+    private async Task RemoveAsync(string value)
+    {
+        Values = Values.Where(v => v != value).ToList();
+        await ValuesChanged.InvokeAsync(Values);
+    }
+}

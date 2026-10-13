@@ -1,6 +1,6 @@
-﻿using StockFlow.Application.DTOs.Customer;
-using StockFlow.Application.DTOs.Customer.CustomerAuthentication;
-using StockFlow.Application.DTOs.Pagination;
+﻿using StockFlow.Shared.DTOs.Customer;
+using StockFlow.Shared.DTOs.Customer.CustomerAuthentication;
+using StockFlow.Shared.DTOs.Pagination;
 using System;
 using System.Collections.Generic;
 using System.Text;

@@ -1,9 +1,9 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using StockFlow.Application.Common;
-using StockFlow.Application.DTOs.Employee;
-using StockFlow.Application.DTOs.Employee.EmployeeAuthentication;
-using StockFlow.Application.DTOs.Pagination;
+using StockFlow.Shared.Common;
+using StockFlow.Shared.DTOs.Employee;
+using StockFlow.Shared.DTOs.Employee.EmployeeAuthentication;
+using StockFlow.Shared.DTOs.Pagination;
 using StockFlow.Application.Interfaces.ManagementApp;
 using System.Security.Authentication;
 

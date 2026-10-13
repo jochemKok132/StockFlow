@@ -1,6 +1,6 @@
-﻿using StockFlow.Application.DTOs.Employee;
-using StockFlow.Application.DTOs.Enums;
-using EmployeeLogin = StockFlow.Application.DTOs.Employee.EmployeeAuthentication.LoginRequest;
+﻿using StockFlow.Shared.DTOs.Employee;
+using StockFlow.Shared.DTOs.Enums;
+using EmployeeLogin = StockFlow.Shared.DTOs.Employee.EmployeeAuthentication.LoginRequest;
 
 namespace StockFlow.Application.Validations.People
 {

@@ -18,6 +18,7 @@
   <ItemGroup>
     <ProjectReference Include="..\StockFlow.Application\StockFlow.Application.csproj" />
     <ProjectReference Include="..\StockFlow.Infrastructure\StockFlow.Infrastructure.csproj" />
+    <ProjectReference Include="..\StockFlow.Shared\StockFlow.Shared.csproj" />
   </ItemGroup>
 
 </Project>

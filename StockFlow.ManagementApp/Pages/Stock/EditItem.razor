@@ -43,7 +43,7 @@
                     @foreach (var prop in EditableProperties.Where(p => !IsHidden(p)))
                     {
                         <div class="form-row">
-                            <label class="form-label" for="@prop.Name">@SplitPascalCase(prop.Name)</label>
+                            <label class="form-label" for="@prop.Name">@DisplayName(prop)</label>
 
                             @if (prop.PropertyType == typeof(byte[]))
                             {
@@ -59,16 +59,24 @@
                                     }
                                 </div>
                             }
-                            else if (GetUnderlyingType(prop.PropertyType).IsEnum)
+                            else if (IsStringCollection(prop.PropertyType))
                             {
-                                <select id="@prop.Name" class="form-select" disabled="@ReadMode"
-                                        value="@GetValueAsString(prop)"
-                                        @onchange="e => SetValueFromString(prop, e.Value?.ToString() ?? string.Empty)">
-                                    @foreach (var name in Enum.GetNames(GetUnderlyingType(prop.PropertyType)))
-                                    {
-                                        <option value="@name">@name</option>
-                                    }
-                                </select>
+                                <SearchableMultiSelect Id="@prop.Name"
+                                                       Options="OptionsFor(prop)"
+                                                       Values="GetValues(prop)"
+                                                       ValuesChanged="values => SetValues(prop, values)"
+                                                       AllowCustom="true"
+                                                       Disabled="ReadMode"
+                                                       Placeholder="@($"Search or add {SplitPascalCase(prop.Name).ToLowerInvariant()}...")" />
+                            }
+                            else if (HasLookup(prop))
+                            {
+                                <SearchableSelect Id="@prop.Name"
+                                                  Options="OptionsFor(prop)"
+                                                  Value="@GetSelectValue(prop)"
+                                                  ValueChanged="value => SetValueFromString(prop, value)"
+                                                  Disabled="ReadMode"
+                                                  Placeholder="@($"Search {LookupName(prop)}...")" />
                             }
                             else if (GetUnderlyingType(prop.PropertyType) == typeof(bool))
                             {
@@ -77,14 +85,6 @@
                                        disabled="@ReadMode"
                                        @onchange="e => SetValueFromString(prop, ((e.Value as bool?) ?? false).ToString())" />
                             }
-                            else if (IsStringCollection(prop.PropertyType))
-                            {
-                                <input id="@prop.Name" type="text" class="form-input"
-                                       value="@GetValueAsString(prop)"
-                                       readonly="@ReadMode"
-                                       placeholder="comma, separated, values"
-                                       @onchange="e => SetValueFromString(prop, e.Value?.ToString() ?? string.Empty)" />
-                            }
                             else
                             {
                                 <input id="@prop.Name" type="@(prop.Name.Contains("Password") ? "password" : GetInputType(prop.PropertyType))" class="form-input"
@@ -92,6 +92,7 @@
                                        placeholder="@(prop.Name == "NewPassword" ? "Leave empty to keep the current password" : null)"
                                        value="@GetValueAsString(prop)"
                                        readonly="@ReadMode"
+                                       @oninput="() => editing = true"
                                        @onchange="e => SetValueFromString(prop, e.Value?.ToString() ?? string.Empty)" />
                             }
                         </div>
@@ -101,8 +102,12 @@
                 @if (EditMode)
                 {
                     <div class="form-actions">
+                        @if (IsUpdate && !HasChanges && !editing)
+                        {
+                            <span class="no-changes">No changes to save.</span>
+                        }
                         <button type="button" class="btn-cancel" @onclick="OnClose">Cancel</button>
-                        <button type="button" class="btn-save" @onclick="HandleSave"><i class="bi bi-check-lg"></i> Save</button>
+                        <button type="button" class="btn-save" disabled="@(IsUpdate && !HasChanges && !editing)" @onclick="HandleSave"><i class="bi bi-check-lg"></i> Save</button>
                     </div>
                 }
             }
@@ -117,11 +122,55 @@
     [Parameter] public object? item { get; set; }
     [Parameter] public bool Loading { get; set; }
     [Parameter] public string Error { get; set; } = "";
+    [Parameter] public Dictionary<string, List<SelectOption>>? Lookups { get; set; }
 
     [Parameter] public EventCallback OnClose { get; set; }
     [Parameter] public EventCallback<object?> OnSave { get; set; }
 
     private const long MaxFileSizeBytes = 5 * 1024 * 1024;
+
+    private object? snapshotItem;
+    private string? snapshot;
+    private bool editing;
+
+    protected override void OnParametersSet()
+    {
+        if (ReferenceEquals(item, snapshotItem)) return;
+
+        snapshotItem = item;
+        editing = false;
+        snapshot = item is null ? null : CreateSnapshot();
+    }
+
+    private bool IsUpdate =>
+        item?.GetType().GetProperty("Id")?.GetValue(item) is Guid id && id != Guid.Empty;
+
+    private bool HasChanges => snapshot is null || CreateSnapshot() != snapshot;
+
+    private string CreateSnapshot()
+    {
+        var values = new SortedDictionary<string, object?>();
+        foreach (var prop in EditableProperties)
+            values[prop.Name] = Normalize(prop.GetValue(item));
+
+        return System.Text.Json.JsonSerializer.Serialize(values);
+    }
+
+    private static object? Normalize(object? value) => value switch
+    {
+        null => "",
+        string text => text.Trim(),
+        byte[] bytes => Convert.ToBase64String(bytes),
+        IEnumerable<string> list => list
+            .Select(v => v.Trim())
+            .Where(v => v.Length > 0)
+            .Order(StringComparer.OrdinalIgnoreCase)
+            .ToArray(),
+        DateTime date => date.ToString("O"),
+        decimal amount => amount.ToString("0.############################", CultureInfo.InvariantCulture),
+        IFormattable number => number.ToString(null, CultureInfo.InvariantCulture),
+        _ => value.ToString(),
+    };
 
     private IEnumerable<PropertyInfo> EditableProperties =>
         item?.GetType()
@@ -151,6 +200,42 @@
             return words.Length > 1 ? words[0] + words[1..].ToLowerInvariant() : words;
         }
     }
+
+    private bool HasLookup(PropertyInfo prop) =>
+        GetUnderlyingType(prop.PropertyType).IsEnum || (Lookups?.ContainsKey(prop.Name) ?? false);
+
+    private List<SelectOption> OptionsFor(PropertyInfo prop)
+    {
+        if (Lookups is not null && Lookups.TryGetValue(prop.Name, out var options))
+            return options;
+
+        var type = GetUnderlyingType(prop.PropertyType);
+        if (type.IsEnum)
+            return Enum.GetNames(type).Select(name => new SelectOption(name, SplitPascalCase(name))).ToList();
+
+        return [];
+    }
+
+    private string? GetSelectValue(PropertyInfo prop)
+    {
+        var value = prop.GetValue(item);
+        if (value is null || (value is Guid guid && guid == Guid.Empty)) return null;
+        return value.ToString();
+    }
+
+    private List<string> GetValues(PropertyInfo prop) =>
+        (prop.GetValue(item) as IEnumerable<string>)?.ToList() ?? [];
+
+    private void SetValues(PropertyInfo prop, List<string> values) =>
+        prop.SetValue(item, values.ToArray());
+
+    private static string DisplayName(PropertyInfo prop)
+    {
+        var name = prop.Name.EndsWith("Id") && prop.PropertyType == typeof(Guid) ? prop.Name[..^2] : prop.Name;
+        return SplitPascalCase(name);
+    }
+
+    private static string LookupName(PropertyInfo prop) => DisplayName(prop).ToLowerInvariant();
 
     private static bool IsHidden(PropertyInfo prop) =>
         prop.Name == "Id" || prop.Name == "HashedPassword";
@@ -234,6 +319,10 @@
         catch
         {
         }
+        finally
+        {
+            editing = false;
+        }
     }
 
     private async Task HandleFileSelected(InputFileChangeEventArgs e, PropertyInfo prop)
@@ -266,6 +355,9 @@
 
     private async Task HandleSave()
     {
+        editing = false;
+        if (IsUpdate && !HasChanges) return;
+
         if (OnSave.HasDelegate)
         {
             await OnSave.InvokeAsync(item);

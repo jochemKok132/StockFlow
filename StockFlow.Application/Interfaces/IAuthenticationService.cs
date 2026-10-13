@@ -1,5 +1,5 @@
-﻿using StockFlow.Application.DTOs.Customer.CustomerAuthentication;
-using StockFlow.Application.DTOs.Employee.EmployeeAuthentication;
+﻿using StockFlow.Shared.DTOs.Customer.CustomerAuthentication;
+using StockFlow.Shared.DTOs.Employee.EmployeeAuthentication;
 using StockFlow.Domain.Entities.People;
 using System;
 using System.Collections.Generic;
@@ -11,7 +11,7 @@ namespace StockFlow.Application.Interfaces
 {
     public interface IAuthenticationService
     {
-        DTOs.Customer.CustomerAuthentication.Token GenerateToken(Customer user);
-        DTOs.Employee.EmployeeAuthentication.Token GenerateToken(Employee user);
+        Shared.DTOs.Customer.CustomerAuthentication.Token GenerateToken(Customer user);
+        Shared.DTOs.Employee.EmployeeAuthentication.Token GenerateToken(Employee user);
     }
 }

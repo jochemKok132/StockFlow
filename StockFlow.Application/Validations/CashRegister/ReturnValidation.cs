@@ -1,5 +1,5 @@
-﻿using StockFlow.Application.Common;
-using StockFlow.Application.DTOs.CashRegister;
+﻿using StockFlow.Shared.Common;
+using StockFlow.Shared.DTOs.CashRegister;
 
 namespace StockFlow.Application.Validations.CashRegister
 {

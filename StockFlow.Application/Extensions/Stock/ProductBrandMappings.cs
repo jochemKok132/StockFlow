@@ -1,4 +1,4 @@
-﻿using StockFlow.Application.DTOs.Stock.ProductBrand;
+﻿using StockFlow.Shared.DTOs.Stock.ProductBrand;
 using StockFlow.Domain.Entities.Stock;
 using System;
 using System.Collections.Generic;

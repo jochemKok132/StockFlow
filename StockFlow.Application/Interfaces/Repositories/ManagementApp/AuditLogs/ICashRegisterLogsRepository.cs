@@ -1,4 +1,4 @@
-﻿using StockFlow.Application.DTOs.Pagination;
+﻿using StockFlow.Shared.DTOs.Pagination;
 using StockFlow.Application.Interfaces.Repositories.EfRepositories;
 using StockFlow.Domain.Entities.AuditLogs;
 using StockFlow.Domain.Entities.Stock;
