@@ -41,10 +41,13 @@ namespace StockFlow.API
                 });
             });
 
+            string[] allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>()
+                ?? ["https://localhost:7158"];
+
             builder.Services.AddCors(options =>
             {
-                options.AddPolicy("frontend-dev", policy =>
-                    policy.WithOrigins("https://localhost:7158")
+                options.AddPolicy("frontend", policy =>
+                    policy.WithOrigins(allowedOrigins)
                         .AllowAnyHeader()
                         .AllowAnyMethod());
             });
@@ -69,7 +72,7 @@ namespace StockFlow.API
 
             app.UseExceptionHandler("/error");
 
-            app.UseCors("frontend-dev");
+            app.UseCors("frontend");
 
             app.UseHttpsRedirection();
 

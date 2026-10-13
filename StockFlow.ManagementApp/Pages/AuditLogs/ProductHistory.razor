@@ -228,7 +228,7 @@
         if (barcode == loadedBarcode)
             await LoadHistory(barcode);
         else
-            Nav.NavigateTo($"/producthistory?barcode={barcode}");
+            Nav.NavigateTo($"producthistory?barcode={barcode}");
     }
 
     private async Task LoadHistory(int barcode)

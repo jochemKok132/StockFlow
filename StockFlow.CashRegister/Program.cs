@@ -17,6 +17,7 @@ namespace StockFlow.CashRegister
             System.Windows.Forms.Application.EnableVisualStyles();
             System.Windows.Forms.Application.SetCompatibleTextRenderingDefault(false);
 
+            var settings = RegisterSettings.Load();
             var services = new ServiceCollection();
 
             services.AddAuthorizationCore();
@@ -33,7 +34,7 @@ namespace StockFlow.CashRegister
             {
                 var handler = sp.GetRequiredService<AuthHandler>();
                 handler.InnerHandler = new HttpClientHandler();
-                return new HttpClient(handler) { BaseAddress = new Uri("https://localhost:7037/") };
+                return new HttpClient(handler) { BaseAddress = settings.ApiBaseUri };
             });
 
             services.AddTransient<LoginForm>();

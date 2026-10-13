@@ -1,0 +1,24 @@
+services:
+  api:
+    image: ghcr.io/${GHCR_OWNER}/stockflow-api:${STOCKFLOW_VERSION:-latest}
+    restart: unless-stopped
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      JWT__Key: ${JWT_KEY:?Set JWT_KEY in .env}
+      JWT__Issuer: https://${DOMAIN}/stockflow/api
+      Cors__AllowedOrigins__0: https://${DOMAIN}
+    ports:
+      - "127.0.0.1:5080:8080"
+    volumes:
+      - stockflow-data:/app/data
+
+  management:
+    image: ghcr.io/${GHCR_OWNER}/stockflow-web:${STOCKFLOW_VERSION:-latest}
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:5081:80"
+    depends_on:
+      - api
+
+volumes:
+  stockflow-data:

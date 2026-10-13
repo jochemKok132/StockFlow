@@ -45,7 +45,10 @@ namespace StockFlow.Infrastructure
 
         public static IServiceCollection RegisterDatabaseServices(this IServiceCollection services, IConfiguration configuration, string root)
         {
-            string folder = Path.GetFullPath(Path.Combine(root, "..", "StockFlow.Infrastructure", "Data"));
+            string? configuredFolder = configuration["DataFolder"];
+            string folder = string.IsNullOrWhiteSpace(configuredFolder)
+                ? Path.GetFullPath(Path.Combine(root, "..", "StockFlow.Infrastructure", "Data"))
+                : Path.GetFullPath(configuredFolder);
 
             if (!Directory.Exists(folder))
                 Directory.CreateDirectory(folder);

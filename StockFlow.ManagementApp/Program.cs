@@ -44,7 +44,8 @@ namespace StockFlow.ManagementApp
             {
                 var handler = sp.GetRequiredService<AuthHandler>();
                 handler.InnerHandler = new HttpClientHandler();
-                return new HttpClient(handler) { BaseAddress = new Uri("https://localhost:7037/") };
+                string apiBaseUrl = builder.Configuration["ApiBaseUrl"] ?? "https://localhost:7037/";
+                return new HttpClient(handler) { BaseAddress = new Uri(new Uri(builder.HostEnvironment.BaseAddress), apiBaseUrl) };
             });
 
             await builder.Build().RunAsync();

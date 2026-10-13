@@ -1,0 +1,143 @@
+name: Release
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: write
+  packages: write
+
+env:
+  DOTNET_VERSION: '10.0.x'
+
+jobs:
+  build-test:
+    name: Build and test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Restore dependencies
+        run: dotnet restore
+
+      - name: Build
+        run: dotnet build --no-restore --configuration Release
+
+      - name: Run unit tests
+        run: dotnet test --no-build --configuration Release --verbosity normal
+
+  docker:
+    name: Docker image (${{ matrix.image }})
+    needs: build-test
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - image: stockflow-api
+            dockerfile: StockFlow.API/Dockerfile
+          - image: stockflow-web
+            dockerfile: StockFlow.ManagementApp/Dockerfile
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Version from release tag
+        run: echo "VERSION=${GITHUB_REF_NAME#v}" >> "$GITHUB_ENV"
+
+      - name: Lowercase owner for ghcr.io
+        run: echo "OWNER=${GITHUB_REPOSITORY_OWNER,,}" >> "$GITHUB_ENV"
+
+      - name: Image tags
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ env.OWNER }}/${{ matrix.image }}
+          tags: |
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=raw,value=latest,enable=${{ !github.event.release.prerelease }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ${{ matrix.dockerfile }}
+          push: true
+          build-args: VERSION=${{ env.VERSION }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha,scope=${{ matrix.image }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.image }}
+
+  cash-register:
+    name: Cash register download
+    needs: build-test
+    runs-on: windows-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Publish single-file exe
+        shell: pwsh
+        run: |
+          $version = "${{ github.ref_name }}".TrimStart('v')
+          dotnet publish StockFlow.CashRegister/StockFlow.CashRegister.csproj `
+            -c Release -r win-x64 --self-contained true `
+            -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true `
+            -p:Version=$version -o publish/cash-register
+
+      - name: Point the register at the server
+        if: ${{ vars.REGISTER_API_URL != '' }}
+        shell: pwsh
+        run: |
+          @{ ApiBaseUrl = "${{ vars.REGISTER_API_URL }}" } | ConvertTo-Json | Set-Content publish/cash-register/appsettings.json
+
+      - name: Zip and attach to the release
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          $zip = "StockFlow.CashRegister-${{ github.ref_name }}-win-x64.zip"
+          Compress-Archive -Path publish/cash-register/* -DestinationPath $zip
+          gh release upload "${{ github.ref_name }}" $zip --clobber
+
+  deploy:
+    name: Deploy to server
+    needs: [docker, cash-register]
+    if: ${{ vars.DEPLOY_ENABLED == 'true' && !github.event.release.prerelease }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Pull and restart on the server
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          port: ${{ secrets.DEPLOY_PORT || 22 }}
+          script: |
+            cd /opt/stockflow
+            docker compose pull
+            docker compose up -d
+            docker image prune -f

@@ -10,8 +10,14 @@
     <Project Path="StockFlow.CashRegister/StockFlow.CashRegister.csproj" Id="88d97335-541c-4f06-a52f-461cb8a50b0b" />
     <Project Path="StockFlow.ManagementApp/StockFlow.ManagementApp.csproj" Id="fe202e03-5b85-4279-9cc1-10428599f71e" />
   </Folder>
+  <Folder Name="/Tests/">
+    <Project Path="StockFlow.UnitTests/StockFlow.UnitTests.csproj" />
+  </Folder>
   <Folder Name="/Solution Items/">
     <File Path=".github/workflows/ci-build-test.yml" />
+    <File Path=".github/workflows/release.yml" />
+    <File Path="deploy/docker-compose.yml" />
+    <File Path="deploy/nginx-stockflow.conf" />
     <File Path=".gitignore" />
     <File Path="README.md" />
   </Folder>

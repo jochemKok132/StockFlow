@@ -1,7 +1,10 @@
-name: CI + build only
+name: CI + build and test
 
 on:
   pull_request:
+    branches:
+      - master
+  push:
     branches:
       - master
 

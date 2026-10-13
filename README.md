@@ -20,8 +20,10 @@ StockFlow is an inventory management system for a (Dutch) hardware store. It con
 12. [Database and migrations](#database-and-migrations)
 13. [Configuration](#configuration)
 14. [Styling conventions](#styling-conventions)
-15. [CI](#ci)
-16. [Known limitations](#known-limitations)
+15. [Tests](#tests)
+16. [CI](#ci)
+17. [Releases and deployment](#releases-and-deployment)
+18. [Known limitations](#known-limitations)
 
 ---
 
@@ -36,6 +38,7 @@ StockFlow is an inventory management system for a (Dutch) hardware store. It con
 | `StockFlow.API` | ASP.NET Core Web API | Controllers, JWT authentication, `ErrorController`, Swagger. |
 | `StockFlow.ManagementApp` | Blazor WebAssembly | Office application: inventory, brands, sales, shelves, logs, employees and customers. |
 | `StockFlow.CashRegister` | WinForms (.NET, Windows) | Point of sale: scan products, attach customers, take payment, take returns. |
+| `StockFlow.UnitTests` | xUnit test project | Tests for the shared rules (points, refunds, identifiers) and the purchase / return validation. |
 
 The solution file is `StockFlow.slnx` (folders `Backend` and `Frontend`; `StockFlow.Shared` is under `Backend`).
 
@@ -47,6 +50,7 @@ StockFlow.Infrastructure  ──► Application, Domain
 StockFlow.API             ──► Application, Infrastructure, Shared
 StockFlow.ManagementApp   ──► Shared
 StockFlow.CashRegister    ──► Shared
+StockFlow.UnitTests       ──► Application, Domain, Shared
 ```
 
 ---
@@ -369,13 +373,16 @@ Seeders: `EmployeeSeeder`, `CustomerSeeder`, `ShelfSeeder`, `ProductBrandSeeder`
 
 | Key | Meaning |
 |---|---|
-| `DataSource` | SQLite file name inside `StockFlow.Infrastructure/Data` (default `app.db`) |
+| `DataSource` | SQLite file name (default `app.db`) |
+| `DataFolder` | Folder for the database. Empty = `StockFlow.Infrastructure/Data` (local development); the Docker image sets `/app/data`. |
+| `Cors:AllowedOrigins` | Browser origins allowed to call the API (default `https://localhost:7158`) |
 | `JWT:Issuer` | Token issuer |
 | `JWT:Key` | Signing key; keep it secret and long enough for HMAC-SHA256 |
 | `JWT:ExpiryMinutes` | Token lifetime |
 
-- CORS allows the management app at `https://localhost:7158`.
-- Both clients use `https://localhost:7037/` as the API base address (`Program.cs` of each client).
+- Every key can be overridden with an environment variable using `__`, for example `JWT__Key` or `Cors__AllowedOrigins__0`. Production secrets go in environment variables, never in `appsettings.json`.
+- **Management app:** the API address is `ApiBaseUrl` in `wwwroot/appsettings.json` (`/stockflow/api/`; the Docker image writes this file from the `API_BASE_URL` build argument) and `wwwroot/appsettings.Development.json` (`https://localhost:7037/`, used by the dev server).
+- **Cash register:** the API address is `ApiBaseUrl` in `appsettings.json` next to the `.exe` (default `https://localhost:7037/`), read by `RegisterSettings`. The file is not bundled into the single-file exe, so it can be edited after unzipping.
 
 ---
 
@@ -397,13 +404,143 @@ The cash register mirrors the same palette in `Screens/Theme.cs`.
 
 ---
 
+## Tests
+
+`StockFlow.UnitTests` (xUnit). Run with `dotnet test` from the repository root or the Test Explorer.
+
+| Test class | Covers |
+|---|---|
+| `LoyaltyPointsTests` | Points earned per whole euro (1.99 → 1, 2.00 → 2), all-or-nothing redeeming, euro value, welcome points |
+| `ReturnRulesTests` | Paid share and proportional refunds, rounding |
+| `IdentifierFormatsTests` | Barcode (9 digits), customer id (8, starts with 8), receipt id (10, starts with 9) |
+| `PurchaseValidationTests` | Empty purchase, sales and points without a customer, partial points, too many points, valid purchases |
+| `ReturnValidationTests` | Receipt id format, empty returns, amounts |
+
+Naming follows `MethodName_Scenario_ExpectedResult`, with Arrange / Act / Assert blocks.
+
+---
+
 ## CI
 
-`.github/workflows/ci-build-test.yml` runs on pull requests to `master`: restore, build (Release) and test with .NET 10.
+`.github/workflows/ci-build-test.yml` runs on pull requests to `master` and on pushes to `master`: restore, build (Release) and test with .NET 10. The cash register project sets `EnableWindowsTargeting`, so the whole solution also builds on the Linux runner.
+
+---
+
+## Releases and deployment
+
+Versions are controlled with **GitHub Releases**. Publishing a release starts `.github/workflows/release.yml`:
+
+1. **Build and test**: restore, build and run all unit tests. If anything fails, nothing is published.
+2. **Docker images**: built from `StockFlow.API/Dockerfile` and `StockFlow.ManagementApp/Dockerfile` and pushed to the GitHub Container Registry:
+   - `ghcr.io/<owner>/stockflow-api`
+   - `ghcr.io/<owner>/stockflow-web` (the management app as static files in a small nginx container)
+
+   Tags: the version (`1.2.0`), the minor line (`1.2`) and `latest` (not for pre-releases).
+3. **Cash register**: published on a Windows runner as a self-contained single-file `.exe` (no .NET install needed), zipped and attached to the same release as `StockFlow.CashRegister-v1.2.0-win-x64.zip`.
+
+### Making a release
+
+1. Merge everything into `master`.
+2. On GitHub: **Releases → Draft a new release → Choose a tag**, type a new tag like `v1.2.0` (always `v` + major.minor.patch), target `master`, write the notes and click **Publish release**.
+3. Follow the progress under **Actions**. When it is done, the images are under **Packages** and the zip is on the release page.
+
+Mark a release as **pre-release** to test it: it gets its version tags but does not move `latest`.
+
+### Where it runs
+
+Everything runs on the existing jochemkok.nl server, next to the other sites, behind the nginx + Certbot setup that already serves the domain:
+
+| URL | Container | Local port |
+|---|---|---|
+| `https://jochemkok.nl/stockflow/api/` | `api` (image `stockflow-api`) | `127.0.0.1:5080` |
+| `https://jochemkok.nl/stockflow/management/` | `management` (image `stockflow-web`) | `127.0.0.1:5081` |
+| `https://jochemkok.nl/stockflow/public/` | public customer site (later) | `127.0.0.1:5082` |
+
+The containers only listen on `127.0.0.1`, so they are reachable through nginx only. nginx strips the `/stockflow/...` prefix before passing a request on, so the API itself still serves `/Product/GetAll` and so on. The management app image is built with `<base href="/stockflow/management/">` and `ApiBaseUrl` `/stockflow/api/` (build arguments `BASE_PATH` and `API_BASE_URL` in `StockFlow.ManagementApp/Dockerfile`). Inside the app all links are relative, so it works under any base path.
+
+### One-time GitHub setup
+
+- **Settings → Actions → General → Workflow permissions**: *Read and write permissions* (the workflow pushes images and uploads the zip with `GITHUB_TOKEN`).
+- **Settings → Secrets and variables → Actions → Variables**: add `REGISTER_API_URL` = `https://jochemkok.nl/stockflow/api/`, so the downloaded cash register talks to the server straight away.
+- After the first release the packages are private. Either make them public (**Packages → stockflow-api / stockflow-web → Package settings → Change visibility**) or log in on the server (see below).
+
+### One-time server setup
+
+On the server (over SSH):
+
+1. **Install Docker** (if it isn't there yet):
+   ```bash
+   curl -fsSL https://get.docker.com | sudo sh
+   sudo usermod -aG docker $USER     # log out and back in afterwards
+   ```
+2. **Get the deploy files** into `/opt/stockflow`:
+   ```bash
+   sudo mkdir -p /opt/stockflow && sudo chown $USER /opt/stockflow && cd /opt/stockflow
+   curl -fsSLO https://raw.githubusercontent.com/jochemKok132/StockFlow/master/deploy/docker-compose.yml
+   curl -fsSLO https://raw.githubusercontent.com/jochemKok132/StockFlow/master/deploy/nginx-stockflow.conf
+   curl -fsSL  https://raw.githubusercontent.com/jochemKok132/StockFlow/master/deploy/.env.example -o .env
+   ```
+   (If the repository is private, copy the files with `scp` from your computer instead.)
+3. **Fill in `.env`**: `nano .env`. `DOMAIN=jochemkok.nl`, `GHCR_OWNER=jochemkok132`, and a new `JWT_KEY` from `openssl rand -base64 64`.
+4. **Log in to GitHub's registry** (only needed while the packages are private), with a personal access token that has `read:packages`:
+   ```bash
+   echo <token> | docker login ghcr.io -u jochemKok132 --password-stdin
+   ```
+5. **Start the containers**:
+   ```bash
+   docker compose up -d
+   docker compose ps          # api and management should be "running"
+   curl -I http://127.0.0.1:5081/
+   ```
+6. **Hook it into nginx**: copy the snippet and include it in the existing `server` block for jochemkok.nl, the one with `listen 443 ssl` that Certbot manages, next to the `/vue` location:
+   ```bash
+   sudo cp nginx-stockflow.conf /etc/nginx/snippets/stockflow.conf
+   sudo nano /etc/nginx/sites-available/jochemkok.nl     # add: include /etc/nginx/snippets/stockflow.conf;
+   sudo nginx -t && sudo systemctl reload nginx
+   ```
+   No new certificate is needed, because everything lives under the existing domain.
+7. Open `https://jochemkok.nl/stockflow/management/` and log in with a seeded employee. **Change the seeded passwords**: the seed data uses the shared dev password from this README.
+
+The SQLite database lives in the Docker volume `stockflow_stockflow-data`, so it survives updates. The API migrates and seeds it on startup.
+
+### Updating the server
+
+**Automatic (recommended):** let the release workflow deploy for you. Add these in **Settings → Secrets and variables → Actions**:
+
+| Kind | Name | Value |
+|---|---|---|
+| Variable | `DEPLOY_ENABLED` | `true` |
+| Secret | `DEPLOY_HOST` | the server's host name or IP |
+| Secret | `DEPLOY_USER` | the SSH user (must be in the `docker` group) |
+| Secret | `DEPLOY_SSH_KEY` | a private key whose public key is in that user's `~/.ssh/authorized_keys` (make a separate key just for this) |
+| Secret | `DEPLOY_PORT` | optional, if SSH isn't on port 22 |
+
+After the images are pushed, the `Deploy to server` job connects over SSH and runs `docker compose pull && docker compose up -d` in `/opt/stockflow`. Pre-releases are never deployed automatically.
+
+**Manual:**
+
+```bash
+cd /opt/stockflow && docker compose pull && docker compose up -d
+```
+
+With `STOCKFLOW_VERSION=latest` this picks up the newest release. Pin a version (`STOCKFLOW_VERSION=1.2.0`) to stay on it, or set it back to an older one to roll back. A rollback across a database migration may need a backup, so back up the volume before big updates:
+
+```bash
+docker run --rm -v stockflow_stockflow-data:/data -v "$PWD":/backup alpine tar czf /backup/stockflow-data.tgz -C /data .
+```
+
+### Cash register on the shop computers
+
+1. Download `StockFlow.CashRegister-vX.Y.Z-win-x64.zip` from the release page.
+2. Unzip it anywhere, for example `C:\StockFlow\CashRegister`.
+3. If `REGISTER_API_URL` was not set, open `appsettings.json` and set `ApiBaseUrl` to `https://jochemkok.nl/stockflow/api/`.
+4. Start `StockFlow.CashRegister.exe`. To update, download the new zip and replace the files (keep your `appsettings.json`).
 
 ---
 
 ## Known limitations
 
-- Customer login and registration exist in the API, but there is no customer portal (front end) yet.
+- Customer login and registration exist in the API, but there is no customer portal (front end) yet. It is planned at `https://jochemkok.nl/stockflow/public/`: add it as a third image in the release workflow and `docker-compose.yml` (port 5082), and uncomment the `/stockflow/public/` block in `deploy/nginx-stockflow.conf`.
+- The cash register does not update itself; shop computers need the new zip after each release.
+- The default Docker setup is single-instance (SQLite + migrate on startup). Moving to multiple API instances needs a server database and migrations as a pipeline step.
 - Points earned before `AddPointsEarned` existed are unknown (0), so returns on those older receipts don't take points back.
