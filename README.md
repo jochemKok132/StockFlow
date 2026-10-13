@@ -433,6 +433,8 @@ The Blazor management app and the WinForms cash register have no automated UI te
 
 `.github/workflows/ci-build-test.yml` runs on pull requests to `master` and on pushes to `master`: restore, build (Release) and test with .NET 10. The cash register project sets `EnableWindowsTargeting`, so the whole solution also builds on the Linux runner.
 
+The standard Visual Studio `.gitignore` ignores every folder named `Releases` or `bootstrap`. Source folders with those names are re-included at the bottom of `.gitignore` (`StockFlow.Shared/DTOs/Releases/`, `StockFlow.Infrastructure/Releases/` and `StockFlow.ManagementApp/wwwroot/lib/bootstrap/`). If you add another source folder with an ignored name, add a matching `!` rule, or CI will fail on missing types.
+
 ---
 
 ## Releases and deployment

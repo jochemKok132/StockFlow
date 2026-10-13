@@ -366,3 +366,11 @@ bootstrap/
 # Deployment secrets
 .env
 deploy/.env
+
+# Source folders named "Releases" (the [Rr]eleases/ rule above is meant for build output)
+!StockFlow.Shared/DTOs/Releases/
+!StockFlow.Infrastructure/Releases/
+
+# SQLite temporary files
+*.db-shm
+*.db-wal
