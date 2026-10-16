@@ -1,4 +1,6 @@
-﻿using StockFlow.Shared.DTOs.Stock.Sales;
+﻿using System.ComponentModel.DataAnnotations;
+using StockFlow.Shared.Common;
+using StockFlow.Shared.DTOs.Stock.Sales;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -9,7 +11,10 @@ namespace StockFlow.Shared.DTOs.Stock.Product
     {
         public Guid Id { get; set; }
 
+        [MaxLength(FieldLimits.Name, ErrorMessage = FieldLimits.TooLongMessage)]
+
         public required string ProductName { get; set; }
+        [MaxLength(FieldLimits.Description, ErrorMessage = FieldLimits.TooLongMessage)]
         public required string Description { get; set; }
         public int Stock { get; set; }
         public decimal Price { get; set; }

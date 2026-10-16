@@ -28,7 +28,7 @@
                            ValueExpression="@(() => loginModel.EmployeeId)"
                            inputmode="numeric"
                            pattern="[0-9]*"
-                           maxlength="6"
+                           maxlength="@FieldLimits.EmployeeId"
                            placeholder="Employee Id" />
             </div>
 
@@ -39,6 +39,7 @@
                            ValueChanged="@OnPasswordChanged"
                            ValueExpression="@(() => loginModel.Password)"
                            type="password"
+                           maxlength="@FieldLimits.EmployeePassword"
                            inputmode="numeric"
                            pattern="[0-9]*"
                            placeholder="Password" />

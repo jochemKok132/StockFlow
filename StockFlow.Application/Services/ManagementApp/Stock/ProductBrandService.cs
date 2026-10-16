@@ -41,7 +41,7 @@ namespace StockFlow.Application.Services.ManagementApp.Stock
         public async Task SoftDeleteProductBrandAsync(Guid id, Guid employeeId)
         {
             var productBrand = await productBrandRepository.GetByIdAsync(id);
-            if (productBrand == null) throw new KeyNotFoundException($"ProductBrand with the id {id} not found.");
+            if (productBrand == null) throw new KeyNotFoundException("Brand not found.");
             await stockLogsService.CreateStockLogsAsync(productBrand.ToSoftDeleteStockLogsDto(employeeId));
 
             await productBrandRepository.SoftDeleteAsync(productBrand);
@@ -52,7 +52,7 @@ namespace StockFlow.Application.Services.ManagementApp.Stock
             productBrandDto.Validate();
 
             var productBrand = await productBrandRepository.GetByIdAsync(productBrandDto.Id);
-            if (productBrand == null) throw new KeyNotFoundException($"ProductBrand with the id {productBrandDto.Id} not found.");
+            if (productBrand == null) throw new KeyNotFoundException("Brand not found.");
 
             var log = productBrandDto.ToUpdateStockLogsDto(productBrand, employeeId);
 

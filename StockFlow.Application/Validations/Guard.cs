@@ -1,10 +1,11 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using StockFlow.Shared.Common;
 
 namespace StockFlow.Application.Validations
 {
     internal static class Guard
     {
-        public static void Required(string? value, string field, int maxLength = 100)
+        public static void Required(string? value, string field, int maxLength = FieldLimits.Name)
         {
             if (string.IsNullOrWhiteSpace(value))
                 throw new ArgumentException($"{field} is required.");
@@ -13,7 +14,7 @@ namespace StockFlow.Application.Validations
                 throw new ArgumentException($"{field} can be at most {maxLength} characters.");
         }
 
-        public static void Optional(string? value, string field, int maxLength = 100)
+        public static void Optional(string? value, string field, int maxLength = FieldLimits.Name)
         {
             if (value is not null && value.Trim().Length > maxLength)
                 throw new ArgumentException($"{field} can be at most {maxLength} characters.");
@@ -33,7 +34,7 @@ namespace StockFlow.Application.Validations
 
         public static void Email(string? value, string field = "Email")
         {
-            Required(value, field, 254);
+            Required(value, field, FieldLimits.Email);
             if (!new EmailAddressAttribute().IsValid(value))
                 throw new ArgumentException($"{field} is not a valid email address.");
         }
@@ -42,7 +43,7 @@ namespace StockFlow.Application.Validations
         {
             if (tags is null) return;
             foreach (var tag in tags)
-                Required(tag, $"Every value in {field}", 50);
+                Required(tag, $"Every value in {field}", FieldLimits.Tag);
         }
 
         public static void NotNull(object? value, string field)

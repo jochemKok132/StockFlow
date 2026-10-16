@@ -1,84 +1,82 @@
 ﻿@if (Show)
 {
-    <div class="modal-overlay drawer" @onclick="OnClose">
-        <div class="modal-box" @onclick:stopPropagation="true">
-            <div class="panel-header">
-                <div>
-                    <span class="panel-label">Product details</span>
-                    <h3>@(product?.ProductName ?? "Product")</h3>
+    <ModalOverlay OnClose="OnClose" CssClass="drawer">
+        <div class="panel-header">
+            <div>
+                <span class="panel-label">Product details</span>
+                <h3>@(product?.ProductName ?? "Product")</h3>
+            </div>
+            <button class="btn-icon" title="Close" @onclick="OnClose">
+                <i class="bi bi-x-lg"></i>
+            </button>
+        </div>
+
+        @if (Loading)
+        {
+            <div class="loading">Loading product details...</div>
+        }
+        else if (!string.IsNullOrWhiteSpace(Error))
+        {
+            <div class="alert-danger">@Error</div>
+        }
+        else if (product is null)
+        {
+            <div class="empty-state">No product details available.</div>
+        }
+        else
+        {
+            @if (GetImageDataUrl() is string imageUrl)
+            {
+                <div class="image-wrapper">
+                    <img src="@imageUrl" alt="@product.ProductName" />
                 </div>
-                <button class="btn-icon" title="Close" @onclick="OnClose">
-                    <i class="bi bi-x-lg"></i>
-                </button>
+            }
+
+            <div class="price-block">
+                <span class="price">&euro;@GetSalesPrice().ToString("0.00")</span>
+                @if (product.Sales.Any())
+                {
+                    <span class="price-old">&euro;@product.Price.ToString("0.00")</span>
+                    <span class="sale-badge"><i class="bi bi-tag-fill"></i> -@product.Sales.Max(s => s.PercentageOff)%</span>
+                }
             </div>
 
-            @if (Loading)
-            {
-                <div class="loading">Loading product details...</div>
-            }
-            else if (!string.IsNullOrWhiteSpace(Error))
-            {
-                <div class="alert-danger">@Error</div>
-            }
-            else if (product is null)
-            {
-                <div class="empty-state">No product details available.</div>
-            }
-            else
-            {
-                @if (GetImageDataUrl() is string imageUrl)
-                {
-                    <div class="image-wrapper">
-                        <img src="@imageUrl" alt="@product.ProductName" />
-                    </div>
-                }
-
-                <div class="price-block">
-                    <span class="price">&euro;@GetSalesPrice().ToString("0.00")</span>
-                    @if (product.Sales.Any())
+            <dl class="details">
+                <dt>Barcode</dt>
+                <dd>@product.Barcode</dd>
+                <dt>Location</dt>
+                <dd>@(product.Shelf?.ShelfLocation)-@product.Location</dd>
+                <dt>Stock</dt>
+                <dd>@product.Stock</dd>
+                <dt>Brand</dt>
+                <dd>@(product.Brand?.BrandName ?? "-")</dd>
+                <dt>Tags</dt>
+                <dd>
+                    @if (product.SalesTags.Any())
                     {
-                        <span class="price-old">&euro;@product.Price.ToString("0.00")</span>
-                        <span class="sale-badge"><i class="bi bi-tag-fill"></i> -@product.Sales.Max(s => s.PercentageOff)%</span>
+                        <div class="tags">
+                            @foreach (var tag in product.SalesTags)
+                            {
+                                <span class="tag">@tag</span>
+                            }
+                        </div>
                     }
+                    else
+                    {
+                        <span>-</span>
+                    }
+                </dd>
+            </dl>
+
+            @if (!string.IsNullOrWhiteSpace(product.Description))
+            {
+                <div class="description">
+                    <span class="panel-label">Description</span>
+                    <p>@product.Description</p>
                 </div>
-
-                <dl class="details">
-                    <dt>Barcode</dt>
-                    <dd>@product.Barcode</dd>
-                    <dt>Location</dt>
-                    <dd>@(product.Shelf?.ShelfLocation)-@product.Location</dd>
-                    <dt>Stock</dt>
-                    <dd>@product.Stock</dd>
-                    <dt>Brand</dt>
-                    <dd>@(product.Brand?.BrandName ?? "-")</dd>
-                    <dt>Tags</dt>
-                    <dd>
-                        @if (product.SalesTags.Any())
-                        {
-                            <div class="tags">
-                                @foreach (var tag in product.SalesTags)
-                                {
-                                    <span class="tag">@tag</span>
-                                }
-                            </div>
-                        }
-                        else
-                        {
-                            <span>-</span>
-                        }
-                    </dd>
-                </dl>
-
-                @if (!string.IsNullOrWhiteSpace(product.Description))
-                {
-                    <div class="description">
-                        <span class="panel-label">Description</span>
-                        <p>@product.Description</p>
-                    </div>
-                }
             }
-        </div>
-    </div>
+        }
+    </ModalOverlay>
 }
 @code {
     [Parameter] public bool Show { get; set; }
@@ -103,6 +101,6 @@
     {
         if (product?.ProductImage is null || product.ProductImage.Length == 0) return null;
 
-        return $"data:image/*;base64,{Convert.ToBase64String(product.ProductImage)}";
+        return $"data:{ImageFormats.DetectContentType(product.ProductImage) ?? "image/png"};base64,{Convert.ToBase64String(product.ProductImage)}";
     }
 }

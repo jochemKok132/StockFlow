@@ -1,0 +1,32 @@
+﻿<div class="modal-overlay @CssClass" @onmousedown="OverlayMouseDown" @onmouseup="OverlayMouseUp">
+    <div class="modal-box" @onmousedown="BoxMouse" @onmousedown:stopPropagation="true" @onmouseup="BoxMouse" @onmouseup:stopPropagation="true" @onclick:stopPropagation="true">
+        @ChildContent
+    </div>
+</div>
+
+@code {
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+    [Parameter] public EventCallback OnClose { get; set; }
+    [Parameter] public string CssClass { get; set; } = string.Empty;
+
+    private bool pressedOutside;
+
+    private void OverlayMouseDown(MouseEventArgs e)
+    {
+        pressedOutside = e.Button == 0;
+    }
+
+    private async Task OverlayMouseUp(MouseEventArgs e)
+    {
+        bool close = pressedOutside && e.Button == 0;
+        pressedOutside = false;
+
+        if (close)
+            await OnClose.InvokeAsync();
+    }
+
+    private void BoxMouse()
+    {
+        pressedOutside = false;
+    }
+}

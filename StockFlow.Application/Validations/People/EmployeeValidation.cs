@@ -1,4 +1,5 @@
-﻿using StockFlow.Shared.DTOs.Employee;
+﻿using StockFlow.Shared.Common;
+using StockFlow.Shared.DTOs.Employee;
 using StockFlow.Shared.DTOs.Enums;
 using EmployeeLogin = StockFlow.Shared.DTOs.Employee.EmployeeAuthentication.LoginRequest;
 
@@ -28,7 +29,7 @@ namespace StockFlow.Application.Validations.People
         public static void Validate(this EmployeeLogin request)
         {
             Guard.NotNull(request, "Login");
-            Guard.Required(request.EmployeeId, "Employee Id", 6);
+            Guard.Required(request.EmployeeId, "Employee Id", FieldLimits.EmployeeId);
             Guard.Required(request.Password, "Password");
 
             if (!request.EmployeeId.All(char.IsDigit))

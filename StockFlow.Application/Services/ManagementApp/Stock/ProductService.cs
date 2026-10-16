@@ -51,6 +51,27 @@ namespace StockFlow.Application.Services.ManagementApp.Stock
                 throw new ArgumentException("The chosen shelf doesn't exist.");
         }
 
+        private async Task<List<string>> DescribeBrandAndShelfChangesAsync(Product product, UpdateProductDto productDto)
+        {
+            List<string> messages = [];
+
+            if (product.BrandId != productDto.BrandId)
+            {
+                var oldBrand = await productBrandRepository.GetByIdAsync(product.BrandId);
+                var newBrand = await productBrandRepository.GetByIdAsync(productDto.BrandId);
+                messages.Add($"BrandName: New: {newBrand?.BrandName ?? "-"}. Old: {oldBrand?.BrandName ?? "-"}");
+            }
+
+            if (product.ShelfId != productDto.ShelfId)
+            {
+                var oldShelf = await shelfRepository.GetByIdAsync(product.ShelfId);
+                var newShelf = await shelfRepository.GetByIdAsync(productDto.ShelfId);
+                messages.Add($"ShelfName: New: {newShelf?.ShelfName ?? "-"}. Old: {oldShelf?.ShelfName ?? "-"}");
+            }
+
+            return messages;
+        }
+
         public async Task<List<ProductBulkViewDto>> GetAllProductsAsync(ProductPaginationDto pagination)
         {
             pagination.Validate();
@@ -68,7 +89,7 @@ namespace StockFlow.Application.Services.ManagementApp.Stock
         public async Task SoftDeleteProductAsync(Guid id, Guid employeeId)
         {
             var product = await productRepository.GetByIdAsync(id);
-            if (product == null) throw new KeyNotFoundException($"Product with the id {id} not found.");
+            if (product == null) throw new KeyNotFoundException("Product not found.");
             await stockLogsService.CreateStockLogsAsync(product.ToSoftDeleteStockLogsDto(employeeId));
             await productRepository.SoftDeleteAsync(product);
         }
@@ -79,9 +100,10 @@ namespace StockFlow.Application.Services.ManagementApp.Stock
             await EnsureBrandAndShelfExistAsync(productDto.BrandId, productDto.ShelfId);
 
             var product = await productRepository.GetByIdAsync(productDto.Id);
-            if (product == null) throw new KeyNotFoundException($"Product with the id {productDto.Id} not found.");
+            if (product == null) throw new KeyNotFoundException("Product not found.");
 
             var log = productDto.ToUpdateStockLogsDto(product, employeeId);
+            log.Messages.AddRange(await DescribeBrandAndShelfChangesAsync(product, productDto));
 
             product.ToProductEntity(productDto);
 
@@ -101,7 +123,7 @@ namespace StockFlow.Application.Services.ManagementApp.Stock
         public async Task<ProductDto> GetProductDetailsAsync(Guid id) 
         {
             var product = await productRepository.GetByIdAsync(id);
-            if (product == null) throw new KeyNotFoundException($"Product with the id {id} not found.");
+            if (product == null) throw new KeyNotFoundException("Product not found.");
             var productDto = product.ToProductDto();
             productDto.Brand = (await productBrandRepository.GetByIdAsync(productDto.BrandId))?.ToProductBrandDto();
             productDto.Shelf = (await shelfRepository.GetByIdAsync(productDto.ShelfId))?.ToShelfDto();
@@ -124,7 +146,7 @@ namespace StockFlow.Application.Services.ManagementApp.Stock
             ProductValidation.ValidateStockChange(amount);
 
             var product = await productRepository.GetByIdAsync(id);
-            if (product == null) throw new KeyNotFoundException($"Product with the id {id} not found.");
+            if (product == null) throw new KeyNotFoundException("Product not found.");
 
             var log = product.ChangeStock(amount, employeeId, logType);
 

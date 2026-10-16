@@ -12,11 +12,5 @@ namespace StockFlow.ManagementApp.Services
                 ? (response.Value ?? [], "")
                 : ([], response.Message ?? "The releases could not be loaded.");
         }
-
-        public async Task<string?> GetApiVersionAsync()
-        {
-            var response = await httpService.GetAsync<string>("Releases/Version");
-            return response.Succeeded ? response.Value : null;
-        }
     }
 }

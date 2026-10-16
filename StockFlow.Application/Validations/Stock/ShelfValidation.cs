@@ -1,4 +1,5 @@
-﻿using StockFlow.Shared.DTOs.Stock.Shelf;
+﻿using StockFlow.Shared.Common;
+using StockFlow.Shared.DTOs.Stock.Shelf;
 
 namespace StockFlow.Application.Validations.Stock
 {
@@ -20,8 +21,8 @@ namespace StockFlow.Application.Validations.Stock
         private static void ValidateFields(string? name, string? hallway, string? location)
         {
             Guard.Required(name, "Shelf name");
-            Guard.Optional(hallway, "Hallway", 50);
-            Guard.Required(location, "Shelf location", 50);
+            Guard.Optional(hallway, "Hallway", FieldLimits.ShelfHallway);
+            Guard.Required(location, "Shelf location", FieldLimits.ShelfLocation);
         }
     }
 }

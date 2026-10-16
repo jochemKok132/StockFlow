@@ -15,23 +15,23 @@
         <div class="filters">
             <div class="filter-group">
                 <label>Receipt id</label>
-                <input type="text" @bind="pagination.ReceiptId" @bind:event="oninput" @bind:after="ResetAndLoad" placeholder="e.g. 9000000001" />
+                <input type="text" maxlength="@IdentifierFormats.ReceiptIdLength" @bind="pagination.ReceiptId" @bind:event="oninput" @bind:after="ResetAndLoad" placeholder="e.g. 9000000001" />
             </div>
             <div class="filter-group">
                 <label>Customer name</label>
-                <input type="text" @bind="pagination.CustomerName" @bind:event="oninput" @bind:after="ResetAndLoad" placeholder="e.g. John" />
+                <input type="text" maxlength="@FieldLimits.Name" @bind="pagination.CustomerName" @bind:event="oninput" @bind:after="ResetAndLoad" placeholder="e.g. John" />
             </div>
             <div class="filter-group">
                 <label>Customer email</label>
-                <input type="email" @bind="pagination.Email" @bind:event="oninput" @bind:after="ResetAndLoad" placeholder="e.g. john@mail.com" />
+                <input type="email" maxlength="@FieldLimits.Email" @bind="pagination.Email" @bind:event="oninput" @bind:after="ResetAndLoad" placeholder="e.g. john@mail.com" />
             </div>
             <div class="filter-group">
                 <label>Employee name</label>
-                <input type="text" @bind="pagination.EmployeeName" @bind:event="oninput" @bind:after="ResetAndLoad" placeholder="e.g. John" />
+                <input type="text" maxlength="@FieldLimits.Name" @bind="pagination.EmployeeName" @bind:event="oninput" @bind:after="ResetAndLoad" placeholder="e.g. John" />
             </div>
             <div class="filter-group">
                 <label>Employee id</label>
-                <input type="text" @bind="pagination.EmployeeId" @bind:event="oninput" @bind:after="ResetAndLoad" placeholder="e.g. 000013" />
+                <input type="text" maxlength="@FieldLimits.EmployeeId" @bind="pagination.EmployeeId" @bind:event="oninput" @bind:after="ResetAndLoad" placeholder="e.g. 000013" />
             </div>
         </div>
     </div>

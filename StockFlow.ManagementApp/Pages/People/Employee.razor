@@ -17,11 +17,11 @@
         <div class="filters">
             <div class="filter-group">
                 <label>Employee name</label>
-                <input type="text" @bind="pagination.EmployeeName" @bind:event="oninput" @bind:after="ResetAndLoad" placeholder="e.g. John" />
+                <input type="text" maxlength="@FieldLimits.Name" @bind="pagination.EmployeeName" @bind:event="oninput" @bind:after="ResetAndLoad" placeholder="e.g. John" />
             </div>
             <div class="filter-group">
                 <label>Employee Id</label>
-                <input type="text" @bind="pagination.EmployeeId" @bind:event="oninput" @bind:after="ResetAndLoad" placeholder="e.g. 000012" />
+                <input type="text" maxlength="@FieldLimits.EmployeeId" @bind="pagination.EmployeeId" @bind:event="oninput" @bind:after="ResetAndLoad" placeholder="e.g. 000012" />
             </div>
             <div class="filter-group">
                 <label>Role</label>

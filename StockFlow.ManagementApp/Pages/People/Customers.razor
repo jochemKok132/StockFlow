@@ -13,23 +13,23 @@
         <div class="filters">
             <div class="filter-group">
                 <label>Customer ID</label>
-                <input type="text" inputmode="numeric" maxlength="8" @bind="pagination.CustomerId" @bind:event="oninput" @bind:after="ResetAndLoad" placeholder="e.g. 80000001" />
+                <input type="text" inputmode="numeric" maxlength="@IdentifierFormats.CustomerIdLength" @bind="pagination.CustomerId" @bind:event="oninput" @bind:after="ResetAndLoad" placeholder="e.g. 80000001" />
             </div>
             <div class="filter-group">
                 <label>Customer name</label>
-                <input type="text" @bind="pagination.CustomerName" @bind:event="oninput" @bind:after="ResetAndLoad" placeholder="e.g. John" />
+                <input type="text" maxlength="@FieldLimits.Name" @bind="pagination.CustomerName" @bind:event="oninput" @bind:after="ResetAndLoad" placeholder="e.g. John" />
             </div>
             <div class="filter-group">
                 <label>Email</label>
-                <input type="email" @bind="pagination.Email" @bind:event="oninput" @bind:after="ResetAndLoad" placeholder="e.g. john@mail.com" />
+                <input type="email" maxlength="@FieldLimits.Email" @bind="pagination.Email" @bind:event="oninput" @bind:after="ResetAndLoad" placeholder="e.g. john@mail.com" />
             </div>
             <div class="filter-group">
                 <label>Postal code</label>
-                <input type="text" @bind="pagination.PostalCode" @bind:event="oninput" @bind:after="ResetAndLoad" placeholder="e.g. 1234AB" />
+                <input type="text" maxlength="@FieldLimits.PostalCode" @bind="pagination.PostalCode" @bind:event="oninput" @bind:after="ResetAndLoad" placeholder="e.g. 1234AB" />
             </div>
             <div class="filter-group">
                 <label>Housenumber</label>
-                <input type="text" @bind="pagination.HouseNumber" @bind:event="oninput" @bind:after="ResetAndLoad" placeholder="e.g. 5" />
+                <input type="text" maxlength="@FieldLimits.HouseNumber" @bind="pagination.HouseNumber" @bind:event="oninput" @bind:after="ResetAndLoad" placeholder="e.g. 5" />
             </div>
         </div>
     </div>

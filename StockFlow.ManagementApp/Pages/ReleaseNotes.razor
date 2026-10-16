@@ -1,7 +1,6 @@
 ﻿@page "/"
 @attribute [Authorize]
 @using System.Text.RegularExpressions
-@using StockFlow.Shared.Common
 @using StockFlow.Shared.DTOs.Releases
 @inject IReleaseService ReleaseService
 
@@ -18,12 +17,8 @@
         <span class="version-value">@AppVersion.Display(managementVersion)</span>
     </div>
     <div class="version-item">
-        <span class="version-label">API</span>
-        <span class="version-value">@(apiVersion is null ? "unknown" : AppVersion.Display(apiVersion))</span>
-    </div>
-    <div class="version-item">
-        <span class="version-label">Latest release</span>
-        <span class="version-value">@(latest is null ? "-" : AppVersion.Display(latest.Version))</span>
+        <span class="version-label">Cash register</span>
+        <span class="version-value">@(latest?.CashRegister is null ? "-" : AppVersion.Display(latest.Version))</span>
     </div>
     @if (latest is not null && !AppVersion.IsDev(managementVersion))
     {
@@ -149,7 +144,6 @@ else
 
 @code {
     private readonly string managementVersion = AppVersion.Of(typeof(Program).Assembly);
-    private string? apiVersion;
     private List<ReleaseDto> releases = [];
     private ReleaseDto? latest;
     private bool loading = true;
@@ -157,11 +151,7 @@ else
 
     protected override async Task OnInitializedAsync()
     {
-        var versionTask = ReleaseService.GetApiVersionAsync();
-        var releasesTask = ReleaseService.GetReleasesAsync();
-
-        apiVersion = await versionTask;
-        (releases, error) = await releasesTask;
+        (releases, error) = await ReleaseService.GetReleasesAsync();
         latest = releases.FirstOrDefault(r => !r.Prerelease);
         loading = false;
     }

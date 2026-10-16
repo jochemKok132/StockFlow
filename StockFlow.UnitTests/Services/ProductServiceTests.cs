@@ -124,6 +124,30 @@ namespace StockFlow.UnitTests.Services
         }
 
         [Fact]
+        public async Task UpdateProductAsync_BrandAndShelfChanged_LogsNamesInsteadOfIds()
+        {
+            var (oldBrand, oldShelf) = SetupBrandAndShelf();
+            var (newBrand, newShelf) = SetupBrandAndShelf();
+            newBrand.BrandName = "Makita";
+            newShelf.ShelfName = "Tuin";
+            var product = TestData.Product(brand: oldBrand, shelf: oldShelf);
+            _productRepository.Setup(r => r.GetByIdAsync(product.Id)).ReturnsAsync(product);
+            _salesRepository.Setup(r => r.GetAllSalesForProductTags(It.IsAny<List<string>>())).ReturnsAsync(Array.Empty<Sales>());
+            CreateStockLogsDto? log = null;
+            _stockLogsService.Setup(s => s.CreateStockLogsAsync(It.IsAny<CreateStockLogsDto>())).Callback<CreateStockLogsDto>(l => log = l);
+            var dto = TestData.UpdateProductDto(product);
+            dto.BrandId = newBrand.Id;
+            dto.ShelfId = newShelf.Id;
+
+            await _sut.UpdateProductAsync(dto, Guid.NewGuid());
+
+            Assert.NotNull(log);
+            Assert.Contains("BrandName: New: Makita. Old: Bosch", log.Messages);
+            Assert.Contains("ShelfName: New: Tuin. Old: Gereedschap", log.Messages);
+            Assert.DoesNotContain(log.Messages, m => m.Contains(newBrand.Id.ToString()) || m.Contains(oldShelf.Id.ToString()));
+        }
+
+        [Fact]
         public async Task UpdateProductAsync_TagsChanged_ResyncsSales()
         {
             var (brand, shelf) = SetupBrandAndShelf();

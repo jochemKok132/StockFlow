@@ -18,7 +18,7 @@
         <div class="filters">
             <div class="filter-group">
                 <label>Sale name</label>
-                <input type="text" @bind="pagination.SalesName" @bind:event="oninput" @bind:after="ResetAndLoad" placeholder="e.g. Summer sale" />
+                <input type="text" maxlength="@FieldLimits.Name" @bind="pagination.SalesName" @bind:event="oninput" @bind:after="ResetAndLoad" placeholder="e.g. Summer sale" />
             </div>
         </div>
     </div>

@@ -20,6 +20,7 @@
     <File Path="deploy/nginx-stockflow.conf" />
     <File Path=".gitignore" />
     <File Path="Directory.Build.props" />
+    <File Path="FEATURES.md" />
     <File Path="README.md" />
   </Folder>
 </Solution>

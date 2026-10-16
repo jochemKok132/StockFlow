@@ -49,7 +49,7 @@ namespace StockFlow.Application.Services.ManagementApp
         public async Task<CustomerDto> GetCustomerByIdAsync(Guid id)
         {
             var customer = await customerRepository.GetByIdAsync(id);
-            if (customer == null || customer.SoftDeleted) throw new KeyNotFoundException($"Customer with id {id} not found.");
+            if (customer == null || customer.SoftDeleted) throw new KeyNotFoundException("Customer not found.");
             return customer.ToCustomerDto();
         }
 
@@ -137,7 +137,7 @@ namespace StockFlow.Application.Services.ManagementApp
 
             var customer = await customerRepository.GetByIdAsync(dto.Id);
             if (customer == null)
-                throw new KeyNotFoundException($"Customer with id {dto.Id} not found.");
+                throw new KeyNotFoundException("Customer not found.");
 
             var log = dto.ToUpdateCustomerLogsDto(customer);
 

@@ -16,6 +16,7 @@ namespace StockFlow.UnitTests.Mappings
             public string? Password { get; set; }
             public byte[]? Image { get; set; }
             public List<string> Tags { get; set; } = [];
+            public Guid BrandId { get; set; }
         }
 
         [Fact]
@@ -64,6 +65,22 @@ namespace StockFlow.UnitTests.Mappings
             var result = new Item { Tags = ["tuin", "verf"] }.FindDifferences(new Item { Tags = ["tuin", "hout"] });
 
             Assert.Equal(["Tags: Added: [verf]. Removed: [hout]"], result);
+        }
+
+        [Fact]
+        public void FindDifferences_GuidChanged_IsNeverReported()
+        {
+            var result = new Item { BrandId = Guid.NewGuid() }.FindDifferences(new Item { BrandId = Guid.NewGuid() });
+
+            Assert.Empty(result);
+        }
+
+        [Fact]
+        public void WithoutGuids_MessageWithGuid_IsRemoved()
+        {
+            var result = new[] { $"BrandId: New: {Guid.NewGuid()}. Old: {Guid.NewGuid()}", "Stock: New: 2. Old: 1" }.WithoutGuids();
+
+            Assert.Equal(["Stock: New: 2. Old: 1"], result);
         }
 
         [Fact]

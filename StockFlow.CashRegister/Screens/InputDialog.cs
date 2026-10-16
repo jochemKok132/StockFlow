@@ -5,7 +5,7 @@ namespace StockFlow.CashRegister.Screens
 {
     public static class InputDialog
     {
-        public static string? Ask(IWin32Window owner, string title, string prompt, string initial = "")
+        public static string? Ask(IWin32Window owner, string title, string prompt, string initial = "", int maxLength = 0)
         {
             using var form = new Form
             {
@@ -23,6 +23,7 @@ namespace StockFlow.CashRegister.Screens
             Theme.ApplyMuted(lblPrompt);
 
             var txtValue = new TextBox { Text = initial, Location = new Point(24, 68), Size = new Size(312, 27) };
+            if (maxLength > 0) txtValue.MaxLength = maxLength;
             Theme.ApplyInput(txtValue, 12);
 
             var btnOk = new Button { Text = "OK", Location = new Point(24, 120), Size = new Size(150, 40), DialogResult = DialogResult.OK };

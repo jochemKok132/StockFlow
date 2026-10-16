@@ -21,7 +21,7 @@ namespace StockFlow.Application.Mappings.AuditLogs
                 CustomerId = log.CustomerId,
                 Id = log.Id,
                 LogType = log.LogType.ToDto(),
-                Messages = log.Messages.WithoutNavigationChanges(),
+                Messages = log.Messages.WithoutNavigationChanges().WithoutGuids(),
             };
         }
         public static CustomerLogs ToCustomerLogsEntity(this CreateCustomerLogsDto dto)

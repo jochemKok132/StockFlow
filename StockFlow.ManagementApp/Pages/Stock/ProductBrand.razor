@@ -17,7 +17,7 @@
         <div class="filters">
             <div class="filter-group">
                 <label>Barcode</label>
-                <input type="text" @bind="pagination.BrandName" @bind:event="oninput" @bind:after="ResetAndLoad" placeholder="e.g. Flexa" />
+                <input type="text" maxlength="@FieldLimits.Name" @bind="pagination.BrandName" @bind:event="oninput" @bind:after="ResetAndLoad" placeholder="e.g. Flexa" />
             </div>
         </div>
     </div>

@@ -1,4 +1,5 @@
 ﻿using System.Text.RegularExpressions;
+using StockFlow.Shared.Common;
 using StockFlow.Shared.DTOs.Customer;
 using StockFlow.Shared.DTOs.Customer.CustomerAuthentication;
 using CustomerLogin = StockFlow.Shared.DTOs.Customer.CustomerAuthentication.LoginRequest;
@@ -19,7 +20,7 @@ namespace StockFlow.Application.Validations.People
             if (!string.IsNullOrWhiteSpace(dto.PostalCode) && !PostalCodePattern.IsMatch(dto.PostalCode.Trim()))
                 throw new ArgumentException("Postal code must look like 1234 AB.");
 
-            Guard.Optional(dto.HouseNumber, "House number", 10);
+            Guard.Optional(dto.HouseNumber, "House number", FieldLimits.HouseNumber);
 
             if (dto.SavedPoints < 0)
                 throw new ArgumentException("Saved points can't be negative.");
@@ -28,7 +29,7 @@ namespace StockFlow.Application.Validations.People
         public static void Validate(this ChangePasswordRequest request)
         {
             Guard.NotNull(request, "Change password");
-            Guard.Required(request.CurrentPassword, "Current password", 128);
+            Guard.Required(request.CurrentPassword, "Current password", FieldLimits.CustomerPassword);
             PasswordRules.ValidateCustomerPassword(request.NewPassword, "New password");
 
             if (request.NewPassword != request.ConfirmPassword)
@@ -54,11 +55,11 @@ namespace StockFlow.Application.Validations.People
             if (request.Password != request.ConfirmPassword)
                 throw new ArgumentException("The passwords do not match.");
 
-            Guard.Required(request.PostalCode, "Postal code", 7);
+            Guard.Required(request.PostalCode, "Postal code", FieldLimits.PostalCode);
             if (!PostalCodePattern.IsMatch(request.PostalCode.Trim()))
                 throw new ArgumentException("Postal code must look like 1234 AB.");
 
-            Guard.Required(request.HouseNumber, "House number", 10);
+            Guard.Required(request.HouseNumber, "House number", FieldLimits.HouseNumber);
             if (!HouseNumberPattern.IsMatch(request.HouseNumber.Trim()))
                 throw new ArgumentException("House number must look like 12 or 12A.");
         }

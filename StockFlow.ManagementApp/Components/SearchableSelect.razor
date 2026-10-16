@@ -4,6 +4,7 @@
                class="select-input"
                type="text"
                autocomplete="off"
+               maxlength="@MaxLength"
                value="@(open ? search : SelectedLabel)"
                placeholder="@(open ? SelectedLabel ?? Placeholder : Placeholder)"
                readonly="@Disabled"
@@ -48,6 +49,7 @@
     [Parameter] public EventCallback<string> ValueChanged { get; set; }
     [Parameter] public string Placeholder { get; set; } = "Search...";
     [Parameter] public bool Disabled { get; set; }
+    [Parameter] public int? MaxLength { get; set; } = StockFlow.Shared.Common.FieldLimits.Name;
 
     private bool open;
     private string search = "";

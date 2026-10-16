@@ -15,7 +15,7 @@
     <form class="search-bar" @onsubmit="Search">
         <div class="filter-group">
             <label for="barcode">Barcode</label>
-            <input id="barcode" type="text" inputmode="numeric" maxlength="9"
+            <input id="barcode" type="text" inputmode="numeric" maxlength="@IdentifierFormats.ProductBarcodeLength"
                    placeholder="e.g. 1001"
                    @bind="barcodeInput" @bind:event="oninput" />
         </div>
@@ -287,6 +287,6 @@
 
     private static string? GetImageDataUrl(ProductDto product) =>
         product.ProductImage is { Length: > 0 } image
-            ? $"data:image/*;base64,{Convert.ToBase64String(image)}"
+            ? $"data:{ImageFormats.DetectContentType(image) ?? "image/png"};base64,{Convert.ToBase64String(image)}"
             : null;
 }

@@ -20,6 +20,7 @@
                class="select-input"
                type="text"
                autocomplete="off"
+               maxlength="@MaxLength"
                value="@search"
                placeholder="@(Values.Count == 0 ? Placeholder : "")"
                readonly="@Disabled"
@@ -62,6 +63,7 @@
     [Parameter] public EventCallback<List<string>> ValuesChanged { get; set; }
     [Parameter] public string Placeholder { get; set; } = "Search...";
     [Parameter] public bool AllowCustom { get; set; }
+    [Parameter] public int? MaxLength { get; set; }
     [Parameter] public bool Disabled { get; set; }
 
     private ElementReference input;

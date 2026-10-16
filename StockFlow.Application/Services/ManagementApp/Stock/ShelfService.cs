@@ -42,7 +42,7 @@ namespace StockFlow.Application.Services.ManagementApp.Stock
         public async Task SoftDeleteShelfAsync(Guid id, Guid employeeId)
         {
             var shelf = await shelfRepository.GetByIdAsync(id);
-            if (shelf == null) throw new KeyNotFoundException($"Shelf with the id {id} not found.");
+            if (shelf == null) throw new KeyNotFoundException("Shelf not found.");
             await stockLogsService.CreateStockLogsAsync(shelf.ToSoftDeleteStockLogsDto(employeeId));
 
             await shelfRepository.SoftDeleteAsync(shelf);
@@ -53,7 +53,7 @@ namespace StockFlow.Application.Services.ManagementApp.Stock
             shelfDto.Validate();
 
             var shelf = await shelfRepository.GetByIdAsync(shelfDto.Id);
-            if (shelf == null) throw new KeyNotFoundException($"Shelf with the id {shelfDto.Id} not found.");
+            if (shelf == null) throw new KeyNotFoundException("Shelf not found.");
             var log = shelfDto.ToUpdateStockLogsDto(shelf, employeeId);
 
             shelf.ToShelfEntity(shelfDto);

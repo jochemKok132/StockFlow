@@ -1,4 +1,5 @@
-﻿using StockFlow.Shared.DTOs.Stock.Sales;
+﻿using StockFlow.Shared.Common;
+using StockFlow.Shared.DTOs.Stock.Sales;
 
 namespace StockFlow.Application.Validations.Stock
 {
@@ -20,7 +21,7 @@ namespace StockFlow.Application.Validations.Stock
         private static void ValidateFields(string? name, string? description, int percentageOff, IEnumerable<string>? tags)
         {
             Guard.Required(name, "Sale name");
-            Guard.Required(description, "Description", 1000);
+            Guard.Required(description, "Description", FieldLimits.Description);
 
             if (percentageOff < 1 || percentageOff > 99)
                 throw new ArgumentException("Percentage off must be between 1 and 99.");

@@ -1,5 +1,6 @@
 ﻿using System.Collections;
 using System.Reflection;
+using System.Text.RegularExpressions;
 
 public static class DifferenceFinder
 {
@@ -15,6 +16,7 @@ public static class DifferenceFinder
             if (newProp == null) continue;
 
             if (IsModelType(oldProp.PropertyType) || IsModelType(newProp.PropertyType)) continue;
+            if (IsGuidType(oldProp.PropertyType) || IsGuidType(newProp.PropertyType)) continue;
 
             var oldRaw = oldProp.GetValue(oldValues);
             var newRaw = newProp.GetValue(newValues);
@@ -70,6 +72,15 @@ public static class DifferenceFinder
 
         return typeof(IEnumerable).IsAssignableFrom(type);
     }
+
+    private static readonly Regex GuidPattern =
+        new(@"[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}");
+
+    public static List<string> WithoutGuids(this IEnumerable<string> messages) =>
+        messages.Where(m => !GuidPattern.IsMatch(m)).ToList();
+
+    private static bool IsGuidType(Type type) =>
+        (Nullable.GetUnderlyingType(type) ?? type) == typeof(Guid);
 
     private static List<object?> ToItems(object? value) =>
         value is IEnumerable items ? items.Cast<object?>().ToList() : new List<object?>();

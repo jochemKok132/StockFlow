@@ -55,6 +55,24 @@ namespace StockFlow.UnitTests.Validations
         }
 
         [Fact]
+        public void ValidateCreate_ImageIsNotAnImage_ThrowsArgumentException()
+        {
+            var dto = Valid();
+            dto.ProductImage = "%PDF-1.7"u8.ToArray();
+
+            Assert.Throws<ArgumentException>(() => dto.Validate());
+        }
+
+        [Fact]
+        public void ValidateCreate_PngImage_DoesNotThrow()
+        {
+            var dto = Valid();
+            dto.ProductImage = [0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A, 0x00];
+
+            Assert.Null(Record.Exception(() => dto.Validate()));
+        }
+
+        [Fact]
         public void ValidateCreate_EmptyTag_ThrowsArgumentException()
         {
             var dto = Valid();

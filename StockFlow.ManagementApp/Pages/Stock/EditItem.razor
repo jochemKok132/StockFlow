@@ -1,118 +1,125 @@
 ﻿@using System.Collections
+@using System.ComponentModel.DataAnnotations
 @using System.Globalization
 @using System.Reflection
 @using Microsoft.AspNetCore.Components.Forms
 
 @if (Show)
 {
-    <div class="modal-overlay" @onclick="OnClose">
-        <div class="modal-box" @onclick:stopPropagation="true">
-            <div class="panel-header">
-                <div>
-                    <span class="panel-label">@(ReadMode ? "Details" : "Edit")</span>
-                    <h3>@Title</h3>
-                </div>
-                <button class="btn-icon" title="Close" @onclick="OnClose">
-                    <i class="bi bi-x-lg"></i>
-                </button>
+    <ModalOverlay OnClose="OnClose">
+        <div class="panel-header">
+            <div>
+                <span class="panel-label">@(ReadMode ? "Details" : "Edit")</span>
+                <h3>@Title</h3>
             </div>
+            <button class="btn-icon" title="Close" @onclick="OnClose">
+                <i class="bi bi-x-lg"></i>
+            </button>
+        </div>
 
-            @if (Loading)
+        @if (Loading)
+        {
+            <div class="loading">Loading details...</div>
+        }
+        else if (item is null)
+        {
+            @if (!string.IsNullOrWhiteSpace(Error))
             {
-                <div class="loading">Loading details...</div>
-            }
-            else if (item is null)
-            {
-                @if (!string.IsNullOrWhiteSpace(Error))
-                {
-                    <div class="alert-danger">@Error</div>
-                }
-                else
-                {
-                    <div class="empty-state">No details available.</div>
-                }
+                <div class="alert-danger">@Error</div>
             }
             else
             {
-                @if (!string.IsNullOrWhiteSpace(Error))
+                <div class="empty-state">No details available.</div>
+            }
+        }
+        else
+        {
+            @if (!string.IsNullOrWhiteSpace(Error))
+            {
+                <div class="alert-danger">@Error</div>
+            }
+
+            <div class="form-grid">
+                @foreach (var prop in EditableProperties.Where(p => !IsHidden(p)))
                 {
-                    <div class="alert-danger">@Error</div>
-                }
+                    <div class="form-row">
+                        <label class="form-label" for="@prop.Name">@DisplayName(prop)</label>
 
-                <div class="form-grid">
-                    @foreach (var prop in EditableProperties.Where(p => !IsHidden(p)))
-                    {
-                        <div class="form-row">
-                            <label class="form-label" for="@prop.Name">@DisplayName(prop)</label>
-
-                            @if (prop.PropertyType == typeof(byte[]))
-                            {
-                                var imgUrl = GetImageDataUrl(prop);
-                                <div class="image-field">
-                                    @if (imgUrl is not null)
-                                    {
-                                        <img src="@imgUrl" alt="@prop.Name" class="image-preview" />
-                                    }
-                                    @if (!ReadMode)
-                                    {
-                                        <InputFile OnChange="e => HandleFileSelected(e, prop)" class="form-input-file" />
-                                    }
-                                </div>
-                            }
-                            else if (IsStringCollection(prop.PropertyType))
-                            {
-                                <SearchableMultiSelect Id="@prop.Name"
-                                                       Options="OptionsFor(prop)"
-                                                       Values="GetValues(prop)"
-                                                       ValuesChanged="values => SetValues(prop, values)"
-                                                       AllowCustom="true"
-                                                       Disabled="ReadMode"
-                                                       Placeholder="@($"Search or add {SplitPascalCase(prop.Name).ToLowerInvariant()}...")" />
-                            }
-                            else if (HasLookup(prop))
-                            {
-                                <SearchableSelect Id="@prop.Name"
-                                                  Options="OptionsFor(prop)"
-                                                  Value="@GetSelectValue(prop)"
-                                                  ValueChanged="value => SetValueFromString(prop, value)"
-                                                  Disabled="ReadMode"
-                                                  Placeholder="@($"Search {LookupName(prop)}...")" />
-                            }
-                            else if (GetUnderlyingType(prop.PropertyType) == typeof(bool))
-                            {
-                                <input id="@prop.Name" type="checkbox" class="form-checkbox"
-                                       checked="@((bool)(prop.GetValue(item) ?? false))"
-                                       disabled="@ReadMode"
-                                       @onchange="e => SetValueFromString(prop, ((e.Value as bool?) ?? false).ToString())" />
-                            }
-                            else
-                            {
-                                <input id="@prop.Name" type="@(prop.Name.Contains("Password") ? "password" : GetInputType(prop.PropertyType))" class="form-input"
-                                       autocomplete="@(prop.Name.Contains("Password") ? "new-password" : null)"
-                                       placeholder="@(prop.Name == "NewPassword" ? "Leave empty to keep the current password" : null)"
-                                       value="@GetValueAsString(prop)"
-                                       readonly="@ReadMode"
-                                       @oninput="() => editing = true"
-                                       @onchange="e => SetValueFromString(prop, e.Value?.ToString() ?? string.Empty)" />
-                            }
-                        </div>
-                    }
-                </div>
-
-                @if (EditMode)
-                {
-                    <div class="form-actions">
-                        @if (IsUpdate && !HasChanges && !editing)
+                        @if (prop.PropertyType == typeof(byte[]))
                         {
-                            <span class="no-changes">No changes to save.</span>
+                            var imgUrl = GetImageDataUrl(prop);
+                            <div class="image-field">
+                                @if (imgUrl is not null)
+                                {
+                                    <img src="@imgUrl" alt="@prop.Name" class="image-preview" />
+                                }
+                                @if (!ReadMode)
+                                {
+                                    <InputFile OnChange="e => HandleFileSelected(e, prop)" accept="@ImageFormats.Accept" class="form-input-file" />
+                                }
+                            </div>
                         }
-                        <button type="button" class="btn-cancel" @onclick="OnClose">Cancel</button>
-                        <button type="button" class="btn-save" disabled="@(IsUpdate && !HasChanges && !editing)" @onclick="HandleSave"><i class="bi bi-check-lg"></i> Save</button>
+                        else if (IsStringCollection(prop.PropertyType))
+                        {
+                            <SearchableMultiSelect Id="@prop.Name"
+                                                   Options="OptionsFor(prop)"
+                                                   Values="GetValues(prop)"
+                                                   ValuesChanged="values => SetValues(prop, values)"
+                                                   AllowCustom="true"
+                                                   MaxLength="FieldLimits.Tag"
+                                                   Disabled="ReadMode"
+                                                   Placeholder="@($"Search or add {SplitPascalCase(prop.Name).ToLowerInvariant()}...")" />
+                        }
+                        else if (HasLookup(prop))
+                        {
+                            <SearchableSelect Id="@prop.Name"
+                                              Options="OptionsFor(prop)"
+                                              Value="@GetSelectValue(prop)"
+                                              ValueChanged="value => SetValueFromString(prop, value)"
+                                              Disabled="ReadMode"
+                                              Placeholder="@($"Search {LookupName(prop)}...")" />
+                        }
+                        else if (GetUnderlyingType(prop.PropertyType) == typeof(bool))
+                        {
+                            <input id="@prop.Name" type="checkbox" class="form-checkbox"
+                                   checked="@((bool)(prop.GetValue(item) ?? false))"
+                                   disabled="@ReadMode"
+                                   @onchange="e => SetValueFromString(prop, ((e.Value as bool?) ?? false).ToString())" />
+                        }
+                        else
+                        {
+                            var maxLength = MaxLengthOf(prop);
+                            <input id="@prop.Name" type="@(prop.Name.Contains("Password") ? "password" : GetInputType(prop.PropertyType))" class="form-input"
+                                   autocomplete="@(prop.Name.Contains("Password") ? "new-password" : null)"
+                                   placeholder="@(prop.Name == "NewPassword" ? "Leave empty to keep the current password" : null)"
+                                   maxlength="@maxLength"
+                                   value="@GetValueAsString(prop)"
+                                   readonly="@ReadMode"
+                                   @oninput="e => OnTyping(prop, e)"
+                                   @onchange="e => SetValueFromString(prop, e.Value?.ToString() ?? string.Empty)" />
+                            @if (maxLength is int max && !ReadMode)
+                            {
+                                var length = LengthOf(prop);
+                                <span class="char-count @(length >= max ? "is-full" : length >= max * 0.9 ? "is-near" : "")">@length / @max</span>
+                            }
+                        }
                     </div>
                 }
+            </div>
+
+            @if (EditMode)
+            {
+                <div class="form-actions">
+                    @if (IsUpdate && !HasChanges && !editing)
+                    {
+                        <span class="no-changes">No changes to save.</span>
+                    }
+                    <button type="button" class="btn-cancel" @onclick="OnClose">Cancel</button>
+                    <button type="button" class="btn-save" disabled="@(IsUpdate && !HasChanges && !editing)" @onclick="HandleSave"><i class="bi bi-check-lg"></i> Save</button>
+                </div>
             }
-        </div>
-    </div>
+        }
+    </ModalOverlay>
 }
 
 @code {
@@ -127,11 +134,10 @@
     [Parameter] public EventCallback OnClose { get; set; }
     [Parameter] public EventCallback<object?> OnSave { get; set; }
 
-    private const long MaxFileSizeBytes = 5 * 1024 * 1024;
-
     private object? snapshotItem;
     private string? snapshot;
     private bool editing;
+    private readonly Dictionary<string, int> typedLengths = [];
 
     protected override void OnParametersSet()
     {
@@ -139,6 +145,7 @@
 
         snapshotItem = item;
         editing = false;
+        typedLengths.Clear();
         snapshot = item is null ? null : CreateSnapshot();
     }
 
@@ -237,8 +244,22 @@
 
     private static string LookupName(PropertyInfo prop) => DisplayName(prop).ToLowerInvariant();
 
-    private static bool IsHidden(PropertyInfo prop) =>
-        prop.Name == "Id" || prop.Name == "HashedPassword";
+    private bool IsHidden(PropertyInfo prop) =>
+        prop.Name == "Id" || prop.Name == "HashedPassword" ||
+        (GetUnderlyingType(prop.PropertyType) == typeof(Guid) && !HasLookup(prop));
+
+    private static int? MaxLengthOf(PropertyInfo prop) =>
+        prop.GetCustomAttribute<MaxLengthAttribute>()?.Length ??
+        prop.GetCustomAttribute<StringLengthAttribute>()?.MaximumLength;
+
+    private int LengthOf(PropertyInfo prop) =>
+        typedLengths.TryGetValue(prop.Name, out var length) ? length : GetValueAsString(prop).Length;
+
+    private void OnTyping(PropertyInfo prop, ChangeEventArgs e)
+    {
+        editing = true;
+        typedLengths[prop.Name] = e.Value?.ToString()?.Length ?? 0;
+    }
 
     private static string SplitPascalCase(string value) =>
         System.Text.RegularExpressions.Regex.Replace(value, "(?<=[a-z])(?=[A-Z])", " ");
@@ -330,18 +351,38 @@
         var file = e.File;
         if (file is null) return;
 
+        if (!ImageFormats.IsAllowedContentType(file.ContentType))
+        {
+            Error = $"'{file.Name}' is not an image. Choose a PNG, JPEG, GIF or WebP file.";
+            return;
+        }
+
+        if (file.Size > FieldLimits.MaxImageBytes)
+        {
+            Error = $"'{file.Name}' exceeds the {FieldLimits.MaxImageBytes / (1024 * 1024)} MB limit.";
+            return;
+        }
+
         try
         {
-            using var stream = file.OpenReadStream(MaxFileSizeBytes);
+            using var stream = file.OpenReadStream(FieldLimits.MaxImageBytes);
             using var ms = new MemoryStream();
             await stream.CopyToAsync(ms);
 
-            prop.SetValue(item, ms.ToArray());
+            var bytes = ms.ToArray();
+            if (!ImageFormats.IsImage(bytes))
+            {
+                Error = $"'{file.Name}' is not a valid image. Choose a PNG, JPEG, GIF or WebP file.";
+                return;
+            }
+
+            Error = "";
+            prop.SetValue(item, bytes);
             StateHasChanged();
         }
         catch (IOException)
         {
-            Error = $"'{file.Name}' exceeds the {MaxFileSizeBytes / (1024 * 1024)} MB limit.";
+            Error = $"'{file.Name}' exceeds the {FieldLimits.MaxImageBytes / (1024 * 1024)} MB limit.";
         }
     }
 
@@ -350,7 +391,8 @@
         var value = prop.GetValue(item) as byte[];
         if (value is null || value.Length == 0) return null;
 
-        return $"data:image/*;base64,{Convert.ToBase64String(value)}";
+        var contentType = ImageFormats.DetectContentType(value) ?? "image/png";
+        return $"data:{contentType};base64,{Convert.ToBase64String(value)}";
     }
 
     private async Task HandleSave()

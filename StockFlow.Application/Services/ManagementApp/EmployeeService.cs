@@ -55,7 +55,7 @@ namespace StockFlow.Application.Services.ManagementApp
         public async Task<EmployeeDto> GetEmployeeByIdAsync(Guid id)
         {
             var employee = await employeeRepository.GetByIdAsync(id);
-            if (employee == null) throw new KeyNotFoundException($"Employee with id {id} not found.");
+            if (employee == null) throw new KeyNotFoundException("Employee not found.");
             return employee.ToEmployeeDto();
         }
 
@@ -81,7 +81,7 @@ namespace StockFlow.Application.Services.ManagementApp
 
             var employee = await employeeRepository.GetByIdAsync(dto.Id);
             if (employee == null)
-                throw new KeyNotFoundException($"Employee with id {dto.Id} not found.");
+                throw new KeyNotFoundException("Employee not found.");
             var log = dto.ToUpdateEmployeeLogsDto(employee, userId);
 
             employee.ToEmployeeEntity(dto);

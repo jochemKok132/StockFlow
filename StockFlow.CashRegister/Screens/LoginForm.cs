@@ -46,6 +46,8 @@ namespace StockFlow.CashRegister.Screens
             Theme.ApplyCaption(lblPassword);
             Theme.ApplyInput(txtUsername);
             Theme.ApplyInput(txtPassword);
+            txtUsername.MaxLength = FieldLimits.EmployeeId;
+            txtPassword.MaxLength = FieldLimits.EmployeePassword;
             Theme.ApplyMessage(lblError);
             Theme.ApplyPrimary(btnLogin, 11);
         }

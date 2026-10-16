@@ -18,15 +18,15 @@
         <div class="filters">
             <div class="filter-group">
                 <label>Barcode</label>
-                <input type="text" @bind="pagination.Barcode" @bind:event="oninput" @bind:after="ResetAndLoad" placeholder="e.g. 500146" />
+                <input type="text" maxlength="@IdentifierFormats.ProductBarcodeLength" @bind="pagination.Barcode" @bind:event="oninput" @bind:after="ResetAndLoad" placeholder="e.g. 500146" />
             </div>
             <div class="filter-group">
                 <label>Product name</label>
-                <input type="text" @bind="pagination.ProductName" @bind:event="oninput" @bind:after="ResetAndLoad" placeholder="e.g. Douchemat" />
+                <input type="text" maxlength="@FieldLimits.Name" @bind="pagination.ProductName" @bind:event="oninput" @bind:after="ResetAndLoad" placeholder="e.g. Douchemat" />
             </div>
             <div class="filter-group">
                 <label>Location</label>
-                <input type="text" @bind="pagination.Location" @bind:event="oninput" @bind:after="ResetAndLoad" placeholder="e.g. 002-1025" />
+                <input type="text" maxlength="@FieldLimits.ShelfLocation" @bind="pagination.Location" @bind:event="oninput" @bind:after="ResetAndLoad" placeholder="e.g. 002-1025" />
             </div>
         </div>
     </div>

@@ -84,6 +84,8 @@ namespace StockFlow.CashRegister
 
         private void SetupLogic()
         {
+            txtBarcode.MaxLength = IdentifierFormats.ReceiptIdLength;
+
             txtBarcode.KeyDown += async (_, e) =>
             {
                 if (e.KeyCode != Keys.Enter) return;
@@ -476,7 +478,8 @@ namespace StockFlow.CashRegister
                 IsReturning
                     ? $"Aantal retour voor {line.Product.ProductName} (maximaal {max})"
                     : $"Nieuw aantal voor {line.Product.ProductName}",
-                line.Amount.ToString());
+                line.Amount.ToString(),
+                FieldLimits.Quantity);
 
             if (answer is null) return;
 

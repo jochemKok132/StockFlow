@@ -2,91 +2,89 @@
 
 @if (Show && Log is not null)
 {
-    <div class="modal-overlay" @onclick="OnClose">
-        <div class="modal-box" @onclick:stopPropagation="true">
-            <div class="panel-header">
-                <div>
-                    <span class="panel-label">Receipt @Log.ReceiptId</span>
-                    <h3>Products sold</h3>
-                    <p>
-                        @(Log.Customer is null ? "Walk-in customer" : $"{Log.Customer.FullName} ({Log.Customer.CustomerId})") &middot;
-                        @Log.CreatedAt.ToLocalTime().ToString("dd-MM-yyyy HH:mm")
-                    </p>
-                </div>
-                <button class="btn-icon" title="Close" @onclick="OnClose">
-                    <i class="bi bi-x-lg"></i>
-                </button>
+    <ModalOverlay OnClose="OnClose">
+        <div class="panel-header">
+            <div>
+                <span class="panel-label">Receipt @Log.ReceiptId</span>
+                <h3>Products sold</h3>
+                <p>
+                    @(Log.Customer is null ? "Walk-in customer" : $"{Log.Customer.FullName} ({Log.Customer.CustomerId})") &middot;
+                    @Log.CreatedAt.ToLocalTime().ToString("dd-MM-yyyy HH:mm")
+                </p>
             </div>
-
-            @if (!Log.ProductsSold.Any())
-            {
-                <div class="empty-state">No products in this transaction.</div>
-            }
-            else
-            {
-                <table class="products-table">
-                    <thead>
-                        <tr>
-                            <th>Product</th>
-                            <th class="number-cell">Amount</th>
-                            <th class="number-cell">Price</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach (var item in Log.ProductsSold)
-                        {
-                            <tr class="@(item.Product is null ? "" : "clickable-row")" @onclick="() => SelectProduct(item)">
-                                <td>
-                                    <div class="product-name">
-                                        <span>@(item.Product?.ProductName ?? "Unknown product")</span>
-                                        @if (item.Sale is not null)
-                                        {
-                                            <span class="sale-badge"><i class="bi bi-tag-fill"></i> Sale</span>
-                                        }
-                                        @if (item.ReturnedAmount > 0)
-                                        {
-                                            <span class="returned-badge"><i class="bi bi-arrow-return-left"></i> @item.ReturnedAmount returned</span>
-                                        }
-                                    </div>
-                                    @if (item.Product is not null)
-                                    {
-                                        <span class="product-sub">Barcode @item.Product.Barcode</span>
-                                    }
-                                </td>
-                                <td class="number-cell"><strong>@item.Amount&times;</strong></td>
-                                <td class="number-cell">&euro;@item.PriceAtTimeOfSale.ToString("0.00")</td>
-                            </tr>
-                        }
-                    </tbody>
-                </table>
-
-                <div class="panel-footer">
-                    <div class="total-row">
-                        <span>Discount</span>
-                        <span>&euro;@Log.TotalOff.ToString("0.00")</span>
-                    </div>
-                    @if (Log.PointsEarned > 0)
-                    {
-                        <div class="total-row">
-                            <span>Points earned</span>
-                            <span>+@Log.PointsEarned</span>
-                        </div>
-                    }
-                    @if (Log.PointsUsed > 0)
-                    {
-                        <div class="total-row">
-                            <span>Points used (@Log.PointsUsed)</span>
-                            <span>-&euro;@((Log.PointsUsed / 100m).ToString("0.00"))</span>
-                        </div>
-                    }
-                    <div class="total-row total-main">
-                        <span>Total</span>
-                        <span>&euro;@Log.TotalPrice.ToString("0.00")</span>
-                    </div>
-                </div>
-            }
+            <button class="btn-icon" title="Close" @onclick="OnClose">
+                <i class="bi bi-x-lg"></i>
+            </button>
         </div>
-    </div>
+
+        @if (!Log.ProductsSold.Any())
+        {
+            <div class="empty-state">No products in this transaction.</div>
+        }
+        else
+        {
+            <table class="products-table">
+                <thead>
+                    <tr>
+                        <th>Product</th>
+                        <th class="number-cell">Amount</th>
+                        <th class="number-cell">Price</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in Log.ProductsSold)
+                    {
+                        <tr class="@(item.Product is null ? "" : "clickable-row")" @onclick="() => SelectProduct(item)">
+                            <td>
+                                <div class="product-name">
+                                    <span>@(item.Product?.ProductName ?? "Unknown product")</span>
+                                    @if (item.Sale is not null)
+                                    {
+                                        <span class="sale-badge"><i class="bi bi-tag-fill"></i> Sale</span>
+                                    }
+                                    @if (item.ReturnedAmount > 0)
+                                    {
+                                        <span class="returned-badge"><i class="bi bi-arrow-return-left"></i> @item.ReturnedAmount returned</span>
+                                    }
+                                </div>
+                                @if (item.Product is not null)
+                                {
+                                    <span class="product-sub">Barcode @item.Product.Barcode</span>
+                                }
+                            </td>
+                            <td class="number-cell"><strong>@item.Amount&times;</strong></td>
+                            <td class="number-cell">&euro;@item.PriceAtTimeOfSale.ToString("0.00")</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+
+            <div class="panel-footer">
+                <div class="total-row">
+                    <span>Discount</span>
+                    <span>&euro;@Log.TotalOff.ToString("0.00")</span>
+                </div>
+                @if (Log.PointsEarned > 0)
+                {
+                    <div class="total-row">
+                        <span>Points earned</span>
+                        <span>+@Log.PointsEarned</span>
+                    </div>
+                }
+                @if (Log.PointsUsed > 0)
+                {
+                    <div class="total-row">
+                        <span>Points used (@Log.PointsUsed)</span>
+                        <span>-&euro;@((Log.PointsUsed / 100m).ToString("0.00"))</span>
+                    </div>
+                }
+                <div class="total-row total-main">
+                    <span>Total</span>
+                    <span>&euro;@Log.TotalPrice.ToString("0.00")</span>
+                </div>
+            </div>
+        }
+    </ModalOverlay>
 }
 
 @code {

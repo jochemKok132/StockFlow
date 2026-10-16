@@ -51,7 +51,7 @@ namespace StockFlow.Application.Services.ManagementApp.Stock
         public async Task SoftDeleteSalesAsync(Guid id, Guid employeeId)
         {
             var sale = await salesRepository.GetByIdAsync(id);
-            if (sale == null) throw new KeyNotFoundException($"Sale with the id {id} not found.");
+            if (sale == null) throw new KeyNotFoundException("Sale not found.");
             await salesRepository.SoftDeleteAsync(sale);
             await stockLogsService.CreateStockLogsAsync(sale.ToSoftDeleteStockLogsDto(employeeId));
         }
@@ -61,7 +61,7 @@ namespace StockFlow.Application.Services.ManagementApp.Stock
             salesDto.Validate();
 
             var sale = await salesRepository.GetByIdWithProductsAsync(salesDto.Id);
-            if (sale == null) throw new KeyNotFoundException($"Sale with the id {salesDto.Id} not found.");
+            if (sale == null) throw new KeyNotFoundException("Sale not found.");
 
             var log = salesDto.ToUpdateStockLogsDto(sale, employeeId);
 

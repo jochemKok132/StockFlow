@@ -112,7 +112,7 @@ namespace StockFlow.CashRegister
             lblScan.TextAlign = ContentAlignment.MiddleLeft;
             txtBarcode.Anchor = AnchorStyles.Left | AnchorStyles.Right;
             txtBarcode.Margin = new Padding(0, 0, 8, 0);
-            txtBarcode.MaxLength = 9;
+            txtBarcode.MaxLength = 10;
             txtBarcode.Name = "txtBarcode";
             txtBarcode.TabIndex = 0;
             btnAdd.Dock = DockStyle.Fill;
