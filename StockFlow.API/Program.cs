@@ -77,6 +77,7 @@ namespace StockFlow.API
             app.UseHttpsRedirection();
 
             app.UseAuthentication();
+            app.UseMiddleware<ViewOnlyGuard>();
             app.UseAuthorization();
 
             app.MapControllers();

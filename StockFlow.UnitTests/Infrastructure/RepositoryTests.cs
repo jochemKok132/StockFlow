@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Storage;
 using StockFlow.Infrastructure.Data;
 using StockFlow.Infrastructure.Repositories;
+using StockFlow.Infrastructure.Repositories.AuditLogs;
 using StockFlow.Infrastructure.Repositories.Stock;
 using StockFlow.UnitTests.Helpers;
 
@@ -27,9 +28,9 @@ namespace StockFlow.UnitTests.Infrastructure
             Context.GetService<IRelationalDatabaseCreator>().CreateTables();
         }
 
-        protected async Task<Employee> AddEmployeeAsync(string employeeId = "000001")
+        protected async Task<Employee> AddEmployeeAsync(string employeeId = "000001", EmployeeRole role = EmployeeRole.Cashier)
         {
-            var employee = TestData.Employee();
+            var employee = TestData.Employee(role);
             employee.EmployeeId = employeeId;
             Context.Employees.Add(employee);
             await Context.SaveChangesAsync();
@@ -139,6 +140,76 @@ namespace StockFlow.UnitTests.Infrastructure
             var result = await sut.GetEmployeeByEmployeeIdAsync("000007");
 
             Assert.NotNull(result);
+        }
+
+        [Fact]
+        public async Task GetAllEmployeesAsync_WithoutTesters_HidesTester()
+        {
+            await AddEmployeeAsync("000001");
+            await AddEmployeeAsync("000002", EmployeeRole.Tester);
+            var sut = new EmployeeRepository(Context);
+
+            var result = await sut.GetAllEmployeesAsync(new EmployeePaginationDto { PageNumber = 1, PageSize = 10 }, includeTesters: false);
+
+            Assert.Equal("000001", Assert.Single(result).EmployeeId);
+        }
+
+        [Fact]
+        public async Task GetAllEmployeesAsync_WithTesters_ReturnsTester()
+        {
+            await AddEmployeeAsync("000001");
+            await AddEmployeeAsync("000002", EmployeeRole.Tester);
+            var sut = new EmployeeRepository(Context);
+
+            var result = await sut.GetAllEmployeesAsync(new EmployeePaginationDto { PageNumber = 1, PageSize = 10 }, includeTesters: true);
+
+            Assert.Equal(2, result.Count());
+        }
+    }
+
+    public class EmployeeLogsRepositoryTests : RepositoryTestBase
+    {
+        private async Task AddLogAsync(Employee by, string identifier, LogType logType)
+        {
+            Context.EmployeeLogs.Add(new EmployeeLogs
+            {
+                Id = Guid.NewGuid(),
+                CreatedAt = DateTime.UtcNow,
+                EmployeeId = by.Id,
+                Identifier = identifier,
+                LogType = logType,
+            });
+            await Context.SaveChangesAsync();
+        }
+
+        [Fact]
+        public async Task GetAllEmployeeLogsAsync_WithoutTesters_HidesLogsByAndAboutTesters()
+        {
+            var admin = await AddEmployeeAsync("000001", EmployeeRole.Admin);
+            var tester = await AddEmployeeAsync("000023", EmployeeRole.Tester);
+            await AddLogAsync(admin, "000001", LogType.Login);
+            await AddLogAsync(tester, "000023", LogType.Login);
+            await AddLogAsync(admin, "000023", LogType.Create);
+            var sut = new EmployeeLogsRepository(Context);
+
+            var result = await sut.GetAllEmployeeLogsAsync(new EmployeeLogsPaginationDto { PageNumber = 1, PageSize = 10 }, includeTesters: false);
+
+            var log = Assert.Single(result);
+            Assert.Equal("000001", log.Identifier);
+        }
+
+        [Fact]
+        public async Task GetAllEmployeeLogsAsync_WithTesters_ReturnsEverything()
+        {
+            var admin = await AddEmployeeAsync("000001", EmployeeRole.Admin);
+            var tester = await AddEmployeeAsync("000023", EmployeeRole.Tester);
+            await AddLogAsync(tester, "000023", LogType.Login);
+            await AddLogAsync(admin, "000023", LogType.Create);
+            var sut = new EmployeeLogsRepository(Context);
+
+            var result = await sut.GetAllEmployeeLogsAsync(new EmployeeLogsPaginationDto { PageNumber = 1, PageSize = 10 }, includeTesters: true);
+
+            Assert.Equal(2, result.Count());
         }
     }
 

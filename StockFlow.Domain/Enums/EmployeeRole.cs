@@ -13,5 +13,6 @@ namespace StockFlow.Domain.Enums
         Cashier,
         FloorWorker,
         None,
+        Tester,
     }
 }

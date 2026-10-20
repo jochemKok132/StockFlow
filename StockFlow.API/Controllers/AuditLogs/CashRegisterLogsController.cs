@@ -11,7 +11,7 @@ namespace StockFlow.API.Controllers
     [Route("[controller]")]
     public class CashRegisterLogsController(ICashRegisterLogsService cashRegisterLogsService) : ControllerBase
     {
-        [Authorize(Roles = "Cashier,ServiceDesk,ShiftLeader,Manager,Admin")]
+        [Authorize(Roles = "Cashier,ServiceDesk,ShiftLeader,Manager,Admin,Tester")]
         [HttpGet("GetAll")]
         public async Task<IActionResult> GetAllAsync([FromQuery] CashRegisterLogsPaginationDto pagination)
         {

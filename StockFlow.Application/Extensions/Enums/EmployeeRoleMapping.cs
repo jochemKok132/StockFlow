@@ -19,6 +19,7 @@ namespace StockFlow.Application.Mappings.Enums
                 EmployeeRoleDto.Cashier => EmployeeRole.Cashier,
                 EmployeeRoleDto.FloorWorker => EmployeeRole.FloorWorker,
                 EmployeeRoleDto.None => EmployeeRole.None,
+                EmployeeRoleDto.Tester => EmployeeRole.Tester,
                 _ => throw new ArgumentOutOfRangeException(nameof(role))
             };
         }
@@ -34,6 +35,7 @@ namespace StockFlow.Application.Mappings.Enums
                 EmployeeRole.Cashier => EmployeeRoleDto.Cashier,
                 EmployeeRole.FloorWorker => EmployeeRoleDto.FloorWorker,
                 EmployeeRole.None => EmployeeRoleDto.None,
+                EmployeeRole.Tester => EmployeeRoleDto.Tester,
                 _ => throw new ArgumentOutOfRangeException(nameof(role))
             };
         }

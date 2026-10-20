@@ -156,7 +156,7 @@ namespace StockFlow.UnitTests.Services.AuditLogs
         public async Task GetAllEmployeeLogsAsync_ValidPagination_ReturnsLogs()
         {
             var log = new EmployeeLogs { Id = Guid.NewGuid(), Identifier = "000010", Employee = TestData.Employee() };
-            _repository.Setup(r => r.GetAllEmployeeLogsAsync(It.IsAny<EmployeeLogsPaginationDto>())).ReturnsAsync(new[] { log });
+            _repository.Setup(r => r.GetAllEmployeeLogsAsync(It.IsAny<EmployeeLogsPaginationDto>(), false)).ReturnsAsync(new[] { log });
 
             var result = await _sut.GetAllEmployeeLogsAsync(new EmployeeLogsPaginationDto { PageNumber = 1, PageSize = 10 });
 

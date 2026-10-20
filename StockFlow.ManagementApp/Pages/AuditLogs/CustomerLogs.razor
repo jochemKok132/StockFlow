@@ -1,5 +1,5 @@
 ﻿@page "/customerlogs";
-@attribute [Authorize(Roles = "Manager,Admin")]
+@attribute [Authorize(Roles = "Manager,Admin,Tester")]
 @inject ICustomerLogsService customerLogsService
 
 <div class="tasks-header">

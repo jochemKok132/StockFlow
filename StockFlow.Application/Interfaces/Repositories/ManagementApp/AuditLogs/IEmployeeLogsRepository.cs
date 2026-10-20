@@ -12,6 +12,6 @@ namespace StockFlow.Application.Interfaces.Repositories.ManagementApp.Stock
         IEfRepository<EmployeeLogs>, 
         IEfCreatableRepository<EmployeeLogs>
     {
-        Task<IEnumerable<EmployeeLogs>> GetAllEmployeeLogsAsync(EmployeeLogsPaginationDto pagination);
+        Task<IEnumerable<EmployeeLogs>> GetAllEmployeeLogsAsync(EmployeeLogsPaginationDto pagination, bool includeTesters);
     }
 }

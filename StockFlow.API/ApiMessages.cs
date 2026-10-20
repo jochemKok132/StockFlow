@@ -12,7 +12,7 @@ namespace StockFlow.API
 
     public static class AuthRoles
     {
-        public const string Employees = "Admin,Manager,ShiftLeader,ServiceDesk,Cashier,FloorWorker";
+        public const string Employees = "Admin,Manager,ShiftLeader,ServiceDesk,Cashier,FloorWorker,Tester";
         public const string Customer = "Customer";
     }
 

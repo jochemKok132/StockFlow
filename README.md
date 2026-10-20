@@ -107,6 +107,7 @@ All employee passwords are **`001273`**.
 | 000006 – 000009 | ServiceDesk |
 | 000010 – 000012 | Cashier |
 | 000013 – 000022 | FloorWorker |
+| 000023 | Tester (view-only demo account, see [Tester account](#tester-account)) |
 
 ### Customers
 
@@ -141,7 +142,7 @@ All rules live in `StockFlow.Shared/Common/IdentifierFormats.cs` and are shared 
 
 ## Roles and permissions
 
-Roles: `Admin`, `Manager`, `ShiftLeader`, `ServiceDesk`, `Cashier`, `FloorWorker` (employees) and `Customer` (given to customers when they log in or register).
+Roles: `Admin`, `Manager`, `ShiftLeader`, `ServiceDesk`, `Cashier`, `FloorWorker`, `Tester` (employees) and `Customer` (given to customers when they log in or register).
 
 | Area | Who |
 |---|---|
@@ -159,6 +160,17 @@ Roles: `Admin`, `Manager`, `ShiftLeader`, `ServiceDesk`, `Cashier`, `FloorWorker
 | Register a customer account | Anyone (no login) |
 | View own customer account (`Customer/Me`), change own customer password | Customer |
 | Look up customers or employees by id / email through the API | Employees only (a customer token is refused) |
+| Everything above, read-only | Tester |
+
+### Tester account
+
+`Tester` is a view-only account to hand out to people who want to look around (a teacher, a recruiter, a demo).
+
+- **Sees everything:** every page, menu item and log, the create and edit forms, and the delete buttons. It can open every form and type in it.
+- **Can't change anything:** in the management app **Save** is disabled with *View-only account: changes can't be saved.* and the delete buttons are disabled. The API enforces it too: `ViewOnlyGuard` (`StockFlow.API/ViewOnlyGuard.cs`) answers every `POST`, `PUT` and `DELETE` from a Tester token with `403` and *This is a view-only account. Nothing was saved.* (logging in is the only exception). On the cash register a Tester can log in and scan, but checking out or completing a return is refused.
+- **Invisible to everyone except the admin:** Tester accounts are left out of the employee list, the employee lookups and the employee logs (their logins, and logs about them) for everyone but `Admin`. The Tester itself doesn't see other Tester accounts either.
+- **Only the admin hands it out:** only an `Admin` can give someone the `Tester` role or edit a Tester; the role isn't even offered in the role select for others, and the API refuses it with *Only an admin can give out the Tester role.*
+- **Getting one:** a fresh database seeds `000023` (password `001273`). On an existing database (like the server) log in as the admin, open **Employees → New employee**, pick the role **Tester** and set a password. Give a Tester its own password, never the shared dev password.
 
 ---
 
@@ -292,6 +304,7 @@ Every response, including errors, uses the same envelope (`StockFlow.Shared/Comm
 | Not found (`KeyNotFoundException`) | 404 | `Fail(message)` |
 | Not logged in / wrong login | 401 | `Fail("You are not logged in.")` or a login error |
 | Wrong role | 403 | `Fail("You don't have access to this function.")` |
+| Change with a Tester token | 403 | `Fail("This is a view-only account. Nothing was saved.")` via `ViewOnlyGuard` |
 | Unhandled exception | 500 | `Fail("An unexpected error occurred.")` via `ErrorController` (`/error`) |
 
 Both clients read this envelope in their `HttpService.ReadAnswer`.
@@ -433,7 +446,7 @@ The cash register mirrors the same palette in `Screens/Theme.cs`.
 
 ## Tests
 
-`StockFlow.UnitTests` (xUnit + Moq, about 340 tests). Run with `dotnet test` from the repository root or the Test Explorer. The release workflow runs them before anything is published.
+`StockFlow.UnitTests` (xUnit + Moq, about 360 tests). Run with `dotnet test` from the repository root or the Test Explorer. The release workflow runs them before anything is published.
 
 | Folder | Covers |
 |---|---|
@@ -443,7 +456,7 @@ The cash register mirrors the same palette in `Screens/Theme.cs`.
 | `Mappings/` | `DifferenceFinder` (log messages), enum mappings, entity ↔ DTO mappings |
 | `Common/` | Shared rules: `LoyaltyPoints`, `ReturnRules`, `IdentifierFormats`, `ImageFormats` (detecting PNG / JPEG / GIF / WebP, allowed content types), `AppVersion` (display, comparing versions) |
 | `Infrastructure/` | `GitHubReleaseService` against a fake GitHub (mapping, drafts skipped, cash register asset, caching, stale fallback, errors), BCrypt `Password`, and the repositories against a real in-memory SQLite database (new customer / employee / receipt ids, barcodes, tag matching, soft delete, receipt filter, unique receipt ids) |
-| `Api/` | Controllers: status codes and `ApiResponse` envelopes for the cash register, customer, employee and releases endpoints (200 / 400 / 401 / 404 / 503) |
+| `Api/` | Controllers: status codes and `ApiResponse` envelopes for the cash register, customer, employee and releases endpoints (200 / 400 / 401 / 404 / 503), and `ViewOnlyGuard` (Tester changes refused, reads and login allowed) |
 
 Conventions: one `Mock<T>` per constructor dependency, system under test in `_sut`, names like `MethodName_Scenario_ExpectedResult`, Arrange / Act / Assert blocks, `[Theory]` for input ranges. `Helpers/TestData.cs` builds the sample entities. Repository tests create only the tables (`CreateTables()`), so the seeders do not run and every test starts with an empty database.
 

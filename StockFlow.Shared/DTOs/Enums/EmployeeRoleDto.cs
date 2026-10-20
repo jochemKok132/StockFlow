@@ -13,5 +13,6 @@ namespace StockFlow.Shared.DTOs.Enums
         Cashier,
         FloorWorker,
         None,
+        Tester,
     }
 }

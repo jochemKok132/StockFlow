@@ -32,7 +32,7 @@
                         <span>Shelves</span>
                     </NavLink>
 
-                    <AuthorizeView Roles="Cashier,ServiceDesk,ShiftLeader,Manager,Admin">
+                    <AuthorizeView Roles="Cashier,ServiceDesk,ShiftLeader,Manager,Admin,Tester">
                         <h5>Logs</h5>
                         <NavLink href="cashregisterlogs" class="ml-nav-link" Match="NavLinkMatch.Prefix">
                             <i class="bi bi-currency-exchange"></i>
@@ -40,7 +40,7 @@
                         </NavLink>
                     </AuthorizeView>
 
-                    <AuthorizeView Roles="ServiceDesk,ShiftLeader,Manager,Admin">
+                    <AuthorizeView Roles="ServiceDesk,ShiftLeader,Manager,Admin,Tester">
                         <NavLink href="stocklogs" class="ml-nav-link" Match="NavLinkMatch.Prefix">
                             <i class="bi bi-receipt"></i>
                             <span>Stock logs</span>
@@ -51,21 +51,21 @@
                         </NavLink>
                     </AuthorizeView>
 
-                    <AuthorizeView Roles="Manager,Admin">
+                    <AuthorizeView Roles="Manager,Admin,Tester">
                         <NavLink href="customerlogs" class="ml-nav-link" Match="NavLinkMatch.Prefix">
                             <i class="bi bi-person-lines-fill"></i>
                             <span>Customer Logs</span>
                         </NavLink>
                     </AuthorizeView>
 
-                    <AuthorizeView Roles="Manager,Admin">
+                    <AuthorizeView Roles="Manager,Admin,Tester">
                         <NavLink href="employeelogs" class="ml-nav-link" Match="NavLinkMatch.Prefix">
                             <i class="bi bi-person-vcard"></i>
                             <span>Employee Logs</span>
                         </NavLink>
                     </AuthorizeView>
 
-                    <AuthorizeView Roles="ShiftLeader,Manager,Admin">
+                    <AuthorizeView Roles="ShiftLeader,Manager,Admin,Tester">
                         <h5>Management</h5>
                         <NavLink href="employees" class="ml-nav-link" Match="NavLinkMatch.Prefix">
                             <i class="bi bi-person-vcard"></i>
@@ -73,7 +73,7 @@
                         </NavLink>
                     </AuthorizeView>
 
-                    <AuthorizeView Roles="Manager,Admin">
+                    <AuthorizeView Roles="Manager,Admin,Tester">
                         <NavLink href="customers" class="ml-nav-link" Match="NavLinkMatch.Prefix">
                             <i class="bi bi-person-fill"></i>
                             <span>Customers</span>

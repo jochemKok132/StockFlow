@@ -9,9 +9,10 @@ A short list of everything StockFlow can do right now, followed by the [to-do li
 - Same `ApiResponse` envelope for every response, including errors (400 / 401 / 403 / 404 / 500)
 - JWT login for employees and customers
 - Six employee roles (Admin, Manager, ShiftLeader, ServiceDesk, Cashier, FloorWorker) plus a Customer role
+- View-only Tester account to give to visitors: sees every page and form but can't save, refused by the API too; only visible to and created by the admin
 - Passwords stored as BCrypt hashes only, never in a log
 - SQLite database that migrates and seeds itself on startup
-- Seed data: 22 employees, 15 customers, 150 products, 25 brands, 15 shelves, 2 sales
+- Seed data: 23 employees (including a Tester), 15 customers, 150 products, 25 brands, 15 shelves, 2 sales
 - Soft delete for products, brands, sales and shelves
 - Users never see a GUID: forms, error messages and logs always use an identifier (barcode, brand name, shelf name, receipt id, employee id)
 - Maximum length on every text field, checked in the apps and again in the API
@@ -106,7 +107,7 @@ A short list of everything StockFlow can do right now, followed by the [to-do li
 
 ## Tests and CI
 
-- 343 xUnit + Moq unit tests: services, validations, mappings, shared rules, repositories (in-memory SQLite), controllers and the GitHub release service
+- 362 xUnit + Moq unit tests: services, validations, mappings, shared rules, repositories (in-memory SQLite), controllers and the GitHub release service
 - Build with 0 warnings
 - CI builds and tests every push and pull request to `master`
 
@@ -182,7 +183,6 @@ A short list of everything StockFlow can do right now, followed by the [to-do li
 - [ ] Show management app buttons only to roles that may use them
 - [ ] Hierarchy in employee management
 - [ ] Managers can't see the admin in the employee list
-- [ ] Tester employee, just below admin and only visible to the admin: can see everything in the front end (including edit screens) but can't add, edit or delete anything
 - [ ] Support role with its own permissions: a page to request support, and a page for the support person to handle the requests
 - [ ] Bug report / feature request screen for all employees, with an overview for the admin
 - [ ] Admin-only panel with deleted items that can be reinstated

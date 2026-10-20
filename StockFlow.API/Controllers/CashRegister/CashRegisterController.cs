@@ -12,7 +12,7 @@ using StockFlow.Application.Interfaces.ManagementApp.Stock;
 
 namespace StockFlow.API.Controllers.CashRegister
 {
-    [Authorize(Roles = "Cashier,ServiceDesk,ShiftLeader,Manager,Admin")]
+    [Authorize(Roles = "Cashier,ServiceDesk,ShiftLeader,Manager,Admin,Tester")]
     [ApiController]
     [Route("[controller]")]
     public class CashRegisterController(IRegisterDataService registerDataService, IProductService productService, ICustomerService customerService, ICashRegisterLogsService cashRegisterLogsService) : ControllerBase

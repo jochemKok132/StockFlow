@@ -22,11 +22,11 @@ namespace StockFlow.Application.Services.ManagementApp.AuditLogs
             await EmployeeLogsRepository.AddAsync(log.ToEmployeeLogsEntity());
         }
 
-        public async Task<List<EmployeeLogsDto>> GetAllEmployeeLogsAsync(EmployeeLogsPaginationDto pagination)
+        public async Task<List<EmployeeLogsDto>> GetAllEmployeeLogsAsync(EmployeeLogsPaginationDto pagination, bool includeTesters = false)
         {
             pagination.Validate();
 
-            var EmployeeLogs = await EmployeeLogsRepository.GetAllEmployeeLogsAsync(pagination);
+            var EmployeeLogs = await EmployeeLogsRepository.GetAllEmployeeLogsAsync(pagination, includeTesters);
 
             var result = new List<EmployeeLogsDto>();
             foreach (var EmployeeLog in EmployeeLogs)

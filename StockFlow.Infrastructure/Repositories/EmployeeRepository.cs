@@ -6,6 +6,7 @@ using StockFlow.Application.Interfaces.Repositories.EfRepositories;
 using StockFlow.Application.Interfaces.Repositories.ManagementApp;
 using StockFlow.Application.Interfaces.Repositories.ManagementApp.Stock;
 using StockFlow.Domain.Entities.People;
+using StockFlow.Domain.Enums;
 using StockFlow.Domain.Entities.Stock;
 using StockFlow.Infrastructure.Data;
 using StockFlow.Infrastructure.Repositories.EfRepositories;
@@ -45,7 +46,7 @@ namespace StockFlow.Infrastructure.Repositories
             var count = await _context.Employees.CountAsync();
             return (count + 1).ToString("D6");
         }
-        public async Task<IEnumerable<Employee>> GetAllEmployeesAsync(EmployeePaginationDto pagination)
+        public async Task<IEnumerable<Employee>> GetAllEmployeesAsync(EmployeePaginationDto pagination, bool includeTesters)
         {
             var query = _context.Employees
                 .AsNoTracking()
@@ -53,6 +54,9 @@ namespace StockFlow.Infrastructure.Repositories
                 e.FullName.ToLower().Contains((pagination.EmployeeName ?? string.Empty).ToLower()) &&
                 e.EmployeeId.ToLower().Contains((pagination.EmployeeId ?? string.Empty).ToLower()) &&
                 e.Role.ToString().ToLower().Contains((pagination.Role.ToString() ?? string.Empty).ToLower()));
+
+            if (!includeTesters)
+                query = query.Where(e => e.Role != EmployeeRole.Tester);
 
             query = pagination.OrderType == OrderType.Descending
                 ? pagination.OrderBy switch

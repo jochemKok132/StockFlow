@@ -193,6 +193,14 @@ namespace StockFlow.Infrastructure.Data.Seeders
                         HashedPassword = "$2a$12$JQPzgasE5YB5MKx8PxKDfegztZWYHS1IYikQkx/u7ONXTaF1FyAzq",
                         Role = EmployeeRole.FloorWorker,
                     },
+                    new Employee()
+                    {
+                        Id = new Guid("7be9b779-ac76-440f-ad76-1251ff1efb61"),
+                        EmployeeId = "000023",
+                        FullName = "Tester",
+                        HashedPassword = "$2a$12$JQPzgasE5YB5MKx8PxKDfegztZWYHS1IYikQkx/u7ONXTaF1FyAzq",
+                        Role = EmployeeRole.Tester,
+                    },
                 };
                 context.Set<Employee>().AddRange(Employees);
                 context.SaveChanges();

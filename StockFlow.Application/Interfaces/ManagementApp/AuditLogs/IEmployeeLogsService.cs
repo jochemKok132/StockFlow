@@ -10,7 +10,7 @@ namespace StockFlow.Application.Interfaces.ManagementApp.AuditLogs
 {
     public interface IEmployeeLogsService
     {
-        Task<List<EmployeeLogsDto>> GetAllEmployeeLogsAsync(EmployeeLogsPaginationDto pagination);
+        Task<List<EmployeeLogsDto>> GetAllEmployeeLogsAsync(EmployeeLogsPaginationDto pagination, bool includeTesters = false);
         Task CreateEmployeeLogsAsync(CreateEmployeeLogsDto log);
     }
 }

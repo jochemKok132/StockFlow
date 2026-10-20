@@ -85,7 +85,7 @@
                             <td class="actions-cell">
                                 <div class="table-actions">
                                     <button class="btn-edit" @onclick="() => OpenUpdate(Employee)" @onclick:stopPropagation="true"><i class="bi bi-pencil"></i> Edit</button>
-                                    <button class="btn-delete" @onclick="() => DeleteItem(Employee)" @onclick:stopPropagation="true"><i class="bi bi-trash"></i> Delete</button>
+                                    <button class="btn-delete" disabled="@viewOnly" title="@(viewOnly ? AccessRules.ViewOnlyMessage : null)" @onclick="() => DeleteItem(Employee)" @onclick:stopPropagation="true"><i class="bi bi-trash"></i> Delete</button>
                                 </div>
                             </td>
                         }
@@ -112,6 +112,8 @@
     </div>
 </div>
 <EditItem Show="showChanges"
+          ViewOnly="viewOnly"
+          Lookups="roleLookups"
           EditMode="true"
           ReadMode="false"
           item="itemType"
@@ -129,6 +131,8 @@
     private string changesError = "";
     private bool showChanges = false;
     private bool canManage;
+    private bool viewOnly;
+    private Dictionary<string, List<SelectOption>> roleLookups = new();
 
     private object? itemType;
 
@@ -147,13 +151,22 @@
     protected override async Task OnInitializedAsync()
     {
         var authState = await AuthStateProvider.GetAuthenticationStateAsync();
-        canManage = authState.User.IsInRole("Manager") || authState.User.IsInRole("Admin");
+        viewOnly = authState.User.IsInRole(AccessRules.ViewOnlyRole);
+        bool isAdmin = authState.User.IsInRole(AccessRules.AdminRole);
+        roleLookups = new()
+        {
+            [nameof(CreateEmployeeDto.Role)] = Enum.GetValues<EmployeeRoleDto>()
+                .Where(role => role != EmployeeRoleDto.None && (isAdmin || role != EmployeeRoleDto.Tester))
+                .Select(role => new SelectOption(role.ToString(), System.Text.RegularExpressions.Regex.Replace(role.ToString(), "(?<=[a-z])(?=[A-Z])", " ")))
+                .ToList(),
+        };
+        canManage = authState.User.IsInRole("Manager") || authState.User.IsInRole("Admin") || viewOnly;
 
         await LoadEmployee();
     }
     private async Task DeleteItem(EmployeeDto shelf)
     {
-        if (!canManage) return;
+        if (!canManage || viewOnly) return;
 
         await employeeService.SoftDeleteEmployeeAsync(shelf.Id);
         await ResetAndLoad();

@@ -1,5 +1,5 @@
 ﻿@page "/employeelogs";
-@attribute [Authorize(Roles = "ShiftLeader,Manager,Admin")]
+@attribute [Authorize(Roles = "ShiftLeader,Manager,Admin,Tester")]
 @inject IEmployeeLogsService employeeLogsService
 
 <div class="tasks-header">

@@ -11,13 +11,13 @@ namespace StockFlow.API.Controllers
     [Route("[controller]")]
     public class EmployeeLogsController(IEmployeeLogsService employeeLogsService) : ControllerBase
     {
-        [Authorize(Roles = "ServiceDesk,ShiftLeader,Manager,Admin")]
+        [Authorize(Roles = "ServiceDesk,ShiftLeader,Manager,Admin,Tester")]
         [HttpGet("GetAll")]
         public async Task<IActionResult> GetAllAsync([FromQuery] EmployeeLogsPaginationDto pagination)
         {
             try
             {
-                List<EmployeeLogsDto> logs = await employeeLogsService.GetAllEmployeeLogsAsync(pagination);
+                List<EmployeeLogsDto> logs = await employeeLogsService.GetAllEmployeeLogsAsync(pagination, User.IsInRole(AccessRules.AdminRole));
                 return Ok(ApiResponse<List<EmployeeLogsDto>>.Ok(logs));
             }
             catch (ArgumentException exception)

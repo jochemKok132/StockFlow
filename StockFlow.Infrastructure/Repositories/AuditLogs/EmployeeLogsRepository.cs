@@ -32,7 +32,7 @@ namespace StockFlow.Infrastructure.Repositories.AuditLogs
 
         public Task AddAsync(EmployeeLogs entity) => _creatable.AddAsync(entity);
 
-        public async Task<IEnumerable<EmployeeLogs>> GetAllEmployeeLogsAsync(EmployeeLogsPaginationDto pagination)
+        public async Task<IEnumerable<EmployeeLogs>> GetAllEmployeeLogsAsync(EmployeeLogsPaginationDto pagination, bool includeTesters)
         {
             var logType = pagination.LogType?.ToDomain();
             pagination.EmployeeName = pagination.EmployeeName?.ToLower();
@@ -44,6 +44,11 @@ namespace StockFlow.Infrastructure.Repositories.AuditLogs
                     e.Employee.FullName.ToLower().Contains(pagination.EmployeeName ?? string.Empty) &&
                     e.Identifier.Contains(pagination.Identifier ?? string.Empty) &&
                     (logType == null || e.LogType == logType));
+
+            if (!includeTesters)
+                query = query.Where(e =>
+                    e.Employee.Role != EmployeeRole.Tester &&
+                    !_context.Employees.Any(t => t.Role == EmployeeRole.Tester && t.EmployeeId == e.Identifier));
 
             query = pagination.OrderType == OrderType.Descending
                 ? pagination.OrderBy switch

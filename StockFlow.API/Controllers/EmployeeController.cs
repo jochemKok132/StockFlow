@@ -13,13 +13,13 @@ namespace StockFlow.API.Controllers
     [Route("[controller]")]
     public class EmployeeController(IEmployeeService employeeService) : ControllerBase
     {
-        [Authorize(Roles = "Manager,Admin,ShiftLeader")]
+        [Authorize(Roles = "Manager,Admin,ShiftLeader,Tester")]
         [HttpGet("GetAll")]
         public async Task<IActionResult> GetAllAsync([FromQuery] EmployeePaginationDto pagination)
         {
             try
             {
-                List<EmployeeDto> employees = await employeeService.GetAllEmployeesAsync(pagination);
+                List<EmployeeDto> employees = await employeeService.GetAllEmployeesAsync(pagination, User.IsInRole(AccessRules.AdminRole));
                 return Ok(ApiResponse<List<EmployeeDto>>.Ok(employees));
             }
             catch (ArgumentException exception)
@@ -34,7 +34,7 @@ namespace StockFlow.API.Controllers
         {
             try
             {
-                EmployeeDto employee = await employeeService.GetEmployeeByIdAsync(id);
+                EmployeeDto employee = await employeeService.GetEmployeeByIdAsync(id, User.IsInRole(AccessRules.AdminRole));
                 return Ok(ApiResponse<EmployeeDto>.Ok(employee));
             }
             catch (KeyNotFoundException exception)
@@ -49,7 +49,7 @@ namespace StockFlow.API.Controllers
         {
             try
             {
-                EmployeeDto employee = await employeeService.GetEmployeeByEmployeeIdAsync(employeeId);
+                EmployeeDto employee = await employeeService.GetEmployeeByEmployeeIdAsync(employeeId, User.IsInRole(AccessRules.AdminRole));
                 return Ok(ApiResponse<EmployeeDto>.Ok(employee));
             }
             catch (KeyNotFoundException exception)
@@ -67,7 +67,7 @@ namespace StockFlow.API.Controllers
 
             try
             {
-                await employeeService.CreateEmployeeAsync(request, userId);
+                await employeeService.CreateEmployeeAsync(request, userId, User.IsInRole(AccessRules.AdminRole));
                 return Ok(ApiResponse<object>.Ok(message: "Employee created."));
             }
             catch (ArgumentException exception)
@@ -85,7 +85,7 @@ namespace StockFlow.API.Controllers
 
             try
             {
-                await employeeService.UpdateEmployeeAsync(request, userId);
+                await employeeService.UpdateEmployeeAsync(request, userId, User.IsInRole(AccessRules.AdminRole));
                 return Ok(ApiResponse<object>.Ok(message: "Employee updated."));
             }
             catch (ArgumentException exception)

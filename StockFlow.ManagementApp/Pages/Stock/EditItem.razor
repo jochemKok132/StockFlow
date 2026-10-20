@@ -110,12 +110,16 @@
             @if (EditMode)
             {
                 <div class="form-actions">
-                    @if (IsUpdate && !HasChanges && !editing)
+                    @if (ViewOnly)
+                    {
+                        <span class="no-changes">View-only account: changes can't be saved.</span>
+                    }
+                    else if (IsUpdate && !HasChanges && !editing)
                     {
                         <span class="no-changes">No changes to save.</span>
                     }
                     <button type="button" class="btn-cancel" @onclick="OnClose">Cancel</button>
-                    <button type="button" class="btn-save" disabled="@(IsUpdate && !HasChanges && !editing)" @onclick="HandleSave"><i class="bi bi-check-lg"></i> Save</button>
+                    <button type="button" class="btn-save" disabled="@(ViewOnly || (IsUpdate && !HasChanges && !editing))" @onclick="HandleSave"><i class="bi bi-check-lg"></i> Save</button>
                 </div>
             }
         }
@@ -130,6 +134,7 @@
     [Parameter] public bool Loading { get; set; }
     [Parameter] public string Error { get; set; } = "";
     [Parameter] public Dictionary<string, List<SelectOption>>? Lookups { get; set; }
+    [Parameter] public bool ViewOnly { get; set; }
 
     [Parameter] public EventCallback OnClose { get; set; }
     [Parameter] public EventCallback<object?> OnSave { get; set; }
@@ -398,6 +403,7 @@
     private async Task HandleSave()
     {
         editing = false;
+        if (ViewOnly) return;
         if (IsUpdate && !HasChanges) return;
 
         if (OnSave.HasDelegate)

@@ -13,7 +13,7 @@ namespace StockFlow.API.Controllers
     [Route("[controller]")]
     public class CustomerController(ICustomerService customerService) : ControllerBase
     {
-        [Authorize(Roles = "Manager,Admin,ShiftLeader")]
+        [Authorize(Roles = "Manager,Admin,ShiftLeader,Tester")]
         [HttpGet("GetAll")]
         public async Task<IActionResult> GetAllAsync([FromQuery] CustomerPaginationDto pagination)
         {
