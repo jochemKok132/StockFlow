@@ -13,6 +13,8 @@ using StockFlow.Application.Mappings.People;
 using StockFlow.Application.Services.ManagementApp.AuditLogs;
 using StockFlow.Domain.Entities.People;
 using StockFlow.Domain.Enums;
+using StockFlow.Application.Mappings.Enums;
+using StockFlow.Shared.Common;
 using StockFlow.Shared.DTOs.Enums;
 using StockFlow.Domain.Entities.Stock;
 using System;
@@ -26,14 +28,10 @@ namespace StockFlow.Application.Services.ManagementApp
 {
     public class EmployeeService(IEmployeeRepository employeeRepository, IAuthenticationService authenticationService, IPassword password, IEmployeeLogsService employeeLogsService) : IEmployeeService
     {
-        public const string OnlyAdminAssignsTester = "Only an admin can give out the Tester role.";
-
-        public async Task CreateEmployeeAsync(CreateEmployeeDto dto, Guid userId, bool byAdmin = false)
+        public async Task CreateEmployeeAsync(CreateEmployeeDto dto, Guid userId, EmployeeRoleDto actorRole = EmployeeRoleDto.None)
         {
             dto.Validate();
-
-            if (dto.Role == EmployeeRoleDto.Tester && !byAdmin)
-                throw new ArgumentException(OnlyAdminAssignsTester);
+            EnsureCanGiveRole(actorRole, dto.Role);
 
             Employee newEmployee = dto.ToEmployeeEntity();
             newEmployee.HashedPassword = password.Hash(dto.Password);
@@ -44,30 +42,40 @@ namespace StockFlow.Application.Services.ManagementApp
             await employeeLogsService.CreateEmployeeLogsAsync(dto.ToCreateEmployeeLogsDto(newEmployee.EmployeeId, userId));
         }
 
-        public async Task<List<EmployeeDto>> GetAllEmployeesAsync(EmployeePaginationDto pagination, bool includeTesters = false)
+        public async Task<List<EmployeeDto>> GetAllEmployeesAsync(EmployeePaginationDto pagination, EmployeeRoleDto viewerRole = EmployeeRoleDto.None)
         {
             pagination.Validate();
 
-            var employees = await employeeRepository.GetAllEmployeesAsync(pagination, includeTesters);
+            var hiddenRoles = RoleHierarchy.HiddenFrom(viewerRole).Select(r => r.ToDomain()).ToList();
+            var employees = await employeeRepository.GetAllEmployeesAsync(pagination, hiddenRoles);
             return employees.Select(e => e.ToEmployeeDto()).ToList();
         }
 
-        public async Task<EmployeeDto> GetEmployeeByEmployeeIdAsync(string id, bool includeTesters = false)
+        public async Task<EmployeeDto> GetEmployeeByEmployeeIdAsync(string id, EmployeeRoleDto viewerRole = EmployeeRoleDto.None)
         {
             var employee = await employeeRepository.GetEmployeeByEmployeeIdAsync(id);
-            if (employee == null || IsHiddenTester(employee, includeTesters)) throw new KeyNotFoundException($"Employee with employee id {id} not found.");
+            if (employee == null || IsHidden(employee, viewerRole)) throw new KeyNotFoundException($"Employee with employee id {id} not found.");
             return employee.ToEmployeeDto();
         }
 
-        public async Task<EmployeeDto> GetEmployeeByIdAsync(Guid id, bool includeTesters = false)
+        public async Task<EmployeeDto> GetEmployeeByIdAsync(Guid id, EmployeeRoleDto viewerRole = EmployeeRoleDto.None)
         {
             var employee = await employeeRepository.GetByIdAsync(id);
-            if (employee == null || IsHiddenTester(employee, includeTesters)) throw new KeyNotFoundException("Employee not found.");
+            if (employee == null || IsHidden(employee, viewerRole)) throw new KeyNotFoundException("Employee not found.");
             return employee.ToEmployeeDto();
         }
 
-        private static bool IsHiddenTester(Employee employee, bool includeTesters) =>
-            employee.Role == EmployeeRole.Tester && !includeTesters;
+        private static bool IsHidden(Employee employee, EmployeeRoleDto viewerRole) =>
+            RoleHierarchy.HiddenFrom(viewerRole).Contains(employee.Role.ToDto());
+
+        private static void EnsureCanGiveRole(EmployeeRoleDto actorRole, EmployeeRoleDto role)
+        {
+            if (role == EmployeeRoleDto.Tester && actorRole != EmployeeRoleDto.Admin)
+                throw new ArgumentException(RoleHierarchy.OnlyAdminAssignsTester);
+
+            if (!RoleHierarchy.CanManage(actorRole, role))
+                throw new ArgumentException(RoleHierarchy.OnlyLowerRoles);
+        }
 
         public async Task<Token> LoginAsync(LoginRequest request)
         {
@@ -85,16 +93,18 @@ namespace StockFlow.Application.Services.ManagementApp
             return authenticationService.GenerateToken(employee);
         }
 
-        public async Task UpdateEmployeeAsync(UpdateEmployeeDto dto, Guid userId, bool byAdmin = false)
+        public async Task UpdateEmployeeAsync(UpdateEmployeeDto dto, Guid userId, EmployeeRoleDto actorRole = EmployeeRoleDto.None)
         {
             dto.Validate();
 
             var employee = await employeeRepository.GetByIdAsync(dto.Id);
-            if (employee == null || IsHiddenTester(employee, byAdmin))
+            if (employee == null || IsHidden(employee, actorRole))
                 throw new KeyNotFoundException("Employee not found.");
 
-            if (dto.Role == EmployeeRoleDto.Tester && !byAdmin)
-                throw new ArgumentException(OnlyAdminAssignsTester);
+            if (!RoleHierarchy.CanManage(actorRole, employee.Role.ToDto()))
+                throw new ArgumentException(RoleHierarchy.OnlyLowerEmployees);
+
+            EnsureCanGiveRole(actorRole, dto.Role);
             var log = dto.ToUpdateEmployeeLogsDto(employee, userId);
 
             employee.ToEmployeeEntity(dto);

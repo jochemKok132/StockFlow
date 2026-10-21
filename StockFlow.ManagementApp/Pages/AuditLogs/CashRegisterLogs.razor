@@ -1,8 +1,10 @@
 ﻿@page "/cashregisterlogs";
-@attribute [Authorize(Roles = "Cashier,ServiceDesk,ShiftLeader,Manager,Admin,Tester")]
+@attribute [Authorize(Roles = Permissions.CashRegisterLogs)]
 @using StockFlow.Shared.DTOs.CashRegister
 @inject ICashRegisterLogsService CashRegisterLogsService
 @inject IProductService ProductService
+@inject IJSRuntime JS
+@implements IAsyncDisposable
 
 <div class="tasks-header">
     <div>
@@ -37,6 +39,10 @@
     </div>
 
     
+    @if (!string.IsNullOrEmpty(receiptError))
+    {
+        <div class="alert-danger">@receiptError</div>
+    }
     <table class="tasks-table">
         <thead>
             <tr>
@@ -52,6 +58,7 @@
                 <th @onclick="() => OrderBy(CashRegisterLogsOrderBy.CreatedAt)" class="sortable">
                     Created at @SortingArrow(CashRegisterLogsOrderBy.CreatedAt)
                 </th>
+                <th>Receipt PDF</th>
             </tr>
         </thead>
         <tbody>
@@ -104,6 +111,11 @@
                             }
                         </td>
                         <td class="date-cell">@log.CreatedAt.ToLocalTime().ToString("dd-MM-yyyy HH:mm")</td>
+                        <td>
+                            <button class="btn-edit" disabled="@(downloading == log.ReceiptId)" @onclick="() => DownloadReceiptAsync(log)" title="Download receipt @log.ReceiptId">
+                                <i class="bi bi-file-earmark-pdf"></i> @(downloading == log.ReceiptId ? "Loading..." : "Download")
+                            </button>
+                        </td>
                     </tr>
                 }
             }
@@ -142,6 +154,37 @@
 
 @code {
     private List<CashRegisterLogsDto> cashRegisterLogs = new List<CashRegisterLogsDto>();
+    private string? downloading;
+    private string receiptError = "";
+    private IJSObjectReference? downloadModule;
+
+    private async Task DownloadReceiptAsync(CashRegisterLogsDto log)
+    {
+        downloading = log.ReceiptId;
+        receiptError = "";
+        try
+        {
+            var (pdf, downloadError) = await CashRegisterLogsService.GetReceiptPdfAsync(log.ReceiptId);
+            if (pdf is null)
+            {
+                receiptError = downloadError.StartsWith("Error:") ? downloadError["Error:".Length..].Trim() : downloadError;
+                return;
+            }
+
+            downloadModule ??= await JS.InvokeAsync<IJSObjectReference>("import", "./js/download.js");
+            await downloadModule.InvokeVoidAsync("downloadFile", $"bon-{log.ReceiptId}.pdf", "application/pdf", pdf);
+        }
+        finally
+        {
+            downloading = null;
+        }
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        if (downloadModule is not null)
+            await downloadModule.DisposeAsync();
+    }
 
     private bool loading = false;
     private bool noAccess = false;

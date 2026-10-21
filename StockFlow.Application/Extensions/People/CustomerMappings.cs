@@ -1,6 +1,7 @@
 ﻿using StockFlow.Shared.DTOs.AuditLogs.Customer;
 using StockFlow.Shared.DTOs.Customer;
 using StockFlow.Domain.Entities.People;
+using StockFlow.Application.Mappings.Enums;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -22,6 +23,13 @@ namespace StockFlow.Application.Mappings.People
                 HouseNumber = customer.HouseNumber,
                 PostalCode = customer.PostalCode,
                 SavedPoints = customer.SavedPoints,
+                MovingSaleUntil = customer.MovingSaleUntil,
+                MovingSaleStatus = customer.MovingSaleStatus.ToDto(),
+                MovingSaleRequestedAt = customer.MovingSaleRequestedAt,
+                MovingSalePostalCode = customer.MovingSalePostalCode,
+                MovingSaleHouseNumber = customer.MovingSaleHouseNumber,
+                MovingSaleReviewedAt = customer.MovingSaleReviewedAt,
+                MovingSaleReviewedBy = customer.MovingSaleReviewedBy,
                 SoftDeleted = customer.SoftDeleted,
                 SoftDeletedAt = customer.SoftDeletedAt,
             };

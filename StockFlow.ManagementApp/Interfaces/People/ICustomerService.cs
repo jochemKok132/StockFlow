@@ -7,5 +7,8 @@ namespace StockFlow.ManagementApp.Interfaces.People
     public interface ICustomerService
     {
         Task<(List<CustomerDto>, string error)> GetPaginatedCustomersAsync(CustomerPaginationDto paginationDto);
+        Task<(List<CustomerDto>, string error)> GetMovingSaleRequestsAsync();
+        Task<string> ApproveMovingSaleAsync(Guid customerId);
+        Task<string> RejectMovingSaleAsync(Guid customerId);
     }
 }

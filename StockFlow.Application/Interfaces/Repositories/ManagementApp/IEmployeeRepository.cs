@@ -15,7 +15,7 @@ namespace StockFlow.Application.Interfaces.Repositories
     {
         Task<Employee?> GetEmployeeByEmployeeIdAsync(string employeeId);
         Task<string> GetNewEmployeeIdAsync();
-        Task<IEnumerable<Employee>> GetAllEmployeesAsync(EmployeePaginationDto pagination, bool includeTesters);
+        Task<IEnumerable<Employee>> GetAllEmployeesAsync(EmployeePaginationDto pagination, IReadOnlyCollection<StockFlow.Domain.Enums.EmployeeRole> hiddenRoles);
 
     }
 }

@@ -1,0 +1,209 @@
+﻿@page "/statistics"
+@attribute [Authorize(Roles = Permissions.Statistics)]
+@using System.Globalization
+@using StockFlow.Shared.DTOs.Statistics
+@inject IStatisticsService StatisticsService
+
+<div class="tasks-header">
+    <div>
+        <h2>Statistics</h2>
+        <p>Revenue, customer cards and best sellers for a period. Revenue is what was paid at the register, before returns.</p>
+    </div>
+</div>
+
+<div class="card stats-filters">
+    <div class="filters">
+        <div class="filter-group">
+            <label for="from">From</label>
+            <input id="from" type="date" @bind="from" @bind:after="LoadAsync" max="@to.ToString("yyyy-MM-dd")" />
+        </div>
+        <div class="filter-group">
+            <label for="to">To</label>
+            <input id="to" type="date" @bind="to" @bind:after="LoadAsync" min="@from.ToString("yyyy-MM-dd")" />
+        </div>
+    </div>
+    <div class="stats-presets">
+        <button class="btn-edit" @onclick="() => SetRange(7)">Last 7 days</button>
+        <button class="btn-edit" @onclick="() => SetRange(30)">Last 30 days</button>
+        <button class="btn-edit" @onclick="ThisMonth">This month</button>
+    </div>
+</div>
+
+@if (loading)
+{
+    <div class="card"><div class="loading">Loading statistics...</div></div>
+}
+else if (!string.IsNullOrEmpty(error))
+{
+    <div class="card"><div class="alert-danger">@error</div></div>
+}
+else if (stats is not null)
+{
+    <div class="stats-grid">
+        <div class="card stat-tile">
+            <span class="stat-label">Revenue</span>
+            <span class="stat-value">@Money(stats.Revenue)</span>
+            <span class="stat-sub">@stats.Purchases purchases</span>
+        </div>
+        <div class="card stat-tile">
+            <span class="stat-label">Average receipt</span>
+            <span class="stat-value">@Money(stats.AverageReceipt)</span>
+            <span class="stat-sub">@stats.ItemsSold items sold</span>
+        </div>
+        <div class="card stat-tile">
+            <span class="stat-label">With customer card</span>
+            <span class="stat-value">@stats.CustomerCardPercentage.ToString("0.#", Dutch)%</span>
+            <span class="stat-sub">@stats.PurchasesWithCustomer of @stats.Purchases purchases</span>
+        </div>
+        <div class="card stat-tile">
+            <span class="stat-label">Discounts given</span>
+            <span class="stat-value">@Money(stats.Discounts)</span>
+            <span class="stat-sub">sales and multi-buys</span>
+        </div>
+        <div class="card stat-tile">
+            <span class="stat-label">Points</span>
+            <span class="stat-value">+@stats.PointsEarned / -@stats.PointsUsed</span>
+            <span class="stat-sub">earned / used</span>
+        </div>
+        <div class="card stat-tile">
+            <span class="stat-label">Returns and new customers</span>
+            <span class="stat-value">@stats.ItemsReturned / @stats.NewCustomers</span>
+            <span class="stat-sub">items returned / new accounts</span>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="panel-header">
+            <div>
+                <span class="panel-label">Daily revenue</span>
+                <h3>@stats.From.ToString("dd-MM-yyyy") – @stats.To.ToString("dd-MM-yyyy")</h3>
+            </div>
+        </div>
+        @if (stats.Purchases == 0)
+        {
+            <div class="empty-state">No purchases in this period.</div>
+        }
+        else
+        {
+            <div class="bar-chart" role="img" aria-label="Daily revenue">
+                @foreach (var day in stats.Days)
+                {
+                    <div class="bar-column" title="@day.Date.ToString("ddd dd-MM", Dutch): @Money(day.Revenue), @day.Purchases purchases, @day.CustomerCardPercentage.ToString("0.#", Dutch)% with card">
+                        <div class="bar" style="height: @BarHeight(day.Revenue)"></div>
+                        <span class="bar-label">@day.Date.ToString(stats.Days.Count > 14 ? "dd" : "dd-MM")</span>
+                    </div>
+                }
+            </div>
+
+            <table class="tasks-table stats-table">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th class="number-cell">Purchases</th>
+                        <th class="number-cell">Revenue</th>
+                        <th class="number-cell">With customer card</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var day in stats.Days.Where(d => d.Purchases > 0).OrderByDescending(d => d.Date))
+                    {
+                        <tr>
+                            <td>@day.Date.ToString("ddd dd-MM-yyyy", Dutch)</td>
+                            <td class="number-cell">@day.Purchases</td>
+                            <td class="number-cell">@Money(day.Revenue)</td>
+                            <td class="number-cell">@day.CustomerCardPercentage.ToString("0.#", Dutch)%</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+    </div>
+
+    <div class="card">
+        <div class="panel-header">
+            <div>
+                <span class="panel-label">Best sellers</span>
+                <h3>Top @stats.TopProducts.Count products</h3>
+            </div>
+        </div>
+        @if (stats.TopProducts.Count == 0)
+        {
+            <div class="empty-state">No products sold in this period.</div>
+        }
+        else
+        {
+            <table class="tasks-table">
+                <thead>
+                    <tr>
+                        <th>Barcode</th>
+                        <th>Product</th>
+                        <th class="number-cell">Items sold</th>
+                        <th class="number-cell">Revenue</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var product in stats.TopProducts)
+                    {
+                        <tr>
+                            <td class="id-cell">@product.Barcode</td>
+                            <td><strong>@product.ProductName</strong></td>
+                            <td class="number-cell">@product.ItemsSold</td>
+                            <td class="number-cell">@Money(product.Revenue)</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+    </div>
+}
+
+@code {
+    private static readonly CultureInfo Dutch = CultureInfo.GetCultureInfo("nl-NL");
+
+    private DateTime to = DateTime.Today;
+    private DateTime from = DateTime.Today.AddDays(-29);
+    private StatisticsDto? stats;
+    private bool loading = true;
+    private string error = "";
+
+    protected override Task OnInitializedAsync() => LoadAsync();
+
+    private async Task LoadAsync()
+    {
+        loading = true;
+        error = "";
+
+        if (to < from)
+        {
+            error = "The end date can't be before the start date.";
+            loading = false;
+            return;
+        }
+
+        (stats, error) = await StatisticsService.GetOverviewAsync(from, to);
+        loading = false;
+    }
+
+    private Task SetRange(int days)
+    {
+        to = DateTime.Today;
+        from = to.AddDays(-(days - 1));
+        return LoadAsync();
+    }
+
+    private Task ThisMonth()
+    {
+        to = DateTime.Today;
+        from = new DateTime(to.Year, to.Month, 1);
+        return LoadAsync();
+    }
+
+    private string BarHeight(decimal revenue)
+    {
+        decimal max = stats?.Days.Max(d => d.Revenue) ?? 0;
+        if (max <= 0 || revenue <= 0) return "0%";
+        return $"{Math.Max(2, Math.Round(revenue / max * 100)).ToString(CultureInfo.InvariantCulture)}%";
+    }
+
+    private static string Money(decimal value) => value.ToString("C", Dutch);
+}

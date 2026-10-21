@@ -1,4 +1,5 @@
 ﻿using StockFlow.Domain.Entities.IEntities;
+using StockFlow.Domain.Enums;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -19,5 +20,12 @@ namespace StockFlow.Domain.Entities.People
         public string? HouseNumber { get; set; }
         public required string HashedPassword { get; set; }
         public int SavedPoints { get; set; } = 0;
+        public DateTime? MovingSaleRequestedAt { get; set; }
+        public DateTime? MovingSaleUntil { get; set; }
+        public MovingSaleStatus MovingSaleStatus { get; set; } = MovingSaleStatus.None;
+        public string? MovingSalePostalCode { get; set; }
+        public string? MovingSaleHouseNumber { get; set; }
+        public DateTime? MovingSaleReviewedAt { get; set; }
+        public string? MovingSaleReviewedBy { get; set; }
     }
 }

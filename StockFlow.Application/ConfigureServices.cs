@@ -37,6 +37,7 @@ namespace StockFlow.Application
             services.AddScoped<IShelfService, ShelfService>();
             services.AddScoped<ISalesService, SalesService>();
 			services.AddScoped<IAuthenticationService, AuthenticationService>();
+            services.AddScoped<IStatisticsService, StatisticsService>();
             services.AddScoped<IEmployeeService, EmployeeService>();
             services.AddScoped<ICustomerService, CustomerService>();
             services.AddScoped<IRegisterDataService, RegisterDataService>();

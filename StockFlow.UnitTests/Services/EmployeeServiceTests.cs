@@ -35,7 +35,7 @@ namespace StockFlow.UnitTests.Services
             _password.Setup(p => p.Hash("123456")).Returns("hashed");
             var dto = new CreateEmployeeDto { FullName = "Piet Pieters", Password = "123456", Role = EmployeeRoleDto.Cashier };
 
-            await _sut.CreateEmployeeAsync(dto, userId);
+            await _sut.CreateEmployeeAsync(dto, userId, EmployeeRoleDto.Manager);
 
             Assert.NotNull(created);
             Assert.Equal("000023", created.EmployeeId);
@@ -47,7 +47,7 @@ namespace StockFlow.UnitTests.Services
         [Fact]
         public async Task GetAllEmployeesAsync_ValidPagination_ReturnsMappedEmployees()
         {
-            _employeeRepository.Setup(r => r.GetAllEmployeesAsync(It.IsAny<EmployeePaginationDto>(), false)).ReturnsAsync(new[] { TestData.Employee(EmployeeRole.Manager) });
+            _employeeRepository.Setup(r => r.GetAllEmployeesAsync(It.IsAny<EmployeePaginationDto>(), It.IsAny<IReadOnlyCollection<EmployeeRole>>())).ReturnsAsync(new[] { TestData.Employee(EmployeeRole.Manager) });
 
             var result = await _sut.GetAllEmployeesAsync(new EmployeePaginationDto { PageNumber = 1, PageSize = 10 });
 
@@ -56,24 +56,42 @@ namespace StockFlow.UnitTests.Services
         }
 
         [Fact]
-        public async Task GetAllEmployeesAsync_ByAdmin_AsksRepositoryForTesters()
+        public async Task GetAllEmployeesAsync_ByManager_HidesAdminsAndTesters()
         {
-            _employeeRepository.Setup(r => r.GetAllEmployeesAsync(It.IsAny<EmployeePaginationDto>(), true)).ReturnsAsync(new[] { TestData.Employee(EmployeeRole.Tester) });
+            IReadOnlyCollection<EmployeeRole>? hidden = null;
+            _employeeRepository.Setup(r => r.GetAllEmployeesAsync(It.IsAny<EmployeePaginationDto>(), It.IsAny<IReadOnlyCollection<EmployeeRole>>()))
+                .Callback<EmployeePaginationDto, IReadOnlyCollection<EmployeeRole>>((_, roles) => hidden = roles)
+                .ReturnsAsync(Array.Empty<Employee>());
 
-            var result = await _sut.GetAllEmployeesAsync(new EmployeePaginationDto { PageNumber = 1, PageSize = 10 }, includeTesters: true);
+            await _sut.GetAllEmployeesAsync(new EmployeePaginationDto { PageNumber = 1, PageSize = 10 }, EmployeeRoleDto.Manager);
 
-            Assert.Equal(EmployeeRoleDto.Tester, Assert.Single(result).Role);
-            _employeeRepository.Verify(r => r.GetAllEmployeesAsync(It.IsAny<EmployeePaginationDto>(), false), Times.Never);
+            Assert.NotNull(hidden);
+            Assert.Contains(EmployeeRole.Admin, hidden);
+            Assert.Contains(EmployeeRole.Tester, hidden);
         }
 
         [Fact]
-        public async Task CreateEmployeeAsync_TesterRoleNotByAdmin_ThrowsArgumentException()
+        public async Task GetAllEmployeesAsync_ByAdmin_HidesNobody()
+        {
+            IReadOnlyCollection<EmployeeRole>? hidden = null;
+            _employeeRepository.Setup(r => r.GetAllEmployeesAsync(It.IsAny<EmployeePaginationDto>(), It.IsAny<IReadOnlyCollection<EmployeeRole>>()))
+                .Callback<EmployeePaginationDto, IReadOnlyCollection<EmployeeRole>>((_, roles) => hidden = roles)
+                .ReturnsAsync(Array.Empty<Employee>());
+
+            await _sut.GetAllEmployeesAsync(new EmployeePaginationDto { PageNumber = 1, PageSize = 10 }, EmployeeRoleDto.Admin);
+
+            Assert.NotNull(hidden);
+            Assert.Empty(hidden);
+        }
+
+        [Fact]
+        public async Task CreateEmployeeAsync_TesterRoleByManager_ThrowsArgumentException()
         {
             var dto = new CreateEmployeeDto { FullName = "Tester", Password = "123456", Role = EmployeeRoleDto.Tester };
 
-            var exception = await Assert.ThrowsAsync<ArgumentException>(() => _sut.CreateEmployeeAsync(dto, Guid.NewGuid()));
+            var exception = await Assert.ThrowsAsync<ArgumentException>(() => _sut.CreateEmployeeAsync(dto, Guid.NewGuid(), EmployeeRoleDto.Manager));
 
-            Assert.Equal(EmployeeService.OnlyAdminAssignsTester, exception.Message);
+            Assert.Equal(RoleHierarchy.OnlyAdminAssignsTester, exception.Message);
             _employeeRepository.Verify(r => r.AddAsync(It.IsAny<Employee>()), Times.Never);
         }
 
@@ -85,60 +103,103 @@ namespace StockFlow.UnitTests.Services
             _employeeRepository.Setup(r => r.AddAsync(It.IsAny<Employee>())).Callback<Employee>(e => created = e);
             var dto = new CreateEmployeeDto { FullName = "Tester", Password = "123456", Role = EmployeeRoleDto.Tester };
 
-            await _sut.CreateEmployeeAsync(dto, Guid.NewGuid(), byAdmin: true);
+            await _sut.CreateEmployeeAsync(dto, Guid.NewGuid(), EmployeeRoleDto.Admin);
 
             Assert.NotNull(created);
             Assert.Equal(EmployeeRole.Tester, created.Role);
         }
 
-        [Fact]
-        public async Task GetEmployeeByIdAsync_TesterNotIncluded_ThrowsKeyNotFoundException()
+        [Theory]
+        [InlineData(EmployeeRoleDto.Manager)]
+        [InlineData(EmployeeRoleDto.Admin)]
+        public async Task CreateEmployeeAsync_ManagerGivesSameOrHigherRole_ThrowsArgumentException(EmployeeRoleDto role)
         {
-            var tester = TestData.Employee(EmployeeRole.Tester);
-            _employeeRepository.Setup(r => r.GetByIdAsync(tester.Id)).ReturnsAsync(tester);
+            var dto = new CreateEmployeeDto { FullName = "Piet", Password = "123456", Role = role };
 
-            await Assert.ThrowsAsync<KeyNotFoundException>(() => _sut.GetEmployeeByIdAsync(tester.Id));
+            var exception = await Assert.ThrowsAsync<ArgumentException>(() => _sut.CreateEmployeeAsync(dto, Guid.NewGuid(), EmployeeRoleDto.Manager));
+
+            Assert.Equal(RoleHierarchy.OnlyLowerRoles, exception.Message);
         }
 
         [Fact]
-        public async Task GetEmployeeByIdAsync_TesterIncluded_ReturnsTester()
+        public async Task CreateEmployeeAsync_ShiftLeaderCreates_ThrowsArgumentException()
+        {
+            var dto = new CreateEmployeeDto { FullName = "Piet", Password = "123456", Role = EmployeeRoleDto.Cashier };
+
+            await Assert.ThrowsAsync<ArgumentException>(() => _sut.CreateEmployeeAsync(dto, Guid.NewGuid(), EmployeeRoleDto.ShiftLeader));
+            _employeeRepository.Verify(r => r.AddAsync(It.IsAny<Employee>()), Times.Never);
+        }
+
+        [Fact]
+        public async Task GetEmployeeByIdAsync_TesterSeenByManager_ThrowsKeyNotFoundException()
         {
             var tester = TestData.Employee(EmployeeRole.Tester);
             _employeeRepository.Setup(r => r.GetByIdAsync(tester.Id)).ReturnsAsync(tester);
 
-            var result = await _sut.GetEmployeeByIdAsync(tester.Id, includeTesters: true);
+            await Assert.ThrowsAsync<KeyNotFoundException>(() => _sut.GetEmployeeByIdAsync(tester.Id, EmployeeRoleDto.Manager));
+        }
+
+        [Fact]
+        public async Task GetEmployeeByIdAsync_AdminSeenByManager_ThrowsKeyNotFoundException()
+        {
+            var admin = TestData.Employee(EmployeeRole.Admin);
+            _employeeRepository.Setup(r => r.GetByIdAsync(admin.Id)).ReturnsAsync(admin);
+
+            await Assert.ThrowsAsync<KeyNotFoundException>(() => _sut.GetEmployeeByIdAsync(admin.Id, EmployeeRoleDto.Manager));
+        }
+
+        [Fact]
+        public async Task GetEmployeeByIdAsync_TesterSeenByAdmin_ReturnsTester()
+        {
+            var tester = TestData.Employee(EmployeeRole.Tester);
+            _employeeRepository.Setup(r => r.GetByIdAsync(tester.Id)).ReturnsAsync(tester);
+
+            var result = await _sut.GetEmployeeByIdAsync(tester.Id, EmployeeRoleDto.Admin);
 
             Assert.Equal(EmployeeRoleDto.Tester, result.Role);
         }
 
         [Fact]
-        public async Task GetEmployeeByEmployeeIdAsync_TesterNotIncluded_ThrowsKeyNotFoundException()
+        public async Task GetEmployeeByEmployeeIdAsync_TesterSeenByManager_ThrowsKeyNotFoundException()
         {
             var tester = TestData.Employee(EmployeeRole.Tester);
             _employeeRepository.Setup(r => r.GetEmployeeByEmployeeIdAsync(tester.EmployeeId)).ReturnsAsync(tester);
 
-            await Assert.ThrowsAsync<KeyNotFoundException>(() => _sut.GetEmployeeByEmployeeIdAsync(tester.EmployeeId));
+            await Assert.ThrowsAsync<KeyNotFoundException>(() => _sut.GetEmployeeByEmployeeIdAsync(tester.EmployeeId, EmployeeRoleDto.Manager));
         }
 
         [Fact]
-        public async Task UpdateEmployeeAsync_TesterNotByAdmin_ThrowsKeyNotFoundException()
+        public async Task UpdateEmployeeAsync_OtherManagerByManager_ThrowsArgumentException()
+        {
+            var manager = TestData.Employee(EmployeeRole.Manager);
+            _employeeRepository.Setup(r => r.GetByIdAsync(manager.Id)).ReturnsAsync(manager);
+            var dto = new UpdateEmployeeDto { Id = manager.Id, FullName = manager.FullName, Role = EmployeeRoleDto.Cashier };
+
+            var exception = await Assert.ThrowsAsync<ArgumentException>(() => _sut.UpdateEmployeeAsync(dto, Guid.NewGuid(), EmployeeRoleDto.Manager));
+
+            Assert.Equal(RoleHierarchy.OnlyLowerEmployees, exception.Message);
+            _employeeRepository.Verify(r => r.UpdateAsync(It.IsAny<Employee>()), Times.Never);
+        }
+
+        [Fact]
+        public async Task UpdateEmployeeAsync_PromoteToManagerByManager_ThrowsArgumentException()
+        {
+            var employee = TestData.Employee(EmployeeRole.Cashier);
+            _employeeRepository.Setup(r => r.GetByIdAsync(employee.Id)).ReturnsAsync(employee);
+            var dto = new UpdateEmployeeDto { Id = employee.Id, FullName = employee.FullName, Role = EmployeeRoleDto.Manager };
+
+            await Assert.ThrowsAsync<ArgumentException>(() => _sut.UpdateEmployeeAsync(dto, Guid.NewGuid(), EmployeeRoleDto.Manager));
+            _employeeRepository.Verify(r => r.UpdateAsync(It.IsAny<Employee>()), Times.Never);
+        }
+
+        [Fact]
+        public async Task UpdateEmployeeAsync_TesterByManager_ThrowsKeyNotFoundException()
         {
             var tester = TestData.Employee(EmployeeRole.Tester);
             _employeeRepository.Setup(r => r.GetByIdAsync(tester.Id)).ReturnsAsync(tester);
             var dto = new UpdateEmployeeDto { Id = tester.Id, FullName = "Tester", Role = EmployeeRoleDto.Tester };
 
-            await Assert.ThrowsAsync<KeyNotFoundException>(() => _sut.UpdateEmployeeAsync(dto, Guid.NewGuid()));
-            _employeeRepository.Verify(r => r.UpdateAsync(It.IsAny<Employee>()), Times.Never);
-        }
-
-        [Fact]
-        public async Task UpdateEmployeeAsync_MakeTesterNotByAdmin_ThrowsArgumentException()
-        {
-            var employee = TestData.Employee(EmployeeRole.Cashier);
-            _employeeRepository.Setup(r => r.GetByIdAsync(employee.Id)).ReturnsAsync(employee);
-            var dto = new UpdateEmployeeDto { Id = employee.Id, FullName = employee.FullName, Role = EmployeeRoleDto.Tester };
-
-            await Assert.ThrowsAsync<ArgumentException>(() => _sut.UpdateEmployeeAsync(dto, Guid.NewGuid()));
+            await Assert.ThrowsAsync<KeyNotFoundException>(() => _sut.UpdateEmployeeAsync(dto, Guid.NewGuid(), EmployeeRoleDto.Manager));
             _employeeRepository.Verify(r => r.UpdateAsync(It.IsAny<Employee>()), Times.Never);
         }
 
@@ -248,7 +309,7 @@ namespace StockFlow.UnitTests.Services
             _employeeLogsService.Setup(s => s.CreateEmployeeLogsAsync(It.IsAny<CreateEmployeeLogsDto>())).Callback<CreateEmployeeLogsDto>(l => log = l);
             var dto = new UpdateEmployeeDto { Id = employee.Id, FullName = employee.FullName, Role = EmployeeRoleDto.ShiftLeader, NewPassword = "4321" };
 
-            await _sut.UpdateEmployeeAsync(dto, Guid.NewGuid());
+            await _sut.UpdateEmployeeAsync(dto, Guid.NewGuid(), EmployeeRoleDto.Manager);
 
             Assert.Equal("new-hash", employee.HashedPassword);
             Assert.Equal(EmployeeRole.ShiftLeader, employee.Role);
@@ -265,7 +326,7 @@ namespace StockFlow.UnitTests.Services
             _employeeRepository.Setup(r => r.GetByIdAsync(employee.Id)).ReturnsAsync(employee);
             var dto = new UpdateEmployeeDto { Id = employee.Id, FullName = "Nieuwe Naam", Role = EmployeeRoleDto.Cashier };
 
-            await _sut.UpdateEmployeeAsync(dto, Guid.NewGuid());
+            await _sut.UpdateEmployeeAsync(dto, Guid.NewGuid(), EmployeeRoleDto.Manager);
 
             Assert.Equal("hash", employee.HashedPassword);
             Assert.Equal("Nieuwe Naam", employee.FullName);

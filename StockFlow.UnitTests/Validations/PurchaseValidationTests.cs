@@ -51,6 +51,46 @@ namespace StockFlow.UnitTests.Validations
         }
 
         [Fact]
+        public void Validate_EndedSale_ThrowsArgumentException()
+        {
+            var today = new DateTime(2026, 10, 20);
+            var sale = new SalesDto { SaleName = "Summer", Description = "Summer sale", PercentageOff = 20, EndDate = today.AddDays(-1) };
+            var purchase = CreatePurchase(Guid.NewGuid(), 0, Line(4m, 1, sale));
+
+            Assert.Throws<ArgumentException>(() => purchase.Validate(true, 0, today: today));
+        }
+
+        [Fact]
+        public void Validate_ScheduledSale_ThrowsArgumentException()
+        {
+            var today = new DateTime(2026, 10, 20);
+            var sale = new SalesDto { SaleName = "Winter", Description = "Winter sale", PercentageOff = 20, StartDate = today.AddDays(1) };
+            var purchase = CreatePurchase(Guid.NewGuid(), 0, Line(4m, 1, sale));
+
+            Assert.Throws<ArgumentException>(() => purchase.Validate(true, 0, today: today));
+        }
+
+        [Fact]
+        public void Validate_MovingSaleWithoutActiveMovingSale_ThrowsArgumentException()
+        {
+            var today = new DateTime(2026, 10, 20);
+            var sale = new SalesDto { Id = SalePricing.MovingSaleId, SaleName = "Moving sale", Description = "x", SaleType = SaleTypeDto.Moving, PercentageOff = 10 };
+            var purchase = CreatePurchase(Guid.NewGuid(), 0, Line(9m, 1, sale));
+
+            Assert.Throws<ArgumentException>(() => purchase.Validate(true, 0, movingSaleUntil: today.AddDays(-1), today: today));
+        }
+
+        [Fact]
+        public void Validate_MovingSaleWithActiveMovingSale_DoesNotThrow()
+        {
+            var today = new DateTime(2026, 10, 20);
+            var sale = new SalesDto { Id = SalePricing.MovingSaleId, SaleName = "Moving sale", Description = "x", SaleType = SaleTypeDto.Moving, PercentageOff = 10 };
+            var purchase = CreatePurchase(Guid.NewGuid(), 0, Line(9m, 1, sale));
+
+            Assert.Null(Record.Exception(() => purchase.Validate(true, 0, movingSaleUntil: today.AddDays(30), today: today)));
+        }
+
+        [Fact]
         public void Validate_PointsWithoutCustomer_ThrowsArgumentException()
         {
             var purchase = CreatePurchase(null, 100, Line(10m, 1));

@@ -46,7 +46,7 @@ namespace StockFlow.Infrastructure.Repositories
             var count = await _context.Employees.CountAsync();
             return (count + 1).ToString("D6");
         }
-        public async Task<IEnumerable<Employee>> GetAllEmployeesAsync(EmployeePaginationDto pagination, bool includeTesters)
+        public async Task<IEnumerable<Employee>> GetAllEmployeesAsync(EmployeePaginationDto pagination, IReadOnlyCollection<EmployeeRole> hiddenRoles)
         {
             var query = _context.Employees
                 .AsNoTracking()
@@ -55,8 +55,8 @@ namespace StockFlow.Infrastructure.Repositories
                 e.EmployeeId.ToLower().Contains((pagination.EmployeeId ?? string.Empty).ToLower()) &&
                 e.Role.ToString().ToLower().Contains((pagination.Role.ToString() ?? string.Empty).ToLower()));
 
-            if (!includeTesters)
-                query = query.Where(e => e.Role != EmployeeRole.Tester);
+            if (hiddenRoles.Count > 0)
+                query = query.Where(e => !hiddenRoles.Contains(e.Role));
 
             query = pagination.OrderType == OrderType.Descending
                 ? pagination.OrderBy switch

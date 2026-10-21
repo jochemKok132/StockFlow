@@ -176,15 +176,48 @@ body {
         color: var(--ButtonTextColor);
     }
 
-.ml-logout-btn {
+.ml-user {
     display: flex;
     align-items: center;
     gap: 10px;
     margin-top: 12px;
-    padding: 16px 10px 8px 10px;
+    padding: 12px 10px 0 10px;
+    border-top: 1px solid var(--BorderColor);
+}
+
+    .ml-user i {
+        font-size: 24px;
+        color: var(--AccentColor);
+    }
+
+.ml-user-text {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.ml-user-name {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--TextColor);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.ml-user-role {
+    font-size: 12px;
+    color: var(--MutedText);
+}
+
+.ml-logout-btn {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 4px;
+    padding: 12px 10px 8px 10px;
     background: none;
     border: none;
-    border-top: 1px solid var(--BorderColor);
     color: var(--MutedText);
     font-size: 14px;
     cursor: pointer;
@@ -712,3 +745,36 @@ body {
     .ml-version:hover {
         color: var(--AccentColor);
     }
+
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 8px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    border-radius: var(--RadiusSmall);
+    white-space: nowrap;
+}
+
+.status-ok {
+    color: var(--SuccessText);
+    background: var(--SuccessBg);
+}
+
+.status-update {
+    color: var(--WarningText);
+    background: var(--WarningBg);
+}
+
+.status-running {
+    color: var(--AccentColorHover);
+    background: var(--AccentColorSoft);
+}
+
+.status-ended {
+    color: var(--MutedText);
+    background: var(--SurfaceColor);
+}

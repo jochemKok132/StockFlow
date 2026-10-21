@@ -12,13 +12,66 @@ namespace StockFlow.UnitTests.Services
         private readonly Mock<ICustomerRepository> _customerRepository = new();
         private readonly Mock<ICustomerLogsService> _customerLogsService = new();
         private readonly Mock<ICashRegisterLogsRepository> _cashRegisterLogsRepository = new();
+        private readonly Mock<ISalesRepository> _salesRepository = new();
         private readonly RegisterDataService _sut;
         private readonly Guid _employeeId = Guid.NewGuid();
 
         public RegisterDataServiceTests()
         {
-            _sut = new RegisterDataService(_productService.Object, _cashRegisterLogsService.Object, _customerRepository.Object, _customerLogsService.Object, _cashRegisterLogsRepository.Object);
+            _sut = new RegisterDataService(_productService.Object, _cashRegisterLogsService.Object, _customerRepository.Object, _customerLogsService.Object, _cashRegisterLogsRepository.Object, _salesRepository.Object);
             _cashRegisterLogsService.Setup(s => s.CreateCashRegisterLogsAsync(It.IsAny<CreateCashRegisterLogsDto>())).ReturnsAsync(ReceiptId);
+        }
+
+        [Fact]
+        public async Task GetCustomerAsync_ActiveMovingSale_AddsTheMovingSale()
+        {
+            var customer = TestData.Customer();
+            customer.MovingSaleUntil = DateTime.Today.AddDays(5);
+            var movingSale = new Sales { Id = SalePricing.MovingSaleId, SaleName = SalePricing.MovingSaleName, Description = "x", SaleType = SaleType.Moving, PercentageOff = 10 };
+            _customerRepository.Setup(r => r.GetCustomerByCustomerIdAsync(customer.CustomerId)).ReturnsAsync(customer);
+            _salesRepository.Setup(r => r.GetByIdAsync(SalePricing.MovingSaleId)).ReturnsAsync(movingSale);
+
+            var result = await _sut.GetCustomerAsync(customer.CustomerId);
+
+            Assert.NotNull(result.MovingSale);
+            Assert.Equal(10, result.MovingSale.PercentageOff);
+        }
+
+        [Fact]
+        public async Task GetCustomerAsync_EndedMovingSale_HasNoMovingSale()
+        {
+            var customer = TestData.Customer();
+            customer.MovingSaleUntil = DateTime.Today.AddDays(-1);
+            _customerRepository.Setup(r => r.GetCustomerByCustomerIdAsync(customer.CustomerId)).ReturnsAsync(customer);
+
+            var result = await _sut.GetCustomerAsync(customer.CustomerId);
+
+            Assert.Null(result.MovingSale);
+            _salesRepository.Verify(r => r.GetByIdAsync(It.IsAny<Guid>()), Times.Never);
+        }
+
+        [Fact]
+        public async Task GetCustomerAsync_NotACustomerId_ThrowsArgumentException()
+        {
+            await Assert.ThrowsAsync<ArgumentException>(() => _sut.GetCustomerAsync("70000001"));
+        }
+
+        [Fact]
+        public async Task FindCustomersByAddressAsync_ValidAddress_ReturnsCustomers()
+        {
+            _customerRepository.Setup(r => r.GetCustomersByAddressAsync("1234 AB", "12")).ReturnsAsync(new[] { TestData.Customer(), TestData.Customer() });
+
+            var result = await _sut.FindCustomersByAddressAsync("1234 AB", "12");
+
+            Assert.Equal(2, result.Count);
+        }
+
+        [Theory]
+        [InlineData("12", "12")]
+        [InlineData("1234 AB", "")]
+        public async Task FindCustomersByAddressAsync_InvalidAddress_ThrowsArgumentException(string postalCode, string houseNumber)
+        {
+            await Assert.ThrowsAsync<ArgumentException>(() => _sut.FindCustomersByAddressAsync(postalCode, houseNumber));
         }
 
         private static RegisterItemDetailDto Line(Guid productId, decimal price, int amount) => new()

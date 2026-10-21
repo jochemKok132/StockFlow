@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using StockFlow.Domain.Entities.Stock;
+using StockFlow.Domain.Enums;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -10,7 +11,7 @@ namespace StockFlow.Infrastructure.Data.Seeders
     {
         public static void UseSalesSeeder(this DbContext context)
         {
-            if (!context.Set<Sales>().Any())
+            if (!context.Set<Sales>().Any(s => s.SaleType != SaleType.Moving))
             {
                 IEnumerable<Sales> sales = new List<Sales>
                 {

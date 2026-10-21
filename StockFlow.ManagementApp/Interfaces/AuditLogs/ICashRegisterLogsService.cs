@@ -7,5 +7,6 @@ namespace StockFlow.ManagementApp.Interfaces.AuditLogs
     public interface ICashRegisterLogsService
     {
         Task<(List<CashRegisterLogsDto>, string error)> GetPaginatedCashRegisterLogsAsync(CashRegisterLogsPaginationDto paginationDto);
+        Task<(byte[]?, string error)> GetReceiptPdfAsync(string receiptId);
     }
 }

@@ -29,6 +29,141 @@ namespace StockFlow.UnitTests.Services
         }
 
         [Fact]
+        public async Task RequestMovingSaleAsync_ValidAddress_WaitsForApprovalWithoutDiscount()
+        {
+            var customer = TestData.Customer();
+            CreateCustomerLogsDto? log = null;
+            _customerRepository.Setup(r => r.GetByIdAsync(customer.Id)).ReturnsAsync(customer);
+            _customerLogsService.Setup(s => s.CreateCustomerLogsAsync(It.IsAny<CreateCustomerLogsDto>())).Callback<CreateCustomerLogsDto>(l => log = l);
+
+            var result = await _sut.RequestMovingSaleAsync(customer.Id, new MovingSaleRequest { PostalCode = "7071ab", HouseNumber = "3a" });
+
+            Assert.Equal(MovingSaleStatus.Pending, customer.MovingSaleStatus);
+            Assert.Equal("7071 AB", customer.MovingSalePostalCode);
+            Assert.Equal("3A", customer.MovingSaleHouseNumber);
+            Assert.Equal("1234 AB", customer.PostalCode);
+            Assert.Null(customer.MovingSaleUntil);
+            Assert.Equal(MovingSaleStatusDto.Pending, result.MovingSaleStatus);
+            _customerRepository.Verify(r => r.UpdateAsync(customer), Times.Once);
+            Assert.NotNull(log);
+            Assert.Contains("MovingSale: Requested", log.Messages);
+        }
+
+        [Fact]
+        public async Task RequestMovingSaleAsync_AlreadyPending_ThrowsArgumentException()
+        {
+            var customer = TestData.Customer();
+            customer.MovingSaleStatus = MovingSaleStatus.Pending;
+            _customerRepository.Setup(r => r.GetByIdAsync(customer.Id)).ReturnsAsync(customer);
+
+            await Assert.ThrowsAsync<ArgumentException>(() => _sut.RequestMovingSaleAsync(customer.Id, new MovingSaleRequest { PostalCode = "7071 AB", HouseNumber = "3" }));
+            _customerRepository.Verify(r => r.UpdateAsync(It.IsAny<Customer>()), Times.Never);
+        }
+
+        private Customer PendingCustomer()
+        {
+            var customer = TestData.Customer();
+            customer.MovingSaleStatus = MovingSaleStatus.Pending;
+            customer.MovingSalePostalCode = "7071 AB";
+            customer.MovingSaleHouseNumber = "3A";
+            _customerRepository.Setup(r => r.GetByIdAsync(customer.Id)).ReturnsAsync(customer);
+            return customer;
+        }
+
+        [Fact]
+        public async Task ApproveMovingSaleAsync_Pending_MovesAddressStartsSaleAndLogs()
+        {
+            var customer = PendingCustomer();
+            CreateCustomerLogsDto? log = null;
+            _customerLogsService.Setup(s => s.CreateCustomerLogsAsync(It.IsAny<CreateCustomerLogsDto>())).Callback<CreateCustomerLogsDto>(l => log = l);
+
+            var result = await _sut.ApproveMovingSaleAsync(customer.Id, "000003");
+
+            Assert.Equal("7071 AB", customer.PostalCode);
+            Assert.Equal("3A", customer.HouseNumber);
+            Assert.Equal(MovingSaleStatus.Approved, customer.MovingSaleStatus);
+            Assert.Equal(DateTime.Today.AddDays(SalePricing.MovingSaleDays), customer.MovingSaleUntil);
+            Assert.Equal("000003", customer.MovingSaleReviewedBy);
+            Assert.Equal(customer.MovingSaleUntil, result.MovingSaleUntil);
+            Assert.NotNull(log);
+            Assert.Contains("PostalCode: New: 7071 AB. Old: 1234 AB", log.Messages);
+            Assert.Contains(log.Messages, m => m.StartsWith("MovingSale: Approved by 000003"));
+        }
+
+        [Fact]
+        public async Task RejectMovingSaleAsync_Pending_KeepsAddressAndGivesNoSale()
+        {
+            var customer = PendingCustomer();
+
+            await _sut.RejectMovingSaleAsync(customer.Id, "000003");
+
+            Assert.Equal(MovingSaleStatus.Rejected, customer.MovingSaleStatus);
+            Assert.Equal("1234 AB", customer.PostalCode);
+            Assert.Null(customer.MovingSaleUntil);
+            _customerRepository.Verify(r => r.UpdateAsync(customer), Times.Once);
+        }
+
+        [Theory]
+        [InlineData(MovingSaleStatus.None)]
+        [InlineData(MovingSaleStatus.Approved)]
+        [InlineData(MovingSaleStatus.Rejected)]
+        public async Task ApproveMovingSaleAsync_NotPending_ThrowsArgumentException(MovingSaleStatus status)
+        {
+            var customer = TestData.Customer();
+            customer.MovingSaleStatus = status;
+            _customerRepository.Setup(r => r.GetByIdAsync(customer.Id)).ReturnsAsync(customer);
+
+            await Assert.ThrowsAsync<ArgumentException>(() => _sut.ApproveMovingSaleAsync(customer.Id, "000003"));
+            _customerRepository.Verify(r => r.UpdateAsync(It.IsAny<Customer>()), Times.Never);
+        }
+
+        [Fact]
+        public async Task ApproveMovingSaleAsync_UnknownCustomer_ThrowsKeyNotFoundException()
+        {
+            _customerRepository.Setup(r => r.GetByIdAsync(It.IsAny<Guid>())).ReturnsAsync((Customer?)null);
+
+            await Assert.ThrowsAsync<KeyNotFoundException>(() => _sut.ApproveMovingSaleAsync(Guid.NewGuid(), "000003"));
+        }
+
+        [Fact]
+        public async Task GetMovingSaleRequestsAsync_ReturnsPendingCustomers()
+        {
+            _customerRepository.Setup(r => r.GetPendingMovingSalesAsync()).ReturnsAsync(new[] { PendingCustomer() });
+
+            var result = await _sut.GetMovingSaleRequestsAsync();
+
+            Assert.Equal("7071 AB", Assert.Single(result).MovingSalePostalCode);
+        }
+
+        [Fact]
+        public async Task RequestMovingSaleAsync_AlreadyActive_ThrowsArgumentException()
+        {
+            var customer = TestData.Customer();
+            customer.MovingSaleUntil = DateTime.Today.AddDays(10);
+            _customerRepository.Setup(r => r.GetByIdAsync(customer.Id)).ReturnsAsync(customer);
+
+            await Assert.ThrowsAsync<ArgumentException>(() => _sut.RequestMovingSaleAsync(customer.Id, new MovingSaleRequest { PostalCode = "7071 AB", HouseNumber = "3" }));
+            _customerRepository.Verify(r => r.UpdateAsync(It.IsAny<Customer>()), Times.Never);
+        }
+
+        [Theory]
+        [InlineData("123 AB", "3")]
+        [InlineData("1234 AB", "")]
+        [InlineData("1234 AB", "abc")]
+        public async Task RequestMovingSaleAsync_InvalidAddress_ThrowsArgumentException(string postalCode, string houseNumber)
+        {
+            await Assert.ThrowsAsync<ArgumentException>(() => _sut.RequestMovingSaleAsync(Guid.NewGuid(), new MovingSaleRequest { PostalCode = postalCode, HouseNumber = houseNumber }));
+        }
+
+        [Fact]
+        public async Task RequestMovingSaleAsync_UnknownCustomer_ThrowsKeyNotFoundException()
+        {
+            _customerRepository.Setup(r => r.GetByIdAsync(It.IsAny<Guid>())).ReturnsAsync((Customer?)null);
+
+            await Assert.ThrowsAsync<KeyNotFoundException>(() => _sut.RequestMovingSaleAsync(Guid.NewGuid(), new MovingSaleRequest { PostalCode = "7071 AB", HouseNumber = "3" }));
+        }
+
+        [Fact]
         public async Task GetAllCustomersAsync_PageSizeTooBig_ThrowsArgumentException()
         {
             var pagination = new CustomerPaginationDto { PageNumber = 1, PageSize = 1000 };

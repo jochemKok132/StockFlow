@@ -41,7 +41,7 @@ namespace StockFlow.API.Controllers
             }
         }
 
-        [Authorize(Roles = "Manager,Admin")]
+        [Authorize(Roles = Permissions.ManageStock)]
         [HttpPost("Create")]
         public async Task<IActionResult> CreateAsync(CreateProductDto request)
         {
@@ -59,7 +59,7 @@ namespace StockFlow.API.Controllers
             }
         }
 
-        [Authorize(Roles = "Manager,Admin")]
+        [Authorize(Roles = Permissions.ManageStock)]
         [HttpPut("Update")]
         public async Task<IActionResult> UpdateAsync(UpdateProductDto request)
         {
@@ -81,7 +81,7 @@ namespace StockFlow.API.Controllers
             }
         }
 
-        [Authorize(Roles = "Manager,Admin")]
+        [Authorize(Roles = Permissions.ManageStock)]
         [HttpDelete("SoftDelete/{id:guid}")]
         public async Task<IActionResult> SoftDeleteAsync(Guid id)
         {

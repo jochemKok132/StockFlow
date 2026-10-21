@@ -89,12 +89,15 @@
                         </td>
                         <td>@product.BrandName</td>
                         <td>@product.Stock</td>
-                        <td class="actions-cell">
-                            <div class="table-actions">
-                                <button class="btn-edit" @onclick="() => OpenUpdate(product)" @onclick:stopPropagation="true"><i class="bi bi-pencil"></i> Edit</button>
-                                <button class="btn-delete" disabled="@viewOnly" title="@(viewOnly ? AccessRules.ViewOnlyMessage : null)" @onclick="() => DeleteItem(product)" @onclick:stopPropagation="true"><i class="bi bi-trash"></i> Delete</button>
-                            </div>
-                        </td>
+                        @if (canManage)
+                        {
+                            <td class="actions-cell">
+                                <div class="table-actions">
+                                    <button class="btn-edit" @onclick="() => OpenUpdate(product)" @onclick:stopPropagation="true"><i class="bi bi-pencil"></i> Edit</button>
+                                    <button class="btn-delete" disabled="@viewOnly" title="@(viewOnly ? AccessRules.ViewOnlyMessage : null)" @onclick="() => DeleteItem(product)" @onclick:stopPropagation="true"><i class="bi bi-trash"></i> Delete</button>
+                                </div>
+                            </td>
+                        }
                     </tr>
                 }
             }
@@ -173,7 +176,7 @@
     {
         var authState = await AuthStateProvider.GetAuthenticationStateAsync();
         viewOnly = authState.User.IsInRole(AccessRules.ViewOnlyRole);
-        canManage = authState.User.IsInRole("Manager") || authState.User.IsInRole("Admin") || viewOnly;
+        canManage = authState.User.CanOpen(Permissions.ManageStock);
 
         await LoadProducts();
     }

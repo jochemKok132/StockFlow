@@ -15,6 +15,7 @@ namespace StockFlow.Shared.DTOs.Pagination
     public class SalesPaginationDto : Pagination<SalesOrderBy>
     {
         public string? SalesName { get; set; }
+        public SaleStatusDto? Status { get; set; }
     }
     public class ShelfPaginationDto : Pagination<ShelfOrderBy>
     {

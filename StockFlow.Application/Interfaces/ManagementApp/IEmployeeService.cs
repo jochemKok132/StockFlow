@@ -11,10 +11,10 @@ namespace StockFlow.Application.Interfaces.ManagementApp
     public interface IEmployeeService
     {
         Task<Token> LoginAsync(LoginRequest request);
-        Task CreateEmployeeAsync(CreateEmployeeDto dto, Guid userId, bool byAdmin = false);
-        Task UpdateEmployeeAsync(UpdateEmployeeDto dto, Guid userId, bool byAdmin = false);
-        Task<EmployeeDto> GetEmployeeByEmployeeIdAsync(string id, bool includeTesters = false);
-        Task<EmployeeDto> GetEmployeeByIdAsync(Guid id, bool includeTesters = false);
-        Task<List<EmployeeDto>> GetAllEmployeesAsync(EmployeePaginationDto pagination, bool includeTesters = false);
+        Task CreateEmployeeAsync(CreateEmployeeDto dto, Guid userId, EmployeeRoleDto actorRole = EmployeeRoleDto.None);
+        Task UpdateEmployeeAsync(UpdateEmployeeDto dto, Guid userId, EmployeeRoleDto actorRole = EmployeeRoleDto.None);
+        Task<EmployeeDto> GetEmployeeByEmployeeIdAsync(string id, EmployeeRoleDto viewerRole = EmployeeRoleDto.None);
+        Task<EmployeeDto> GetEmployeeByIdAsync(Guid id, EmployeeRoleDto viewerRole = EmployeeRoleDto.None);
+        Task<List<EmployeeDto>> GetAllEmployeesAsync(EmployeePaginationDto pagination, EmployeeRoleDto viewerRole = EmployeeRoleDto.None);
     }
 }

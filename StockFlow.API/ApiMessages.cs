@@ -1,4 +1,5 @@
 ﻿using System.Security.Claims;
+using StockFlow.Shared.Common;
 
 namespace StockFlow.API
 {
@@ -12,7 +13,7 @@ namespace StockFlow.API
 
     public static class AuthRoles
     {
-        public const string Employees = "Admin,Manager,ShiftLeader,ServiceDesk,Cashier,FloorWorker,Tester";
+        public const string Employees = Permissions.Employees;
         public const string Customer = "Customer";
     }
 

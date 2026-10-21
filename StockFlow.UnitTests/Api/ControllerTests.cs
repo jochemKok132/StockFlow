@@ -28,12 +28,11 @@ namespace StockFlow.UnitTests.Api
     {
         private readonly Mock<IRegisterDataService> _registerDataService = new();
         private readonly Mock<IProductService> _productService = new();
-        private readonly Mock<ICustomerService> _customerService = new();
         private readonly Mock<ICashRegisterLogsService> _cashRegisterLogsService = new();
         private readonly Guid _userId = Guid.NewGuid();
 
         private CashRegisterController CreateSut(bool loggedIn = true) =>
-            new CashRegisterController(_registerDataService.Object, _productService.Object, _customerService.Object, _cashRegisterLogsService.Object)
+            new CashRegisterController(_registerDataService.Object, _productService.Object, _cashRegisterLogsService.Object)
                 .WithUser(loggedIn ? _userId : null);
 
         [Fact]
@@ -132,6 +131,8 @@ namespace StockFlow.UnitTests.Api
         [Fact]
         public async Task GetCustomerAsync_NotACustomerId_Returns400()
         {
+            _registerDataService.Setup(s => s.GetCustomerAsync("70000001")).ThrowsAsync(new ArgumentException("x"));
+
             var result = await CreateSut().GetCustomerAsync("70000001");
 
             Assert.Equal(StatusCodes.Status400BadRequest, result.Status());
@@ -140,7 +141,7 @@ namespace StockFlow.UnitTests.Api
         [Fact]
         public async Task GetCustomerAsync_Unknown_Returns404()
         {
-            _customerService.Setup(s => s.GetCustomerByCustomerIdAsync("80000099")).ThrowsAsync(new KeyNotFoundException("x"));
+            _registerDataService.Setup(s => s.GetCustomerAsync("80000099")).ThrowsAsync(new KeyNotFoundException("x"));
 
             var result = await CreateSut().GetCustomerAsync("80000099");
 

@@ -32,7 +32,7 @@
                         <span>Shelves</span>
                     </NavLink>
 
-                    <AuthorizeView Roles="Cashier,ServiceDesk,ShiftLeader,Manager,Admin,Tester">
+                    <AuthorizeView Roles="@Permissions.CashRegisterLogs">
                         <h5>Logs</h5>
                         <NavLink href="cashregisterlogs" class="ml-nav-link" Match="NavLinkMatch.Prefix">
                             <i class="bi bi-currency-exchange"></i>
@@ -40,7 +40,7 @@
                         </NavLink>
                     </AuthorizeView>
 
-                    <AuthorizeView Roles="ServiceDesk,ShiftLeader,Manager,Admin,Tester">
+                    <AuthorizeView Roles="@Permissions.StockLogs">
                         <NavLink href="stocklogs" class="ml-nav-link" Match="NavLinkMatch.Prefix">
                             <i class="bi bi-receipt"></i>
                             <span>Stock logs</span>
@@ -51,21 +51,21 @@
                         </NavLink>
                     </AuthorizeView>
 
-                    <AuthorizeView Roles="Manager,Admin,Tester">
+                    <AuthorizeView Roles="@Permissions.CustomerLogs">
                         <NavLink href="customerlogs" class="ml-nav-link" Match="NavLinkMatch.Prefix">
                             <i class="bi bi-person-lines-fill"></i>
                             <span>Customer Logs</span>
                         </NavLink>
                     </AuthorizeView>
 
-                    <AuthorizeView Roles="Manager,Admin,Tester">
+                    <AuthorizeView Roles="@Permissions.EmployeeLogs">
                         <NavLink href="employeelogs" class="ml-nav-link" Match="NavLinkMatch.Prefix">
                             <i class="bi bi-person-vcard"></i>
                             <span>Employee Logs</span>
                         </NavLink>
                     </AuthorizeView>
 
-                    <AuthorizeView Roles="ShiftLeader,Manager,Admin,Tester">
+                    <AuthorizeView Roles="@Permissions.ViewEmployees">
                         <h5>Management</h5>
                         <NavLink href="employees" class="ml-nav-link" Match="NavLinkMatch.Prefix">
                             <i class="bi bi-person-vcard"></i>
@@ -73,12 +73,34 @@
                         </NavLink>
                     </AuthorizeView>
 
-                    <AuthorizeView Roles="Manager,Admin,Tester">
+                    <AuthorizeView Roles="@Permissions.ViewCustomers">
                         <NavLink href="customers" class="ml-nav-link" Match="NavLinkMatch.Prefix">
                             <i class="bi bi-person-fill"></i>
                             <span>Customers</span>
                         </NavLink>
                     </AuthorizeView>
+
+                    <AuthorizeView Roles="@Permissions.ViewMovingSales">
+                        <NavLink href="movingsales" class="ml-nav-link" Match="NavLinkMatch.Prefix">
+                            <i class="bi bi-house-door-fill"></i>
+                            <span>Moving sales</span>
+                        </NavLink>
+                    </AuthorizeView>
+
+                    <AuthorizeView Roles="@Permissions.Statistics">
+                        <NavLink href="statistics" class="ml-nav-link" Match="NavLinkMatch.Prefix">
+                            <i class="bi bi-bar-chart-fill"></i>
+                            <span>Statistics</span>
+                        </NavLink>
+                    </AuthorizeView>
+                </div>
+
+                <div class="ml-user" title="Logged in as @auth.User.Identity?.Name">
+                    <i class="bi bi-person-circle"></i>
+                    <div class="ml-user-text">
+                        <span class="ml-user-name">@(auth.User.Identity?.Name ?? "Unknown")</span>
+                        <span class="ml-user-role">@EmployeeId(auth.User) &middot; @RoleName(auth.User)</span>
+                    </div>
                 </div>
 
                 <button class="ml-logout-btn" @onclick="HandleLogout">
@@ -102,6 +124,12 @@
 
 @code {
     private readonly string version = AppVersion.Of(typeof(Program).Assembly);
+
+    private static string EmployeeId(System.Security.Claims.ClaimsPrincipal user) =>
+        user.FindFirst(System.Security.Claims.ClaimTypes.Thumbprint)?.Value ?? "-";
+
+    private static string RoleName(System.Security.Claims.ClaimsPrincipal user) =>
+        System.Text.RegularExpressions.Regex.Replace(user.EmployeeRole().ToString(), "(?<=[a-z])(?=[A-Z])", " ");
 
     private async Task HandleLogout()
     {

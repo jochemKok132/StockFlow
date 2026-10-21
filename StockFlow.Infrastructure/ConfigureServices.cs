@@ -39,6 +39,7 @@ namespace StockFlow.Infrastructure
             services.AddScoped<ISalesRepository, SalesRepository>();
             services.AddScoped<IEmployeeRepository, EmployeeRepository>();
             services.AddScoped<ICustomerRepository, CustomerRepository>();
+            services.AddScoped<IStatisticsRepository, StatisticsRepository>();
 
             return services;
         }

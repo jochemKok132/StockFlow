@@ -10,7 +10,7 @@ namespace StockFlow.API.Controllers
     [Route("[controller]")]
     public class ReleasesController(IReleaseService releaseService) : ControllerBase
     {
-        [Authorize(Roles = AuthRoles.Employees)]
+        [Authorize(Roles = Permissions.Employees)]
         [HttpGet]
         public async Task<IActionResult> GetAllAsync()
         {

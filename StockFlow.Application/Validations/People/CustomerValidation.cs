@@ -64,6 +64,18 @@ namespace StockFlow.Application.Validations.People
                 throw new ArgumentException("House number must look like 12 or 12A.");
         }
 
+        public static void Validate(this MovingSaleRequest request)
+        {
+            Guard.NotNull(request, "Moving sale request");
+            Guard.Required(request.PostalCode, "Postal code", FieldLimits.PostalCode);
+            if (!PostalCodePattern.IsMatch(request.PostalCode.Trim()))
+                throw new ArgumentException("Postal code must look like 1234 AB.");
+
+            Guard.Required(request.HouseNumber, "House number", FieldLimits.HouseNumber);
+            if (!HouseNumberPattern.IsMatch(request.HouseNumber.Trim()))
+                throw new ArgumentException("House number must look like 12 or 12A.");
+        }
+
         public static string NormalizePostalCode(string postalCode)
         {
             var compact = postalCode.Replace(" ", "").ToUpperInvariant();

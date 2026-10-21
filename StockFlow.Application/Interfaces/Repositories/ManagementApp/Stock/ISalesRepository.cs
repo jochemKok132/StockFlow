@@ -13,7 +13,8 @@ namespace StockFlow.Application.Interfaces.Repositories.ManagementApp.Stock
         IEfCreatableRepository<Sales>, 
         IEfSoftDeletableRepository<Sales>
     {
-        Task<IEnumerable<Sales>> GetAllSalesAsync(SalesPaginationDto pagination);
+        Task<IEnumerable<Sales>> GetAllSalesAsync(SalesPaginationDto pagination, DateTime today);
+        Task<Dictionary<Guid, int>> GetItemsSoldAsync(IEnumerable<Guid> saleIds);
         Task<IEnumerable<Sales>> GetAllSalesForProductTags(List<string> productTags); 
         Task<Sales?> GetByIdWithProductsAsync(Guid id);
     }

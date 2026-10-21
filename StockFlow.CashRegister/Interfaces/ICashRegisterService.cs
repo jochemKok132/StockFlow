@@ -13,6 +13,7 @@ namespace StockFlow.CashRegister.Interfaces
         Task<string> FinalizePurchaseAsync(Purchase purchase);
         Task<(ProductDto, string error)> GetProductAsync(string input);
         Task<(CustomerDto?, string error)> GetCustomerAsync(string customerId);
+        Task<(List<CustomerDto>, string error)> FindCustomersByAddressAsync(string postalCode, string houseNumber);
         Task<(CashRegisterLogsDto?, string error)> GetReceiptAsync(string receiptId);
         Task<(ReturnResult?, string error)> ProcessReturnAsync(ReturnRequest request);
         Task<ReleaseDto?> GetLatestReleaseAsync();

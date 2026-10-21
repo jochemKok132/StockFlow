@@ -11,7 +11,7 @@ namespace StockFlow.API.Controllers
     [Route("[controller]")]
     public class StockLogsController(IStockLogsService stockLogsService) : ControllerBase
     {
-        [Authorize(Roles = "ServiceDesk,ShiftLeader,Manager,Admin,Tester")]
+        [Authorize(Roles = Permissions.StockLogs)]
         [HttpGet("GetAll")]
         public async Task<IActionResult> GetAllAsync([FromQuery] StockLogsPaginationDto pagination)
         {
@@ -26,7 +26,7 @@ namespace StockFlow.API.Controllers
             }
         }
 
-        [Authorize(Roles = "ServiceDesk,ShiftLeader,Manager,Admin,Tester")]
+        [Authorize(Roles = Permissions.StockLogs)]
         [HttpGet("ProductHistory/{barcode:int}")]
         public async Task<IActionResult> GetProductHistoryAsync(int barcode)
         {
@@ -45,7 +45,7 @@ namespace StockFlow.API.Controllers
             }
         }
 
-        [Authorize(Roles = "Manager,Admin")]
+        [Authorize(Roles = Permissions.WriteLogs)]
         [HttpPost("Create")]
         public async Task<IActionResult> CreateAsync(CreateStockLogsDto log)
         {

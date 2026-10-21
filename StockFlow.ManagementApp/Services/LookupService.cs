@@ -1,4 +1,5 @@
-﻿using StockFlow.Shared.DTOs.Enums;
+﻿using StockFlow.Shared.Common;
+using StockFlow.Shared.DTOs.Enums;
 using StockFlow.Shared.DTOs.Pagination;
 using StockFlow.ManagementApp.Components;
 using StockFlow.ManagementApp.Interfaces;
@@ -62,7 +63,7 @@ namespace StockFlow.ManagementApp.Services
                 .Select(g => new SelectOption(
                     g.Key,
                     g.Key,
-                    "Used by: " + string.Join(", ", g.Select(x => $"{x.Sale.SaleName} (-{x.Sale.PercentageOff}%)").Distinct())))
+                    "Used by: " + string.Join(", ", g.Select(x => $"{x.Sale.SaleName} ({SalePricing.Describe(x.Sale)})").Distinct())))
                 .ToList();
 
             return (options, error);

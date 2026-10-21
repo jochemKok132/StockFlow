@@ -7,9 +7,10 @@ namespace StockFlow.Application.Validations.CashRegister
     {
         public const int MaxAmountPerLine = 999;
 
-        public static void Validate(this Purchase purchase, bool customerExists, int availablePoints)
+        public static void Validate(this Purchase purchase, bool customerExists, int availablePoints, DateTime? movingSaleUntil = null, DateTime? today = null)
         {
             Guard.NotNull(purchase, "Purchase");
+            DateTime date = (today ?? DateTime.Today).Date;
 
             var lines = purchase.ProductsSold?.ToList() ?? [];
             if (lines.Count == 0)
@@ -25,6 +26,18 @@ namespace StockFlow.Application.Validations.CashRegister
 
                 if (line.PriceAtTimeOfSale < 0)
                     throw new ArgumentException($"The price of {line.Product.ProductName} can't be negative.");
+
+                if (line.Sale is null) continue;
+
+                if (line.Sale.Id == SalePricing.MovingSaleId)
+                {
+                    if (!SalePricing.IsMovingSaleActive(movingSaleUntil, date))
+                        throw new ArgumentException("This customer has no active moving sale.");
+                }
+                else if (!SalePricing.IsActive(line.Sale, date))
+                {
+                    throw new ArgumentException($"The sale {line.Sale.SaleName} is not active today.");
+                }
             }
 
             if (purchase.TotalPrice < 0 || purchase.TotalOff < 0)
@@ -47,7 +60,7 @@ namespace StockFlow.Application.Validations.CashRegister
                 if (purchase.PointsUsed > availablePoints)
                     throw new ArgumentException($"The customer only has {availablePoints} points.");
 
-                decimal linesTotal = lines.Sum(l => l.PriceAtTimeOfSale * l.Amount);
+                decimal linesTotal = lines.Sum(l => SalePricing.Total(l.PriceAtTimeOfSale, l.Amount));
                 if (LoyaltyPoints.ToEuros(purchase.PointsUsed) > linesTotal)
                     throw new ArgumentException("More points are used than the purchase is worth.");
 

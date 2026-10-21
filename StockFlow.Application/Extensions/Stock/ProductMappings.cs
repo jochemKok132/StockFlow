@@ -1,5 +1,7 @@
 ﻿using StockFlow.Shared.DTOs.Stock.Product;
 using StockFlow.Domain.Entities.Stock;
+using StockFlow.Domain.Enums;
+using StockFlow.Shared.Common;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -62,6 +64,10 @@ namespace StockFlow.Application.Mappings.Stock
         {
             entity.Stock += amount;
         }
+        public static IEnumerable<Sales> ActiveSales(this Product product) =>
+            product.Sales.Where(s => !s.SoftDeleted && s.SaleType != SaleType.Moving &&
+                                     SalePricing.IsInPeriod(s.StartDate, s.EndDate, DateTime.Today));
+
         public static ProductBulkViewDto ToProductBulkViewDto(this Product product)
         {
             return new ProductBulkViewDto()
@@ -70,10 +76,12 @@ namespace StockFlow.Application.Mappings.Stock
                 ProductName = product.ProductName,
                 Barcode = product.Barcode,
                 Location = $"{product.Shelf?.ShelfLocation}-{product.Location}",
-                Price = product.Sales.Any()
-                    ? Math.Round(product.Price * (1 - (product.Sales.Max(s => s.PercentageOff) / 100.0m)), 2)
-                    : product.Price,
-                Sale = product.Sales.Any(),
+                Price = product.ActiveSales()
+                    .Where(s => s.SaleType == SaleType.Percentage)
+                    .Select(s => SalePricing.DiscountedPrice(product.Price, s.PercentageOff))
+                    .DefaultIfEmpty(product.Price)
+                    .Min(),
+                Sale = product.ActiveSales().Any(),
                 Stock = product.Stock,
                 BrandName = product.Brand?.BrandName ?? string.Empty,
             };

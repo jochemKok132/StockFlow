@@ -116,6 +116,20 @@ namespace StockFlow.UnitTests.Mappings
         }
 
         [Fact]
+        public void SaleType_EveryValue_RoundTrips()
+        {
+            foreach (var value in Enum.GetValues<SaleTypeDto>())
+                Assert.Equal(value, value.ToDomain().ToDto());
+        }
+
+        [Fact]
+        public void MovingSaleStatus_EveryValue_HasADto()
+        {
+            foreach (var value in Enum.GetValues<MovingSaleStatus>())
+                Assert.Equal(value.ToString(), value.ToDto().ToString());
+        }
+
+        [Fact]
         public void LogType_UnknownValue_ThrowsArgumentOutOfRangeException()
         {
             Assert.Throws<ArgumentOutOfRangeException>(() => ((LogTypeDto)99).ToDomain());

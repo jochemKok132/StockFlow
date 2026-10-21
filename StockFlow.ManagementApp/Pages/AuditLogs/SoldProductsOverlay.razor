@@ -40,7 +40,7 @@
                                     <span>@(item.Product?.ProductName ?? "Unknown product")</span>
                                     @if (item.Sale is not null)
                                     {
-                                        <span class="sale-badge"><i class="bi bi-tag-fill"></i> Sale</span>
+                                        <span class="sale-badge"><i class="bi bi-tag-fill"></i> @SalePricing.Describe(item.Sale) @item.Sale.SaleName</span>
                                     }
                                     @if (item.ReturnedAmount > 0)
                                     {

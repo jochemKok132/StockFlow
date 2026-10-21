@@ -1,6 +1,6 @@
 ﻿@page "/producthistory"
 @using System.Text.RegularExpressions
-@attribute [Authorize(Roles = "ServiceDesk,ShiftLeader,Manager,Admin,Tester")]
+@attribute [Authorize(Roles = Permissions.ProductHistory)]
 @inject IStockLogsService StockLogsService
 @inject NavigationManager Nav
 

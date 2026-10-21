@@ -7,6 +7,7 @@ using StockFlow.Application.Interfaces.Repositories.ManagementApp.Stock;
 using StockFlow.Application.Mappings.AuditLogs;
 using StockFlow.Application.Mappings.Stock;
 using StockFlow.Domain.Entities.Stock;
+using StockFlow.Domain.Enums;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -38,12 +39,15 @@ namespace StockFlow.Application.Services.ManagementApp.Stock
         {
             pagination.Validate();
 
-            var sales = await salesRepository.GetAllSalesAsync(pagination);
+            var sales = (await salesRepository.GetAllSalesAsync(pagination, DateTime.Today)).ToList();
+            var itemsSold = await salesRepository.GetItemsSoldAsync(sales.Select(s => s.Id));
 
             var result = new List<SalesDto>();
             foreach (var sale in sales)
             {
-                result.Add(sale.ToSalesDto());
+                var dto = sale.ToSalesDto();
+                dto.ItemsSold = itemsSold.GetValueOrDefault(sale.Id);
+                result.Add(dto);
             }
             return result;
         }
@@ -52,20 +56,31 @@ namespace StockFlow.Application.Services.ManagementApp.Stock
         {
             var sale = await salesRepository.GetByIdAsync(id);
             if (sale == null) throw new KeyNotFoundException("Sale not found.");
+            if (sale.SaleType == SaleType.Moving) throw new ArgumentException("The moving sale can't be deleted. Change its percentage instead.");
             await salesRepository.SoftDeleteAsync(sale);
             await stockLogsService.CreateStockLogsAsync(sale.ToSoftDeleteStockLogsDto(employeeId));
         }
 
         public async Task UpdateSalesAsync(UpdateSalesDto salesDto, Guid employeeId)
         {
-            salesDto.Validate();
+            Guard.NotNull(salesDto, "Sale");
 
             var sale = await salesRepository.GetByIdWithProductsAsync(salesDto.Id);
             if (sale == null) throw new KeyNotFoundException("Sale not found.");
 
+            bool isMovingSale = sale.SaleType == SaleType.Moving;
+            salesDto.Validate(isMovingSale);
+
             var log = salesDto.ToUpdateStockLogsDto(sale, employeeId);
 
             sale.ToSalesEntity(salesDto);
+
+            if (isMovingSale)
+            {
+                await salesRepository.UpdateAsync(sale);
+                await stockLogsService.CreateStockLogsAsync(log);
+                return;
+            }
 
             var matchingProducts = (await productRepository.GetAllProductsWithTagsAsync(sale.SalesTags.ToList())).ToList();
             var matchingIds = matchingProducts.Select(p => p.Id).ToHashSet();

@@ -310,6 +310,12 @@
         {
             object? converted;
 
+            if (string.IsNullOrWhiteSpace(value) && Nullable.GetUnderlyingType(prop.PropertyType) is not null)
+            {
+                prop.SetValue(item, null);
+                return;
+            }
+
             if (underlyingType == typeof(string))
             {
                 converted = value;

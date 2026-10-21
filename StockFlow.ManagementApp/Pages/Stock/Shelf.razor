@@ -141,7 +141,7 @@
     {
         var authState = await AuthStateProvider.GetAuthenticationStateAsync();
         viewOnly = authState.User.IsInRole(AccessRules.ViewOnlyRole);
-        canManage = authState.User.IsInRole("Manager") || authState.User.IsInRole("Admin") || viewOnly;
+        canManage = authState.User.CanOpen(Permissions.ManageStock);
 
         await LoadProducts();
     }

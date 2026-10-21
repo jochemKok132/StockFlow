@@ -7,12 +7,15 @@ A short list of everything StockFlow can do right now, followed by the [to-do li
 - REST API, Blazor WebAssembly management app and WinForms cash register, all on .NET 10
 - Layered backend (Domain, Application, Infrastructure, API) with a Shared project for DTOs and shared rules
 - Same `ApiResponse` envelope for every response, including errors (400 / 401 / 403 / 404 / 500)
-- JWT login for employees and customers
+- JWT login for employees and customers (30 minutes per login)
 - Six employee roles (Admin, Manager, ShiftLeader, ServiceDesk, Cashier, FloorWorker) plus a Customer role
 - View-only Tester account to give to visitors: sees every page and form but can't save, refused by the API too; only visible to and created by the admin
+- One shared permissions map used by both the API and the management app
+- Employee hierarchy: you can only create, edit and give out roles below your own
+- The admin and Tester accounts are hidden from everyone except the admin
 - Passwords stored as BCrypt hashes only, never in a log
 - SQLite database that migrates and seeds itself on startup
-- Seed data: 23 employees (including a Tester), 15 customers, 150 products, 25 brands, 15 shelves, 2 sales
+- Seed data: 23 employees (including a Tester), 15 customers, 150 products, 25 brands, 15 shelves, 2 sales plus the moving sale
 - Soft delete for products, brands, sales and shelves
 - Users never see a GUID: forms, error messages and logs always use an identifier (barcode, brand name, shelf name, receipt id, employee id)
 - Maximum length on every text field, checked in the apps and again in the API
@@ -37,12 +40,15 @@ A short list of everything StockFlow can do right now, followed by the [to-do li
 - Points can pay the whole receipt, with no PIN or cash needed then
 - Points spent don't earn new points
 - Every points change is written to the customer log with the receipt id
+- Moving sale: a customer who moved asks for it with their new address, a shift leader or higher approves or rejects it; when approved the address is updated and the customer gets 10 % off everything that isn't already on sale for 90 days
 
 ## Cash register
 
 - Employee login with version shown and a check for a newer release
 - Scan products, customers and receipts in one input field (max 10 characters)
 - Sales only apply when a customer is attached
+- Find a customer by postal code and house number (F9), with a choice when more people live at that address
+- Sale prices for every sale type and the moving sale, the cheapest sale per line wins
 - Change quantity, delete a line, cancel the receipt
 - Park and recall a receipt (the customer is parked too)
 - PIN or cash payment, confirmation shows the receipt id and points earned
@@ -50,6 +56,7 @@ A short list of everything StockFlow can do right now, followed by the [to-do li
 - Keyboard shortcuts for everything (F1 – F12, Esc)
 - Dutch UI with the same colours as the management app
 - API address editable in `appsettings.json` next to the exe
+- Back to the login screen when the session has expired
 
 ## Returns
 
@@ -63,9 +70,12 @@ A short list of everything StockFlow can do right now, followed by the [to-do li
 
 ## Management app
 
-- Sidebar only shows the pages your role can use
+- Sidebar only shows the pages your role can use, and buttons only show for roles that may use them
+- Goes to the login page automatically when the session ends
 - Inventory: paged, sortable and filterable, with a product details panel (image, sale price, location, stock, tags)
 - Create, edit and delete products, brands, sales and shelves (managers)
+- Sales types: percentage off, multi-buy (1+1, 2+1, …), second item half price, bundle price (3 for €10)
+- Sales with a start and end date, status *Scheduled* / *Active* / *Ended*, filter on status, ended sales kept as history with items sold
 - Searchable selects for brand, shelf, role and enums
 - Searchable multi-select for sales tags, shows which sale a tag belongs to, new tags can be typed
 - Save only enabled when something actually changed (ignores spaces, tag order and trailing zeros)
@@ -73,20 +83,25 @@ A short list of everything StockFlow can do right now, followed by the [to-do li
 - Live character counter under every text field (orange near the limit, red at the limit)
 - Overlays only close when the click starts and ends outside them
 - Image picker only accepts PNG, JPEG, GIF and WebP, checked on the file contents
-- Employees: create with password, edit with optional password reset
+- Employees: create with password, edit with optional password reset, only roles below your own
 - Customers: list, filter, sort and edit
 - Cash register logs with receipt filter, products overlay, returned amounts and a points column
+- Download any receipt as a till-style PDF
+- Moving sales page to approve or reject requests
+- Statistics page: revenue, purchases, average receipt, % of purchases with a customer card, discounts, points, returns, new customers, revenue per day and top 10 products
 - Stock logs with old → new values
 - Product history per barcode (sold, returned, added, all changes or stock only), bookmarkable URL
 - Customer logs and employee logs (including logins)
 - Releases page: management app and cash register versions (no API version), *Up to date* / *Update available*, cash register download, release notes
 - Version shown in the sidebar
+- The logged-in employee (name, employee id and role) shown in the sidebar
 
 ## Validation
 
 - Paging: page 1 or higher, page size 1 – 100
 - Products: price 0 – 100,000 with at most 2 decimals, image up to 5 MB and a real image file, brand and shelf must exist
-- Sales: 1 – 99 % off and at least one tag
+- Sales: valid type and its fields (1 – 99 % off, multi-buy amounts, bundle size and price), end date not before the start, at least one tag
+- Sales only count on days inside their period
 - Purchases: 1 – 999 per line, no negative prices, all points rules checked again on the server
 - Returns: every rule checked again on the server
 
@@ -95,7 +110,7 @@ A short list of everything StockFlow can do right now, followed by the [to-do li
 - Stock logs for every create, update, delete, sale and return
 - Cash register logs with prices at the time of sale, sales, discount, points used and earned
 - Employee logs for create, update and login
-- Customer logs for registration, login, update, password change and points changes
+- Customer logs for registration, login, update, password change, points changes and moving sale requests, approvals and rejections
 - Update logs show `Field: New: x. Old: y`
 - Brand and shelf changes are logged by name, never by internal id
 
@@ -107,7 +122,7 @@ A short list of everything StockFlow can do right now, followed by the [to-do li
 
 ## Tests and CI
 
-- 362 xUnit + Moq unit tests: services, validations, mappings, shared rules, repositories (in-memory SQLite), controllers and the GitHub release service
+- 483 xUnit + Moq unit tests: services, validations, mappings, shared rules, repositories (in-memory SQLite), controllers and the GitHub release service
 - Build with 0 warnings
 - CI builds and tests every push and pull request to `master`
 
@@ -152,11 +167,6 @@ A short list of everything StockFlow can do right now, followed by the [to-do li
 - [ ] Button in the product details that opens that product on the public site
 - [ ] More brand information
 
-## Sales
-
-- [ ] Start and end date, plus sale history
-- [ ] Different kinds of sales (1+1, 2+1, …)
-- [ ] Moving sale
 
 ## Ordering and stock counts
 
@@ -174,30 +184,20 @@ A short list of everything StockFlow can do right now, followed by the [to-do li
 - [ ] Custom wood sawing
 - [ ] Paint mixed in a colour the customer specifies
 
-## Cash register
-
-- [ ] Find a customer by postal code and house number
 
 ## Employees and permissions
 
-- [ ] Show management app buttons only to roles that may use them
-- [ ] Hierarchy in employee management
-- [ ] Managers can't see the admin in the employee list
 - [ ] Support role with its own permissions: a page to request support, and a page for the support person to handle the requests
 - [ ] Bug report / feature request screen for all employees, with an overview for the admin
 - [ ] Admin-only panel with deleted items that can be reinstated
 - [ ] Confirmation popup before deleting or updating
 - [ ] Staff schedule (*rooster*) management: generated automatically 4 weeks ahead, can be changed, the manager has to confirm it
 
+
+
 ## Login
 
 - [ ] Refresh tokens
-- [ ] Go to the login page automatically when logged out
-
-## Receipts and statistics
-
-- [ ] Downloadable receipts from the cash register logs (not in the cash register itself yet)
-- [ ] Statistics screens (daily revenue, % of purchases with a customer card, …)
 
 ## New apps and services
 

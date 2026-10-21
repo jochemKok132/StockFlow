@@ -18,6 +18,8 @@ namespace StockFlow.Application.Interfaces.Repositories.ManagementApp
         Task<Customer?> GetCustomerByCustomerIdAsync(string customerId);
         Task<string> GetNewCustomerIdAsync();
         Task<IEnumerable<Customer>> GetAllCustomersAsync(CustomerPaginationDto pagination);
+        Task<IEnumerable<Customer>> GetCustomersByAddressAsync(string postalCode, string houseNumber);
+        Task<IEnumerable<Customer>> GetPendingMovingSalesAsync();
 
     }
 }

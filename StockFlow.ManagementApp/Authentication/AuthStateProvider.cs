@@ -1,9 +1,9 @@
-using Microsoft.AspNetCore.Components.Authorization;
+﻿using Microsoft.AspNetCore.Components.Authorization;
 using System.Security.Claims;
 
 namespace StockFlow.ManagementApp.Authentication
 {
-    public class AuthStateProvider : AuthenticationStateProvider
+    public class AuthStateProvider : AuthenticationStateProvider, IDisposable
     {
         private const string TokenKey = "authToken";
 
@@ -13,6 +13,7 @@ namespace StockFlow.ManagementApp.Authentication
             new(new ClaimsPrincipal(new ClaimsIdentity()));
 
         private AuthenticationState? _currentState;
+        private Timer? _expiryTimer;
 
         public AuthStateProvider(SessionStorageService sessionStorageService)
         {
@@ -35,17 +36,17 @@ namespace StockFlow.ManagementApp.Authentication
                 }
 
                 List<Claim> claims = ParseJWT.GetClaims(token);
+                DateTimeOffset? expiresAt = ExpiresAt(claims);
 
-                if (IsExpired(claims))
+                if (expiresAt is null || expiresAt <= DateTimeOffset.UtcNow)
                 {
                     await _sessionStorageService.RemoveItemAsync(TokenKey);
-
                     _currentState = _anonymous;
                     return _currentState;
                 }
 
-                _currentState = new AuthenticationState(BuildUser(claims));
-                return _currentState;
+                SetState(claims, expiresAt.Value);
+                return _currentState!;
             }
             catch
             {
@@ -54,14 +55,49 @@ namespace StockFlow.ManagementApp.Authentication
             }
         }
 
-        private static bool IsExpired(List<Claim> claims)
+        public async Task MarkUserAsAuthenticatedAsync(string token)
+        {
+            await _sessionStorageService.SetItemAsync(TokenKey, token);
+
+            List<Claim> claims = ParseJWT.GetClaims(token);
+            SetState(claims, ExpiresAt(claims) ?? DateTimeOffset.UtcNow);
+
+            NotifyAuthenticationStateChanged(Task.FromResult(_currentState!));
+        }
+
+        public async Task MarkUserAsLoggedOutAsync()
+        {
+            await _sessionStorageService.RemoveItemAsync(TokenKey);
+
+            _expiryTimer?.Dispose();
+            _expiryTimer = null;
+            _currentState = _anonymous;
+
+            NotifyAuthenticationStateChanged(Task.FromResult(_anonymous));
+        }
+
+        public async Task<string?> GetTokenAsync()
+        {
+            return await _sessionStorageService.GetItemAsync(TokenKey);
+        }
+
+        private void SetState(List<Claim> claims, DateTimeOffset expiresAt)
+        {
+            _currentState = new AuthenticationState(BuildUser(claims));
+
+            _expiryTimer?.Dispose();
+            TimeSpan due = expiresAt - DateTimeOffset.UtcNow;
+            _expiryTimer = new Timer(_ => _ = MarkUserAsLoggedOutAsync(), null, due < TimeSpan.Zero ? TimeSpan.Zero : due, Timeout.InfiniteTimeSpan);
+        }
+
+        private static DateTimeOffset? ExpiresAt(List<Claim> claims)
         {
             Claim? exp = claims.FirstOrDefault(c => c.Type == "exp");
 
             if (exp == null || !long.TryParse(exp.Value, out long seconds))
-                return true;
+                return null;
 
-            return DateTimeOffset.FromUnixTimeSeconds(seconds) <= DateTimeOffset.UtcNow;
+            return DateTimeOffset.FromUnixTimeSeconds(seconds);
         }
 
         private static ClaimsPrincipal BuildUser(List<Claim> claims)
@@ -79,31 +115,10 @@ namespace StockFlow.ManagementApp.Authentication
                     roleClaimType));
         }
 
-        public async Task MarkUserAsAuthenticatedAsync(string token)
+        public void Dispose()
         {
-            await _sessionStorageService.SetItemAsync(TokenKey, token);
-
-            List<Claim> claims = ParseJWT.GetClaims(token);
-
-            _currentState = new AuthenticationState(BuildUser(claims));
-
-            NotifyAuthenticationStateChanged(
-                Task.FromResult(_currentState));
-        }
-
-        public async Task MarkUserAsLoggedOutAsync()
-        {
-            await _sessionStorageService.RemoveItemAsync(TokenKey);
-
-            _currentState = _anonymous;
-
-            NotifyAuthenticationStateChanged(
-                Task.FromResult(_anonymous));
-        }
-
-        public async Task<string?> GetTokenAsync()
-        {
-            return await _sessionStorageService.GetItemAsync(TokenKey);
+            _expiryTimer?.Dispose();
+            GC.SuppressFinalize(this);
         }
     }
 }

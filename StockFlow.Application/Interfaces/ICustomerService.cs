@@ -17,5 +17,9 @@ namespace StockFlow.Application.Interfaces
         Task<CustomerDto> GetCustomerByIdAsync(Guid id);
         Task<CustomerDto> GetCustomerByCustomerIdAsync(string customerId);
         Task<List<CustomerDto>> GetAllCustomersAsync(CustomerPaginationDto pagination);
+        Task<CustomerDto> RequestMovingSaleAsync(Guid customerId, MovingSaleRequest request);
+        Task<List<CustomerDto>> GetMovingSaleRequestsAsync();
+        Task<CustomerDto> ApproveMovingSaleAsync(Guid customerId, string reviewedBy);
+        Task<CustomerDto> RejectMovingSaleAsync(Guid customerId, string reviewedBy);
     }
 }

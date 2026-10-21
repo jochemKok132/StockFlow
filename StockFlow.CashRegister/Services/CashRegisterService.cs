@@ -32,6 +32,17 @@ namespace StockFlow.CashRegister.Services
             return (response.Value, "");
         }
 
+        public async Task<(List<CustomerDto>, string error)> FindCustomersByAddressAsync(string postalCode, string houseNumber)
+        {
+            string query = $"CashRegister/Customer/Search?postalCode={Uri.EscapeDataString(postalCode)}&houseNumber={Uri.EscapeDataString(houseNumber)}";
+            var response = await httpService.GetAsync<List<CustomerDto>>(query);
+
+            if (!response.Succeeded)
+                return ([], $"Error: {response.Message}");
+
+            return (response.Value ?? [], "");
+        }
+
         public async Task<(CustomerDto?, string error)> GetCustomerAsync(string customerId)
         {
             var response = await httpService.GetAsync<CustomerDto>($"CashRegister/Customer/{customerId}");

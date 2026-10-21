@@ -30,10 +30,10 @@ namespace StockFlow.CashRegister
             ? LoyaltyPoints.Redeemable(_customer.SavedPoints, LinesTotal)
             : 0;
         public decimal CurrentTotal => IsReturning ? RefundTotal : LinesTotal - LoyaltyPoints.ToEuros(PointsToUse);
-        public decimal CurrentDiscount => IsReturning ? 0m : _lines.Sum(l => (l.Product.Price - l.PriceAtTimeOfSale) * l.Amount);
+        public decimal CurrentDiscount => IsReturning ? 0m : _lines.Sum(l => SalePricing.Total(l.Product.Price, l.Amount) - LineTotal(l));
         public bool IsReturning => _receipt is not null;
         public int PointsToEarn => _customer is null || IsReturning ? 0 : LoyaltyPoints.PointsEarned(CurrentTotal);
-        private decimal ReceiptLinesTotal => _receipt?.ProductsSold.Sum(p => p.PriceAtTimeOfSale * p.Amount) ?? 0m;
+        private decimal ReceiptLinesTotal => _receipt?.ProductsSold.Sum(p => SalePricing.Total(p.PriceAtTimeOfSale, p.Amount)) ?? 0m;
         private decimal RefundTotal => _lines.Sum(RefundFor);
         public bool HasItems => _lines.Count > 0;
         public CustomerDto? Customer => _customer;
@@ -106,6 +106,7 @@ namespace StockFlow.CashRegister
             btnCancel.Click += (_, _) => CancelSale();
             btnPark.Click += (_, _) => ParkSale();
             btnRecall.Click += (_, _) => RecallSale();
+            btnFindCustomer.Click += async (_, _) => await FindCustomerAsync();
             btnCheckout.Click += async (_, _) =>
             {
                 if (IsReturning) await CompleteReturnAsync();
@@ -137,6 +138,7 @@ namespace StockFlow.CashRegister
                 Keys.F6 => btnDeleteLine,
                 Keys.F7 => btnPark,
                 Keys.F8 => btnRecall,
+                Keys.F9 => btnFindCustomer,
                 Keys.F10 => btnCheckout,
                 _ => null
             };
@@ -407,9 +409,12 @@ namespace StockFlow.CashRegister
             }
 
             int points = PointsToUse;
-            lblCustomer.Text = points > 0
+            string movingSale = _customer.MovingSale is { } sale
+                ? $"   ·   verhuiskorting {sale.PercentageOff}% t/m {_customer.MovingSaleUntil:dd-MM-yyyy}"
+                : "";
+            lblCustomer.Text = (points > 0
                 ? $"Klant: {_customer.FullName}   ·   {_customer.CustomerId}   ·   {points} van {_customer.SavedPoints} punten gebruikt (-{Theme.Money(LoyaltyPoints.ToEuros(points))})"
-                : $"Klant: {_customer.FullName}   ·   {_customer.CustomerId}   ·   {_customer.SavedPoints} punten ({Theme.Money(LoyaltyPoints.ToEuros(_customer.SavedPoints))})";
+                : $"Klant: {_customer.FullName}   ·   {_customer.CustomerId}   ·   {_customer.SavedPoints} punten ({Theme.Money(LoyaltyPoints.ToEuros(_customer.SavedPoints))})") + movingSale;
 
             btnUsePoints.Text = _usePoints ? "Punten niet gebruiken [F4]" : "Punten gebruiken [F4]";
             btnUsePoints.Enabled = _customer.SavedPoints > 0;
@@ -418,18 +423,30 @@ namespace StockFlow.CashRegister
 
         private void ApplyPricing(RegisterItemDetailDto line)
         {
-            SalesDto? sale = _customer is null ? null : BestSale(line.Product);
+            int amount = Math.Max(line.Amount, 1);
+            SalesDto? sale = _customer is null ? null : SalePricing.BestSale(line.Product, amount, DateTime.Today, _customer.MovingSale);
 
             line.Sale = sale;
-            line.PriceAtTimeOfSale = sale is null
-                ? line.Product.Price
-                : Math.Round(line.Product.Price * (1 - sale.PercentageOff / 100m), 2);
+            line.PriceAtTimeOfSale = SalePricing.UnitPrice(line.Product.Price, amount, sale);
         }
 
-        private static SalesDto? BestSale(ProductDto product) =>
-            product.Sales
-                .Where(s => !s.SoftDeleted && s.PercentageOff > 0)
-                .MaxBy(s => s.PercentageOff);
+        private async Task FindCustomerAsync()
+        {
+            if (IsReturning || _busy) return;
+
+            var customer = await CustomerSearchDialog.AskAsync(FindForm()!, _cashRegister);
+            if (customer is null)
+            {
+                txtBarcode.Focus();
+                return;
+            }
+
+            SetCustomer(customer);
+            ShowNotice(CurrentDiscount > 0
+                ? $"Klant {customer.FullName} gekoppeld. Aanbiedingen toegepast: {Theme.Money(CurrentDiscount)} korting."
+                : $"Klant {customer.FullName} gekoppeld aan deze bon.");
+            txtBarcode.Focus();
+        }
 
         private async Task AddProductAsync(string input)
         {
@@ -543,18 +560,22 @@ namespace StockFlow.CashRegister
             RefreshView();
         }
 
-        private static decimal LineTotal(RegisterItemDetailDto line) => line.PriceAtTimeOfSale * line.Amount;
+        private static decimal LineTotal(RegisterItemDetailDto line) => SalePricing.Total(line.PriceAtTimeOfSale, line.Amount);
 
         private int SelectedIndex => gridItems.CurrentRow?.Index ?? -1;
 
         private void RefreshView(int? select = null)
         {
+            if (!IsReturning)
+                foreach (var line in _lines)
+                    ApplyPricing(line);
+
             gridItems.Rows.Clear();
             foreach (var line in _lines)
             {
                 string description = line.Sale is null
                     ? line.Product.ProductName
-                    : $"{line.Product.ProductName}   (-{line.Sale.PercentageOff}% {line.Sale.SaleName})";
+                    : $"{line.Product.ProductName}   ({SalePricing.Describe(line.Sale)} {line.Sale.SaleName})";
 
                 if (IsReturning)
                     description += $"   (retour, max {Returnable(line.Product)})";
@@ -604,6 +625,7 @@ namespace StockFlow.CashRegister
             btnCancel.Enabled = HasItems || IsReturning;
             btnPark.Enabled = HasItems && _parked is null && !IsReturning;
             btnRecall.Enabled = _parked is not null && !HasItems && !IsReturning;
+            btnFindCustomer.Enabled = !IsReturning;
             btnCheckout.Enabled = HasItems;
         }
 

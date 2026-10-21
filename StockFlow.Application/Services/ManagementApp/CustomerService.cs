@@ -8,6 +8,7 @@ using StockFlow.Application.Interfaces.ManagementApp;
 using StockFlow.Application.Interfaces.Repositories.ManagementApp;
 using StockFlow.Application.Mappings.People;
 using StockFlow.Domain.Entities.People;
+using StockFlow.Domain.Enums;
 using System;
 using System.Collections.Generic;
 using System.Security.Authentication;
@@ -130,6 +131,105 @@ namespace StockFlow.Application.Services.ManagementApp
                 Messages = ["Password: Changed."],
             });
         }
+
+        public async Task<CustomerDto> RequestMovingSaleAsync(Guid customerId, MovingSaleRequest request)
+        {
+            request.Validate();
+
+            var customer = await customerRepository.GetByIdAsync(customerId);
+            if (customer == null || customer.SoftDeleted)
+                throw new KeyNotFoundException("Customer not found.");
+
+            if (SalePricing.IsMovingSaleActive(customer.MovingSaleUntil, DateTime.Today))
+                throw new ArgumentException($"You already have a moving sale until {customer.MovingSaleUntil:dd-MM-yyyy}.");
+
+            if (customer.MovingSaleStatus == MovingSaleStatus.Pending)
+                throw new ArgumentException("Your moving sale request is still waiting for approval.");
+
+            customer.MovingSalePostalCode = CustomerValidation.NormalizePostalCode(request.PostalCode.Trim());
+            customer.MovingSaleHouseNumber = request.HouseNumber.Trim().ToUpperInvariant();
+            customer.MovingSaleStatus = MovingSaleStatus.Pending;
+            customer.MovingSaleRequestedAt = DateTime.UtcNow;
+            customer.MovingSaleReviewedAt = null;
+            customer.MovingSaleReviewedBy = null;
+
+            await customerRepository.UpdateAsync(customer);
+            await LogMovingSaleAsync(customer, [
+                "MovingSale: Requested",
+                $"NewAddress: {customer.MovingSalePostalCode} {customer.MovingSaleHouseNumber}",
+            ]);
+
+            return customer.ToCustomerDto();
+        }
+
+        public async Task<List<CustomerDto>> GetMovingSaleRequestsAsync()
+        {
+            var customers = await customerRepository.GetPendingMovingSalesAsync();
+            return customers.Select(c => c.ToCustomerDto()).ToList();
+        }
+
+        public async Task<CustomerDto> ApproveMovingSaleAsync(Guid customerId, string reviewedBy)
+        {
+            var customer = await GetPendingMovingSaleAsync(customerId);
+
+            string oldPostalCode = customer.PostalCode ?? "-";
+            string oldHouseNumber = customer.HouseNumber ?? "-";
+
+            customer.PostalCode = customer.MovingSalePostalCode;
+            customer.HouseNumber = customer.MovingSaleHouseNumber;
+            customer.MovingSaleUntil = DateTime.Today.AddDays(SalePricing.MovingSaleDays);
+            customer.MovingSaleStatus = MovingSaleStatus.Approved;
+            customer.MovingSaleReviewedAt = DateTime.UtcNow;
+            customer.MovingSaleReviewedBy = Reviewer(reviewedBy);
+
+            await customerRepository.UpdateAsync(customer);
+
+            List<string> messages = [];
+            if (customer.PostalCode != oldPostalCode) messages.Add($"PostalCode: New: {customer.PostalCode}. Old: {oldPostalCode}");
+            if (customer.HouseNumber != oldHouseNumber) messages.Add($"HouseNumber: New: {customer.HouseNumber}. Old: {oldHouseNumber}");
+            messages.Add($"MovingSale: Approved by {customer.MovingSaleReviewedBy}, until {customer.MovingSaleUntil:dd-MM-yyyy}");
+            await LogMovingSaleAsync(customer, messages);
+
+            return customer.ToCustomerDto();
+        }
+
+        public async Task<CustomerDto> RejectMovingSaleAsync(Guid customerId, string reviewedBy)
+        {
+            var customer = await GetPendingMovingSaleAsync(customerId);
+
+            customer.MovingSaleStatus = MovingSaleStatus.Rejected;
+            customer.MovingSaleReviewedAt = DateTime.UtcNow;
+            customer.MovingSaleReviewedBy = Reviewer(reviewedBy);
+
+            await customerRepository.UpdateAsync(customer);
+            await LogMovingSaleAsync(customer, [$"MovingSale: Rejected by {customer.MovingSaleReviewedBy}"]);
+
+            return customer.ToCustomerDto();
+        }
+
+        private async Task<Customer> GetPendingMovingSaleAsync(Guid customerId)
+        {
+            var customer = await customerRepository.GetByIdAsync(customerId);
+            if (customer == null || customer.SoftDeleted)
+                throw new KeyNotFoundException("Customer not found.");
+
+            if (customer.MovingSaleStatus != MovingSaleStatus.Pending)
+                throw new ArgumentException("This customer has no moving sale request waiting.");
+
+            return customer;
+        }
+
+        private static string Reviewer(string reviewedBy) =>
+            string.IsNullOrWhiteSpace(reviewedBy) ? "-" : reviewedBy.Trim();
+
+        private Task LogMovingSaleAsync(Customer customer, List<string> messages) =>
+            customerLogsService.CreateCustomerLogsAsync(new CreateCustomerLogsDto
+            {
+                Id = Guid.NewGuid(),
+                CustomerId = customer.Id,
+                LogType = LogTypeDto.Update,
+                Messages = messages,
+            });
 
         public async Task UpdateCustomerAsync(UpdateCustomerDto dto)
         {

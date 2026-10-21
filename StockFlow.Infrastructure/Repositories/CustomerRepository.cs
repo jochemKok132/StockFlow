@@ -6,6 +6,7 @@ using StockFlow.Application.Interfaces.Repositories.EfRepositories;
 using StockFlow.Application.Interfaces.Repositories.ManagementApp;
 using StockFlow.Application.Interfaces.Repositories.ManagementApp.Stock;
 using StockFlow.Domain.Entities.People;
+using StockFlow.Domain.Enums;
 using StockFlow.Domain.Entities.Stock;
 using StockFlow.Infrastructure.Data;
 using StockFlow.Infrastructure.Repositories.EfRepositories;
@@ -63,6 +64,30 @@ namespace StockFlow.Infrastructure.Repositories
         {
             return _context.Customers.FirstOrDefaultAsync(e => !e.SoftDeleted && e.CustomerId == customerId);
         }
+        public async Task<IEnumerable<Customer>> GetPendingMovingSalesAsync()
+        {
+            return await _context.Customers
+                .AsNoTracking()
+                .Where(c => !c.SoftDeleted && c.MovingSaleStatus == MovingSaleStatus.Pending)
+                .OrderBy(c => c.MovingSaleRequestedAt)
+                .ToListAsync();
+        }
+
+        public async Task<IEnumerable<Customer>> GetCustomersByAddressAsync(string postalCode, string houseNumber)
+        {
+            string compactPostalCode = postalCode.Replace(" ", "").ToUpper();
+            string house = houseNumber.Trim().ToUpper();
+
+            return await _context.Customers
+                .AsNoTracking()
+                .Where(c => !c.SoftDeleted &&
+                            c.PostalCode != null && c.PostalCode.Replace(" ", "").ToUpper() == compactPostalCode &&
+                            c.HouseNumber != null && c.HouseNumber.ToUpper() == house)
+                .OrderBy(c => c.FullName)
+                .Take(25)
+                .ToListAsync();
+        }
+
         public async Task<IEnumerable<Customer>> GetAllCustomersAsync(CustomerPaginationDto pagination)
         {
             var query = _context.Customers

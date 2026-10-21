@@ -20,8 +20,12 @@ RUN dotnet publish StockFlow.API/StockFlow.API.csproj -c Release -o /app/publish
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS final
 WORKDIR /app
 ENV ASPNETCORE_HTTP_PORTS=8080 \
-    DataFolder=/app/data
-RUN mkdir -p /app/data && chown $APP_UID /app/data
+    DataFolder=/app/data \
+    TZ=Europe/Amsterdam
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends libfontconfig1 tzdata \
+    && rm -rf /var/lib/apt/lists/* \
+    && mkdir -p /app/data && chown $APP_UID /app/data
 COPY --from=build /app/publish .
 USER $APP_UID
 VOLUME /app/data

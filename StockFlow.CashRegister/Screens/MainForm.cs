@@ -38,6 +38,8 @@ namespace StockFlow.CashRegister
 
             _clockTimer.Tick += (_, _) => UpdateStatus();
             btnLogout.Click += btnLogout_Click;
+            _authStateProvider.AuthenticationStateChanged += OnAuthenticationStateChanged;
+            FormClosed += (_, _) => _authStateProvider.AuthenticationStateChanged -= OnAuthenticationStateChanged;
 
             UpdateStatus();
             _clockTimer.Start();
@@ -85,9 +87,23 @@ namespace StockFlow.CashRegister
                     return;
             }
 
-            await _authStateProvider.MarkUserAsLoggedOutAsync();
             LoggedOut = true;
+            await _authStateProvider.MarkUserAsLoggedOutAsync();
             Close();
+        }
+
+        private async void OnAuthenticationStateChanged(Task<Microsoft.AspNetCore.Components.Authorization.AuthenticationState> task)
+        {
+            var state = await task;
+            if (state.User.Identity?.IsAuthenticated == true || LoggedOut || IsDisposed)
+                return;
+
+            LoggedOut = true;
+            BeginInvoke(() =>
+            {
+                MessageBox.Show(this, "Je sessie is verlopen. Log opnieuw in.", "StockFlow Kassa", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                Close();
+            });
         }
 
         protected override bool ProcessCmdKey(ref Message msg, Keys keyData)

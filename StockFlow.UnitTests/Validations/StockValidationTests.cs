@@ -107,6 +107,86 @@ namespace StockFlow.UnitTests.Validations
 
     public class SalesValidationTests
     {
+        [Fact]
+        public void ValidateCreate_SecondItemHalfPrice_NeedsNoOtherFields()
+        {
+            var dto = new CreateSalesDto { SaleName = "2e halve prijs", Description = "x", SaleType = SaleTypeDto.SecondItemHalfPrice, SalesTags = ["tuin"] };
+
+            Assert.Null(Record.Exception(() => dto.Validate()));
+        }
+
+        [Fact]
+        public void ValidateCreate_ValidBundle_DoesNotThrow()
+        {
+            var dto = new CreateSalesDto { SaleName = "3 voor 10", Description = "x", SaleType = SaleTypeDto.Bundle, BuyAmount = 3, BundlePrice = 10m, SalesTags = ["tuin"] };
+
+            Assert.Null(Record.Exception(() => dto.Validate()));
+        }
+
+        [Theory]
+        [InlineData(1, 10.0)]
+        [InlineData(100, 10.0)]
+        [InlineData(3, 0.0)]
+        [InlineData(3, 9.999)]
+        [InlineData(3, 100000.01)]
+        public void ValidateCreate_InvalidBundle_ThrowsArgumentException(int size, double price)
+        {
+            var dto = new CreateSalesDto { SaleName = "bundel", Description = "x", SaleType = SaleTypeDto.Bundle, BuyAmount = size, BundlePrice = (decimal)price, SalesTags = ["tuin"] };
+
+            Assert.Throws<ArgumentException>(() => dto.Validate());
+        }
+
+        [Fact]
+        public void ValidateCreate_MultiBuy_DoesNotNeedAPercentage()
+        {
+            var dto = new CreateSalesDto { SaleName = "1+1", Description = "x", SaleType = SaleTypeDto.MultiBuy, BuyAmount = 1, FreeAmount = 1, SalesTags = ["tuin"] };
+
+            Assert.Null(Record.Exception(() => dto.Validate()));
+        }
+
+        [Theory]
+        [InlineData(0, 1)]
+        [InlineData(1, 0)]
+        [InlineData(100, 1)]
+        public void ValidateCreate_MultiBuyWithoutAmounts_ThrowsArgumentException(int buy, int free)
+        {
+            var dto = new CreateSalesDto { SaleName = "x+y", Description = "x", SaleType = SaleTypeDto.MultiBuy, BuyAmount = buy, FreeAmount = free, SalesTags = ["tuin"] };
+
+            Assert.Throws<ArgumentException>(() => dto.Validate());
+        }
+
+        [Fact]
+        public void ValidateCreate_MovingSale_ThrowsArgumentException()
+        {
+            var dto = new CreateSalesDto { SaleName = "Verhuis", Description = "x", SaleType = SaleTypeDto.Moving, PercentageOff = 10, SalesTags = ["tuin"] };
+
+            Assert.Throws<ArgumentException>(() => dto.Validate());
+        }
+
+        [Fact]
+        public void ValidateCreate_EndBeforeStart_ThrowsArgumentException()
+        {
+            var dto = new CreateSalesDto { SaleName = "Zomer", Description = "x", PercentageOff = 10, SalesTags = ["tuin"], StartDate = new DateTime(2026, 7, 1), EndDate = new DateTime(2026, 6, 30) };
+
+            Assert.Throws<ArgumentException>(() => dto.Validate());
+        }
+
+        [Fact]
+        public void ValidateUpdate_MovingSaleWithoutTags_DoesNotThrow()
+        {
+            var dto = new UpdateSalesDto { Id = Guid.NewGuid(), SaleName = "Moving sale", Description = "x", SaleType = SaleTypeDto.Moving, PercentageOff = 12 };
+
+            Assert.Null(Record.Exception(() => dto.Validate(isMovingSale: true)));
+        }
+
+        [Fact]
+        public void ValidateUpdate_TurnIntoMovingSale_ThrowsArgumentException()
+        {
+            var dto = new UpdateSalesDto { Id = Guid.NewGuid(), SaleName = "Zomer", Description = "x", SaleType = SaleTypeDto.Moving, PercentageOff = 10, SalesTags = ["tuin"] };
+
+            Assert.Throws<ArgumentException>(() => dto.Validate());
+        }
+
         [Theory]
         [InlineData(0)]
         [InlineData(100)]

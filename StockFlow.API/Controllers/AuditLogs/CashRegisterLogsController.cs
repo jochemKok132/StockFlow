@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using StockFlow.Shared.Common;
 using StockFlow.Shared.DTOs.Pagination;
+using StockFlow.Application.Interfaces;
 using StockFlow.Application.Interfaces.ManagementApp.AuditLogs;
 using StockFlow.Shared.DTOs.AuditLogs.CashRegister;
 
@@ -9,9 +10,9 @@ namespace StockFlow.API.Controllers
 {
     [ApiController]
     [Route("[controller]")]
-    public class CashRegisterLogsController(ICashRegisterLogsService cashRegisterLogsService) : ControllerBase
+    public class CashRegisterLogsController(ICashRegisterLogsService cashRegisterLogsService, IReceiptPdfService receiptPdfService) : ControllerBase
     {
-        [Authorize(Roles = "Cashier,ServiceDesk,ShiftLeader,Manager,Admin,Tester")]
+        [Authorize(Roles = Permissions.CashRegisterLogs)]
         [HttpGet("GetAll")]
         public async Task<IActionResult> GetAllAsync([FromQuery] CashRegisterLogsPaginationDto pagination)
         {
@@ -26,7 +27,26 @@ namespace StockFlow.API.Controllers
             }
         }
 
-        [Authorize(Roles = "Manager,Admin")]
+        [Authorize(Roles = Permissions.CashRegisterLogs)]
+        [HttpGet("Receipt/{receiptId}/Pdf")]
+        public async Task<IActionResult> GetReceiptPdfAsync(string receiptId)
+        {
+            try
+            {
+                CashRegisterLogsDto receipt = await cashRegisterLogsService.GetByReceiptIdAsync(receiptId);
+                return File(receiptPdfService.Create(receipt), "application/pdf", $"bon-{receipt.ReceiptId}.pdf");
+            }
+            catch (ArgumentException exception)
+            {
+                return BadRequest(ApiResponse<object>.Fail(exception.Message));
+            }
+            catch (KeyNotFoundException exception)
+            {
+                return NotFound(ApiResponse<object>.Fail(exception.Message));
+            }
+        }
+
+        [Authorize(Roles = Permissions.WriteLogs)]
         [HttpPost("Create")]
         public async Task<IActionResult> CreateAsync(CreateCashRegisterLogsDto log)
         {

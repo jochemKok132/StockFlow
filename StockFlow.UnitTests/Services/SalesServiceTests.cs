@@ -44,7 +44,8 @@ namespace StockFlow.UnitTests.Services
         [Fact]
         public async Task GetAllSalesAsync_ValidPagination_ReturnsSales()
         {
-            _salesRepository.Setup(r => r.GetAllSalesAsync(It.IsAny<SalesPaginationDto>())).ReturnsAsync(new[] { TestData.Sale() });
+            _salesRepository.Setup(r => r.GetAllSalesAsync(It.IsAny<SalesPaginationDto>(), It.IsAny<DateTime>())).ReturnsAsync(new[] { TestData.Sale() });
+            _salesRepository.Setup(r => r.GetItemsSoldAsync(It.IsAny<IEnumerable<Guid>>())).ReturnsAsync(new Dictionary<Guid, int>());
 
             var result = await _sut.GetAllSalesAsync(new SalesPaginationDto { PageNumber = 1, PageSize = 10 });
 

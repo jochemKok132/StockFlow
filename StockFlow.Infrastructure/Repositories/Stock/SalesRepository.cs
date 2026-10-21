@@ -38,14 +38,23 @@ namespace StockFlow.Infrastructure.Repositories.Stock
         public Task SoftDeleteAsync(Sales entity) => _softDeletable.SoftDeleteAsync(entity);
 
 
-        public async Task<IEnumerable<Sales>> GetAllSalesAsync(SalesPaginationDto pagination)
+        public async Task<IEnumerable<Sales>> GetAllSalesAsync(SalesPaginationDto pagination, DateTime today)
         {
+            today = today.Date;
             var query = _context.Sales
                 .AsNoTracking()
                 .Include(p => p.Products)
                 .Where(e =>
                     !e.SoftDeleted &&
                     e.SaleName.ToLower().Contains((pagination.SalesName ?? string.Empty).ToLower()));
+
+            query = pagination.Status switch
+            {
+                SaleStatusDto.Scheduled => query.Where(e => e.StartDate != null && e.StartDate > today),
+                SaleStatusDto.Ended => query.Where(e => e.EndDate != null && e.EndDate < today),
+                SaleStatusDto.Active => query.Where(e => (e.StartDate == null || e.StartDate <= today) && (e.EndDate == null || e.EndDate >= today)),
+                _ => query,
+            };
 
             query = pagination.OrderType == OrderType.Descending
                 ? pagination.OrderBy switch
@@ -72,6 +81,17 @@ namespace StockFlow.Infrastructure.Repositories.Stock
                 .Take(pagination.PageSize)
                 .ToListAsync();
         }
+        public async Task<Dictionary<Guid, int>> GetItemsSoldAsync(IEnumerable<Guid> saleIds)
+        {
+            var ids = saleIds.ToList();
+            return await _context.RegisterItemDetails
+                .AsNoTracking()
+                .Where(d => d.SalesId != null && ids.Contains(d.SalesId.Value))
+                .GroupBy(d => d.SalesId!.Value)
+                .Select(g => new { SaleId = g.Key, Amount = g.Sum(d => d.Amount - d.ReturnedAmount) })
+                .ToDictionaryAsync(x => x.SaleId, x => x.Amount);
+        }
+
         public async Task<IEnumerable<Sales>> GetAllSalesForProductTags(List<string> productTags)
         {
             return await _context.Sales

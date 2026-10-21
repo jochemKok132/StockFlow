@@ -1,0 +1,108 @@
+﻿@page "/movingsales"
+@attribute [Authorize(Roles = Permissions.ViewMovingSales)]
+@inject ICustomerService customerService
+@inject AuthenticationStateProvider AuthStateProvider
+
+<div class="tasks-header">
+    <div>
+        <h2>Moving sales</h2>
+        <p>Customers who moved ask for the moving sale (@SalePricing.MovingSalePercentage% off everything that isn't already on sale, for @SalePricing.MovingSaleDays days). A shift leader or higher approves or rejects the request.</p>
+    </div>
+</div>
+
+<div class="card">
+    @if (!string.IsNullOrEmpty(message))
+    {
+        <div class="alert-danger">@message</div>
+    }
+
+    <table class="tasks-table">
+        <thead>
+            <tr>
+                <th>Customer ID</th>
+                <th>Full name</th>
+                <th>Current address</th>
+                <th>New address</th>
+                <th>Requested</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (loading)
+            {
+                <tr><td class="loading">Loading...</td></tr>
+            }
+            else if (!string.IsNullOrEmpty(error))
+            {
+                <tr><td class="alert-danger">@error</td></tr>
+            }
+            else if (requests.Count == 0)
+            {
+                <tr><td class="empty-state">There are no moving sale requests waiting.</td></tr>
+            }
+            else
+            {
+                @foreach (var customer in requests)
+                {
+                    <tr>
+                        <td class="id-cell">@customer.CustomerId</td>
+                        <td><strong>@customer.FullName</strong></td>
+                        <td>@Address(customer.PostalCode, customer.HouseNumber)</td>
+                        <td><strong>@Address(customer.MovingSalePostalCode, customer.MovingSaleHouseNumber)</strong></td>
+                        <td>@customer.MovingSaleRequestedAt?.ToLocalTime().ToString("dd-MM-yyyy HH:mm")</td>
+                        <td class="actions-cell">
+                            @if (canReview)
+                            {
+                                <div class="table-actions">
+                                    <button class="btn-save" disabled="@(busy || viewOnly)" title="@(viewOnly ? AccessRules.ViewOnlyMessage : null)" @onclick="() => Review(customer, approve: true)"><i class="bi bi-check-lg"></i> Approve</button>
+                                    <button class="btn-delete" disabled="@(busy || viewOnly)" title="@(viewOnly ? AccessRules.ViewOnlyMessage : null)" @onclick="() => Review(customer, approve: false)"><i class="bi bi-x-lg"></i> Reject</button>
+                                </div>
+                            }
+                        </td>
+                    </tr>
+                }
+            }
+        </tbody>
+    </table>
+</div>
+
+@code {
+    private List<CustomerDto> requests = [];
+    private bool loading;
+    private bool busy;
+    private bool canReview;
+    private bool viewOnly;
+    private string error = "";
+    private string message = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        canReview = authState.User.CanOpen(Permissions.ApproveMovingSales);
+        viewOnly = authState.User.IsInRole(AccessRules.ViewOnlyRole);
+        await LoadAsync();
+    }
+
+    private async Task LoadAsync()
+    {
+        loading = true;
+        (requests, error) = await customerService.GetMovingSaleRequestsAsync();
+        loading = false;
+    }
+
+    private async Task Review(CustomerDto customer, bool approve)
+    {
+        if (!canReview || viewOnly) return;
+
+        busy = true;
+        message = approve
+            ? await customerService.ApproveMovingSaleAsync(customer.Id)
+            : await customerService.RejectMovingSaleAsync(customer.Id);
+        busy = false;
+
+        await LoadAsync();
+    }
+
+    private static string Address(string? postalCode, string? houseNumber) =>
+        string.IsNullOrWhiteSpace(postalCode) && string.IsNullOrWhiteSpace(houseNumber) ? "-" : $"{postalCode} {houseNumber}".Trim();
+}

@@ -8,5 +8,6 @@ namespace StockFlow.ManagementApp.Interfaces
 		Task<ApiResponse<TResponse>> PostAsync<TResponse, TRequest>(string url, TRequest request);
 		Task<ApiResponse<TResponse>> PutAsync<TResponse, TRequest>(string url, TRequest request);
 		Task<ApiResponse<TResponse>> DeleteAsync<TResponse>(string url);
+		Task<ApiResponse<byte[]>> GetFileAsync(string url);
 	}
 }

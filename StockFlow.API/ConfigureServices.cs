@@ -6,6 +6,7 @@ using System.Text;
 using System.Net.Http.Headers;
 using Microsoft.Extensions.Options;
 using StockFlow.Application.Interfaces;
+using StockFlow.Infrastructure.Receipts;
 using StockFlow.Infrastructure.Releases;
 
 namespace StockFlow.API
@@ -17,6 +18,19 @@ namespace StockFlow.API
             services.RegisterAuthenticationServices(configuration);
             services.RegisterValidationResponses();
             services.RegisterReleaseServices(configuration);
+            services.RegisterReceiptServices(configuration);
+
+            return services;
+        }
+
+        public static IServiceCollection RegisterReceiptServices(this IServiceCollection services, IConfiguration configuration)
+        {
+            services.AddOptions<ReceiptOptions>()
+                .Bind(configuration.GetSection(ReceiptOptions.SectionName))
+                .ValidateDataAnnotations()
+                .ValidateOnStart();
+
+            services.AddSingleton<IReceiptPdfService, ReceiptPdfService>();
 
             return services;
         }
@@ -47,7 +61,7 @@ namespace StockFlow.API
 
         public static IServiceCollection RegisterValidationResponses(this IServiceCollection services)
         {
-            services.Configure<ApiBehaviorOptions>(options =>
+            services.PostConfigure<ApiBehaviorOptions>(options =>
             {
                 options.InvalidModelStateResponseFactory = context =>
                 {

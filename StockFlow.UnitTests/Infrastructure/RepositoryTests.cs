@@ -67,6 +67,25 @@ namespace StockFlow.UnitTests.Infrastructure
         }
 
         [Fact]
+        public async Task GetCustomersByAddressAsync_IgnoresSpacesAndCase()
+        {
+            var match = TestData.Customer();
+            match.PostalCode = "1234 AB";
+            match.HouseNumber = "12A";
+            var otherHouse = TestData.Customer();
+            otherHouse.CustomerId = "80000002";
+            otherHouse.Email = "other@example.com";
+            otherHouse.PostalCode = "1234 AB";
+            otherHouse.HouseNumber = "14";
+            Context.Customers.AddRange(match, otherHouse);
+            await Context.SaveChangesAsync();
+
+            var result = await _sut.GetCustomersByAddressAsync("1234ab", "12a");
+
+            Assert.Equal(match.Id, Assert.Single(result).Id);
+        }
+
+        [Fact]
         public async Task GetNewCustomerIdAsync_NoCustomers_ReturnsFirstCustomerId()
         {
             var result = await _sut.GetNewCustomerIdAsync();
@@ -149,7 +168,7 @@ namespace StockFlow.UnitTests.Infrastructure
             await AddEmployeeAsync("000002", EmployeeRole.Tester);
             var sut = new EmployeeRepository(Context);
 
-            var result = await sut.GetAllEmployeesAsync(new EmployeePaginationDto { PageNumber = 1, PageSize = 10 }, includeTesters: false);
+            var result = await sut.GetAllEmployeesAsync(new EmployeePaginationDto { PageNumber = 1, PageSize = 10 }, [EmployeeRole.Tester]);
 
             Assert.Equal("000001", Assert.Single(result).EmployeeId);
         }
@@ -161,7 +180,7 @@ namespace StockFlow.UnitTests.Infrastructure
             await AddEmployeeAsync("000002", EmployeeRole.Tester);
             var sut = new EmployeeRepository(Context);
 
-            var result = await sut.GetAllEmployeesAsync(new EmployeePaginationDto { PageNumber = 1, PageSize = 10 }, includeTesters: true);
+            var result = await sut.GetAllEmployeesAsync(new EmployeePaginationDto { PageNumber = 1, PageSize = 10 }, []);
 
             Assert.Equal(2, result.Count());
         }
@@ -290,6 +309,71 @@ namespace StockFlow.UnitTests.Infrastructure
             var result = await sut.GetAllSalesForProductTags(["tuin", "gereedschap"]);
 
             Assert.Equal(matching.Id, Assert.Single(result).Id);
+        }
+
+        [Fact]
+        public async Task GetAllSalesAsync_StatusFilter_SplitsScheduledActiveAndEnded()
+        {
+            var today = new DateTime(2026, 10, 20);
+            var scheduled = TestData.Sale(10, "a");
+            scheduled.StartDate = today.AddDays(1);
+            var active = TestData.Sale(10, "b");
+            active.StartDate = today;
+            active.EndDate = today;
+            var ended = TestData.Sale(10, "c");
+            ended.EndDate = today.AddDays(-1);
+            Context.Sales.AddRange(scheduled, active, ended);
+            await Context.SaveChangesAsync();
+            var sut = new SalesRepository(Context);
+
+            async Task<Guid> Only(SaleStatusDto status) =>
+                Assert.Single(await sut.GetAllSalesAsync(new SalesPaginationDto { PageNumber = 1, PageSize = 10, Status = status }, today)).Id;
+
+            Assert.Equal(scheduled.Id, await Only(SaleStatusDto.Scheduled));
+            Assert.Equal(active.Id, await Only(SaleStatusDto.Active));
+            Assert.Equal(ended.Id, await Only(SaleStatusDto.Ended));
+            Assert.Equal(3, (await sut.GetAllSalesAsync(new SalesPaginationDto { PageNumber = 1, PageSize = 10 }, today)).Count());
+        }
+
+        [Fact]
+        public async Task GetItemsSoldAsync_CountsSoldMinusReturnedPerSale()
+        {
+            var employee = await AddEmployeeAsync();
+            var product = await AddProductAsync(500000060);
+            var sale = TestData.Sale(10, "tuin");
+            Context.Sales.Add(sale);
+            var log = new CashRegisterLogs { Id = Guid.NewGuid(), ReceiptId = "9000000001", EmployeeId = employee.Id };
+            log.ProductsSold.Add(new RegisterItemDetail { Id = Guid.NewGuid(), CashregisterLogId = log.Id, ProductId = product.Id, SalesId = sale.Id, Amount = 5, ReturnedAmount = 1, PriceAtTimeOfSale = 2m });
+            Context.CashRegisterLogs.Add(log);
+            await Context.SaveChangesAsync();
+            var sut = new SalesRepository(Context);
+
+            var result = await sut.GetItemsSoldAsync([sale.Id]);
+
+            Assert.Equal(4, result[sale.Id]);
+        }
+    }
+
+    public class StatisticsRepositoryTests : RepositoryTestBase
+    {
+        [Fact]
+        public async Task GetPurchasesAsync_ReturnsOnlyThePeriodWithLines()
+        {
+            var employee = await AddEmployeeAsync();
+            var product = await AddProductAsync(500000070);
+            var inside = new CashRegisterLogs { Id = Guid.NewGuid(), ReceiptId = "9000000001", EmployeeId = employee.Id, CreatedAt = new DateTime(2026, 10, 10, 12, 0, 0, DateTimeKind.Utc) };
+            inside.ProductsSold.Add(new RegisterItemDetail { Id = Guid.NewGuid(), CashregisterLogId = inside.Id, ProductId = product.Id, Amount = 1, PriceAtTimeOfSale = 2m });
+            var outside = new CashRegisterLogs { Id = Guid.NewGuid(), ReceiptId = "9000000002", EmployeeId = employee.Id, CreatedAt = new DateTime(2026, 9, 1, 12, 0, 0, DateTimeKind.Utc) };
+            Context.CashRegisterLogs.AddRange(inside, outside);
+            await Context.SaveChangesAsync();
+            Context.ChangeTracker.Clear();
+            var sut = new StatisticsRepository(Context);
+
+            var result = await sut.GetPurchasesAsync(new DateTime(2026, 10, 1, 0, 0, 0, DateTimeKind.Utc), new DateTime(2026, 11, 1, 0, 0, 0, DateTimeKind.Utc));
+
+            var purchase = Assert.Single(result);
+            Assert.Equal("9000000001", purchase.ReceiptId);
+            Assert.NotNull(Assert.Single(purchase.ProductsSold).Product);
         }
     }
 

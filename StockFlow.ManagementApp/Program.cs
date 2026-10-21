@@ -39,14 +39,17 @@ namespace StockFlow.ManagementApp
             builder.Services.AddScoped<IEmployeeService, EmployeeService>();
             builder.Services.AddScoped<ILookupService, LookupService>();
             builder.Services.AddScoped<IReleaseService, ReleaseService>();
+            builder.Services.AddScoped<IStatisticsService, StatisticsService>();
             builder.Services.AddTransient<AuthHandler>();
+
+            string apiBaseUrl = builder.Configuration["ApiBaseUrl"] ?? "https://localhost:7037/";
+            var apiBaseAddress = new Uri(new Uri(builder.HostEnvironment.BaseAddress), apiBaseUrl);
 
             builder.Services.AddScoped(sp =>
             {
                 var handler = sp.GetRequiredService<AuthHandler>();
                 handler.InnerHandler = new HttpClientHandler();
-                string apiBaseUrl = builder.Configuration["ApiBaseUrl"] ?? "https://localhost:7037/";
-                return new HttpClient(handler) { BaseAddress = new Uri(new Uri(builder.HostEnvironment.BaseAddress), apiBaseUrl) };
+                return new HttpClient(handler) { BaseAddress = apiBaseAddress };
             });
 
             await builder.Build().RunAsync();

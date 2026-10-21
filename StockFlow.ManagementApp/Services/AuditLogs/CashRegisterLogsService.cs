@@ -9,6 +9,14 @@ namespace StockFlow.ManagementApp.Services.AuditLogs
 {
     public class CashRegisterLogsService(IHttpService httpService) : ICashRegisterLogsService
     {
+        public async Task<(byte[]?, string error)> GetReceiptPdfAsync(string receiptId)
+        {
+            var response = await httpService.GetFileAsync($"CashRegisterLogs/Receipt/{Uri.EscapeDataString(receiptId)}/Pdf");
+            return response.Succeeded
+                ? (response.Value, "")
+                : (null, $"Error: {response.Message}");
+        }
+
         public async Task<(List<CashRegisterLogsDto>, string error)> GetPaginatedCashRegisterLogsAsync(CashRegisterLogsPaginationDto pagination)
         {
             var url = "CashRegisterLogs/GetAll" +

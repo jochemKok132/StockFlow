@@ -20,6 +20,15 @@
                 <label>Sale name</label>
                 <input type="text" maxlength="@FieldLimits.Name" @bind="pagination.SalesName" @bind:event="oninput" @bind:after="ResetAndLoad" placeholder="e.g. Summer sale" />
             </div>
+            <div class="filter-group">
+                <label>Status</label>
+                <select @bind="pagination.Status" @bind:after="ResetAndLoad">
+                    <option value="">All, including history</option>
+                    <option value="@SaleStatusDto.Active">Active</option>
+                    <option value="@SaleStatusDto.Scheduled">Scheduled</option>
+                    <option value="@SaleStatusDto.Ended">Ended (history)</option>
+                </select>
+            </div>
         </div>
     </div>
 
@@ -31,12 +40,15 @@
                     Sale name @SortingArrow(SalesOrderBy.SaleName)
                 </th>
                 <th @onclick="() => OrderBy(SalesOrderBy.PercentageOff)" class="sortable">
-                    Percentage off @SortingArrow(SalesOrderBy.PercentageOff)
+                    Deal @SortingArrow(SalesOrderBy.PercentageOff)
                 </th>
+                <th>Period</th>
+                <th>Status</th>
                 <th>Tags</th>
                 <th @onclick="() => OrderBy(SalesOrderBy.ProductAmount)" class="sortable">
                     Product amount @SortingArrow(SalesOrderBy.ProductAmount)
                 </th>
+                <th>Items sold</th>
                 @if (canManage)
                 {
                     <th>Management</th>
@@ -66,15 +78,24 @@
                 {
                     <tr class="clickable-row" @onclick="() => OpenDetails(sale)">
                         <td><strong>@sale.SaleName</strong></td>
-                        <td>@sale.PercentageOff</td>
-                        <td>@string.Join(", ", sale.SalesTags)</td>
+                        <td>@SalePricing.Describe(sale)@(sale.SaleType == SaleTypeDto.Moving ? " (moving)" : "")</td>
+                        <td>@Period(sale)</td>
+                        <td>@StatusBadge(sale)</td>
+                        <td>@(sale.SaleType == SaleTypeDto.Moving ? "Customers who are moving" : string.Join(", ", sale.SalesTags))</td>
                         <td>@sale.Products.Count()</td>
-                        <td class="actions-cell">
-                            <div class="table-actions">
-                                <button class="btn-edit" @onclick="() => OpenUpdate(sale)" @onclick:stopPropagation="true"><i class="bi bi-pencil"></i> Edit</button>
-                                <button class="btn-delete" disabled="@viewOnly" title="@(viewOnly ? AccessRules.ViewOnlyMessage : null)" @onclick="() => DeleteItem(sale)" @onclick:stopPropagation="true"><i class="bi bi-trash"></i> Delete</button>
-                            </div>
-                        </td>
+                        <td>@sale.ItemsSold</td>
+                        @if (canManage)
+                        {
+                            <td class="actions-cell">
+                                <div class="table-actions">
+                                    <button class="btn-edit" @onclick="() => OpenUpdate(sale)" @onclick:stopPropagation="true"><i class="bi bi-pencil"></i> Edit</button>
+                                    @if (sale.SaleType != SaleTypeDto.Moving)
+                                    {
+                                        <button class="btn-delete" disabled="@viewOnly" title="@(viewOnly ? AccessRules.ViewOnlyMessage : null)" @onclick="() => DeleteItem(sale)" @onclick:stopPropagation="true"><i class="bi bi-trash"></i> Delete</button>
+                                    }
+                                </div>
+                            </td>
+                        }
                     </tr>
                 }
             }
@@ -138,7 +159,7 @@
     {
         var authState = await AuthStateProvider.GetAuthenticationStateAsync();
         viewOnly = authState.User.IsInRole(AccessRules.ViewOnlyRole);
-        canManage = authState.User.IsInRole("Manager") || authState.User.IsInRole("Admin") || viewOnly;
+        canManage = authState.User.CanOpen(Permissions.ManageStock);
 
         await LoadProducts();
     }
@@ -169,7 +190,7 @@
         changesLoading = true;
         changesError = "";
         await InvokeAsync(StateHasChanged);
-        await LoadLookupsAsync();
+        await LoadLookupsAsync(dto.SaleType == SaleTypeDto.Moving);
 
         itemType = new UpdateSalesDto
         {
@@ -177,7 +198,13 @@
             Description = dto.Description,
             SalesTags = dto.SalesTags,
             SaleName = dto.SaleName,
+            SaleType = dto.SaleType,
             PercentageOff = dto.PercentageOff,
+            BuyAmount = dto.BuyAmount,
+            FreeAmount = dto.FreeAmount,
+            BundlePrice = dto.BundlePrice,
+            StartDate = dto.StartDate,
+            EndDate = dto.EndDate,
         };
 
 
@@ -201,10 +228,24 @@
 
     private Dictionary<string, List<SelectOption>> lookups = new();
 
-    private async Task LoadLookupsAsync()
+    private async Task LoadLookupsAsync(bool movingSale = false)
     {
         var (tags, error) = await LookupService.GetSalesTagOptionsAsync();
-        lookups = new() { [nameof(CreateSalesDto.SalesTags)] = tags };
+        List<SelectOption> types = movingSale
+            ? [new SelectOption(nameof(SaleTypeDto.Moving), "Moving sale", "Only the percentage, name, description and dates can change")]
+            :
+            [
+                new SelectOption(nameof(SaleTypeDto.Percentage), "Percentage off", "Uses Percentage off"),
+                new SelectOption(nameof(SaleTypeDto.MultiBuy), "Multi-buy (1+1, 2+1, ...)", "Uses Buy amount + Free amount"),
+                new SelectOption(nameof(SaleTypeDto.SecondItemHalfPrice), "Second item half price", "Every 2nd item 50% off, no other fields"),
+                new SelectOption(nameof(SaleTypeDto.Bundle), "Bundle price (3 for €10, ...)", "Uses Buy amount (items in the bundle) + Bundle price"),
+            ];
+
+        lookups = new()
+        {
+            [nameof(CreateSalesDto.SalesTags)] = tags,
+            [nameof(CreateSalesDto.SaleType)] = types,
+        };
 
         if (!string.IsNullOrEmpty(error))
             changesError = error.StartsWith("Error:") ? error["Error:".Length..].Trim() : error;
@@ -310,6 +351,21 @@
             pagination.PageNumber--;
         await LoadProducts();
     }
+    private static string Period(SalesDto sale) => (sale.StartDate, sale.EndDate) switch
+    {
+        (null, null) => "Always",
+        ({ } start, null) => $"From {start:dd-MM-yyyy}",
+        (null, { } end) => $"Until {end:dd-MM-yyyy}",
+        ({ } start, { } end) => $"{start:dd-MM-yyyy} – {end:dd-MM-yyyy}",
+    };
+
+    private static RenderFragment StatusBadge(SalesDto sale) => SalePricing.Status(sale.StartDate, sale.EndDate, DateTime.Today) switch
+    {
+        SaleStatusDto.Scheduled => @<span class="status-badge status-update">Scheduled</span>,
+        SaleStatusDto.Ended => @<span class="status-badge status-ended">Ended</span>,
+        _ => @<span class="status-badge status-ok">Active</span>,
+    };
+
     private async Task LoadProducts()
     {
         loading = true;

@@ -11,7 +11,7 @@ namespace StockFlow.API.Controllers
     [Route("[controller]")]
     public class EmployeeLogsController(IEmployeeLogsService employeeLogsService) : ControllerBase
     {
-        [Authorize(Roles = "ServiceDesk,ShiftLeader,Manager,Admin,Tester")]
+        [Authorize(Roles = Permissions.EmployeeLogs)]
         [HttpGet("GetAll")]
         public async Task<IActionResult> GetAllAsync([FromQuery] EmployeeLogsPaginationDto pagination)
         {
@@ -26,7 +26,7 @@ namespace StockFlow.API.Controllers
             }
         }
 
-        [Authorize(Roles = "Manager,Admin")]
+        [Authorize(Roles = Permissions.WriteLogs)]
         [HttpPost("Create")]
         public async Task<IActionResult> CreateAsync(CreateEmployeeLogsDto log)
         {

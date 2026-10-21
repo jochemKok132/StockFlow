@@ -27,5 +27,21 @@ namespace StockFlow.ManagementApp.Services.People
             else
                 return (new List<CustomerDto>(), $"Error: {response.Message}");
         }
+
+        public async Task<(List<CustomerDto>, string error)> GetMovingSaleRequestsAsync()
+        {
+            var response = await httpService.GetAsync<List<CustomerDto>>("Customer/MovingSaleRequests");
+            return response.Succeeded ? (response.Value ?? [], "") : ([], response.Message ?? "The requests could not be loaded.");
+        }
+
+        public Task<string> ApproveMovingSaleAsync(Guid customerId) => ReviewAsync(customerId, "Approve");
+
+        public Task<string> RejectMovingSaleAsync(Guid customerId) => ReviewAsync(customerId, "Reject");
+
+        private async Task<string> ReviewAsync(Guid customerId, string action)
+        {
+            var response = await httpService.PostAsync<CustomerDto, object>($"Customer/MovingSale/{customerId}/{action}", new { });
+            return response.Succeeded ? "" : response.Message ?? "The request could not be saved.";
+        }
     }
 }

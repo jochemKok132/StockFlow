@@ -34,10 +34,13 @@
 
             <div class="price-block">
                 <span class="price">&euro;@GetSalesPrice().ToString("0.00")</span>
-                @if (product.Sales.Any())
+                @if (BestSale is { } sale)
                 {
-                    <span class="price-old">&euro;@product.Price.ToString("0.00")</span>
-                    <span class="sale-badge"><i class="bi bi-tag-fill"></i> -@product.Sales.Max(s => s.PercentageOff)%</span>
+                    @if (GetSalesPrice() != product.Price)
+                    {
+                        <span class="price-old">&euro;@product.Price.ToString("0.00")</span>
+                    }
+                    <span class="sale-badge"><i class="bi bi-tag-fill"></i> @SalePricing.Describe(sale) @sale.SaleName</span>
                 }
             </div>
 
@@ -88,13 +91,12 @@
 
     [Parameter] public EventCallback OnClose { get; set; }
 
+    private SalesDto? BestSale => product is null ? null : SalePricing.BestSale(product, 1, DateTime.Today);
+
     private decimal GetSalesPrice()
     {
         if (product is null) return 0;
-        if (!product.Sales.Any())
-            return product.Price;
-
-        return Math.Round(product.Price * (1 - (product.Sales.Max(s => s.PercentageOff) / 100.0m)), 2);
+        return SalePricing.UnitPrice(product.Price, 1, BestSale);
     }
 
     private string? GetImageDataUrl()

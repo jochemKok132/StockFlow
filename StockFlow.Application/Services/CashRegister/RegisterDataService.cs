@@ -17,11 +17,51 @@ using System.Collections.Generic;
 using System.Text;
 using StockFlow.Application.Validations.CashRegister;
 using StockFlow.Application.Interfaces.Repositories.ManagementApp;
+using StockFlow.Application.Mappings.People;
+using StockFlow.Application.Mappings.Stock;
+using StockFlow.Application.Validations.People;
+using StockFlow.Shared.DTOs.Customer;
 
 namespace StockFlow.Application.Services.CashRegister
 {
-    public class RegisterDataService(IProductService productService, ICashRegisterLogsService cashRegisterLogsService, ICustomerRepository customerRepository, ICustomerLogsService customerLogsService, ICashRegisterLogsRepository cashRegisterLogsRepository) : IRegisterDataService
+    public class RegisterDataService(IProductService productService, ICashRegisterLogsService cashRegisterLogsService, ICustomerRepository customerRepository, ICustomerLogsService customerLogsService, ICashRegisterLogsRepository cashRegisterLogsRepository, ISalesRepository salesRepository) : IRegisterDataService
     {
+        public async Task<CustomerDto> GetCustomerAsync(string customerId)
+        {
+            if (!IdentifierFormats.IsCustomerId(customerId))
+                throw new ArgumentException($"A customer id must be {IdentifierFormats.CustomerIdLength} digits and start with {IdentifierFormats.CustomerIdPrefix}.");
+
+            var customer = await customerRepository.GetCustomerByCustomerIdAsync(customerId);
+            if (customer == null) throw new KeyNotFoundException($"Customer with customer id {customerId} not found.");
+
+            return await ToRegisterCustomerAsync(customer);
+        }
+
+        public async Task<List<CustomerDto>> FindCustomersByAddressAsync(string postalCode, string houseNumber)
+        {
+            new MovingSaleRequest { PostalCode = postalCode ?? "", HouseNumber = houseNumber ?? "" }.Validate();
+
+            var customers = await customerRepository.GetCustomersByAddressAsync(postalCode!, houseNumber!);
+
+            var result = new List<CustomerDto>();
+            foreach (var customer in customers)
+                result.Add(await ToRegisterCustomerAsync(customer));
+            return result;
+        }
+
+        private async Task<CustomerDto> ToRegisterCustomerAsync(Customer customer)
+        {
+            var dto = customer.ToCustomerDto();
+            if (!SalePricing.IsMovingSaleActive(customer.MovingSaleUntil, DateTime.Today))
+                return dto;
+
+            var movingSale = await salesRepository.GetByIdAsync(SalePricing.MovingSaleId);
+            if (movingSale is not null && !movingSale.SoftDeleted)
+                dto.MovingSale = movingSale.ToSalesDto(includeProducts: false);
+
+            return dto;
+        }
+
         public async Task<string> FinalizePurchase(Purchase purchase, Guid employeeId)
         {
             if (purchase == null) throw new ArgumentException("Purchase is required.");
@@ -34,13 +74,13 @@ namespace StockFlow.Application.Services.CashRegister
                     customer = null;
             }
 
-            purchase.Validate(customer is not null, customer?.SavedPoints ?? 0);
+            purchase.Validate(customer is not null, customer?.SavedPoints ?? 0, customer?.MovingSaleUntil);
             
             foreach(var stock in purchase.ProductsSold)
             {
                 await productService.UpdateProductStockAsync(stock.Product.Id, -stock.Amount, employeeId);
             }
-            decimal amountPaid = purchase.ProductsSold.Sum(l => l.PriceAtTimeOfSale * l.Amount) - LoyaltyPoints.ToEuros(purchase.PointsUsed);
+            decimal amountPaid = purchase.ProductsSold.Sum(l => SalePricing.Total(l.PriceAtTimeOfSale, l.Amount)) - LoyaltyPoints.ToEuros(purchase.PointsUsed);
             int pointsEarned = customer is null ? 0 : LoyaltyPoints.PointsEarned(amountPaid);
 
             var log = purchase.ToCashRegisterLogsDto(employeeId);
@@ -108,7 +148,7 @@ namespace StockFlow.Application.Services.CashRegister
                     throw new ArgumentException($"Only {returnable} of {name} can still be returned on receipt {log.ReceiptId}.");
             }
 
-            decimal linesTotal = log.ProductsSold.Sum(l => l.PriceAtTimeOfSale * l.Amount);
+            decimal linesTotal = log.ProductsSold.Sum(l => SalePricing.Total(l.PriceAtTimeOfSale, l.Amount));
             decimal totalPaid = (decimal)log.TotalPrice;
             decimal refund = 0m;
 
@@ -127,7 +167,7 @@ namespace StockFlow.Application.Services.CashRegister
                 }
             }
 
-            decimal keptValue = log.ProductsSold.Sum(l => l.PriceAtTimeOfSale * (l.Amount - l.ReturnedAmount))
+            decimal keptValue = log.ProductsSold.Sum(l => SalePricing.Total(l.PriceAtTimeOfSale, l.Amount - l.ReturnedAmount))
                 * ReturnRules.PaidShare(totalPaid, linesTotal);
             int pointsStillEarned = Math.Min(log.PointsEarned, LoyaltyPoints.PointsEarned(keptValue));
             int pointsDeducted = log.PointsEarned - pointsStillEarned;

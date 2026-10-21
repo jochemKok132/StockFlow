@@ -12,10 +12,10 @@ using StockFlow.Application.Interfaces.ManagementApp.Stock;
 
 namespace StockFlow.API.Controllers.CashRegister
 {
-    [Authorize(Roles = "Cashier,ServiceDesk,ShiftLeader,Manager,Admin,Tester")]
+    [Authorize(Roles = Permissions.CashRegister)]
     [ApiController]
     [Route("[controller]")]
-    public class CashRegisterController(IRegisterDataService registerDataService, IProductService productService, ICustomerService customerService, ICashRegisterLogsService cashRegisterLogsService) : ControllerBase
+    public class CashRegisterController(IRegisterDataService registerDataService, IProductService productService, ICashRegisterLogsService cashRegisterLogsService) : ControllerBase
     {
         [HttpPost("Purchase")]
         public async Task<IActionResult> FinalizePurchaseAsync(Purchase purchase)
@@ -80,18 +80,32 @@ namespace StockFlow.API.Controllers.CashRegister
         [HttpGet("Customer/{customerId}")]
         public async Task<IActionResult> GetCustomerAsync(string customerId)
         {
-            if (!IdentifierFormats.IsCustomerId(customerId))
-                return BadRequest(ApiResponse<CustomerDto>.Fail(
-                    $"A customer id must be {IdentifierFormats.CustomerIdLength} digits and start with {IdentifierFormats.CustomerIdPrefix}."));
-
             try
             {
-                CustomerDto customer = await customerService.GetCustomerByCustomerIdAsync(customerId);
+                CustomerDto customer = await registerDataService.GetCustomerAsync(customerId);
                 return Ok(ApiResponse<CustomerDto>.Ok(customer));
+            }
+            catch (ArgumentException exception)
+            {
+                return BadRequest(ApiResponse<CustomerDto>.Fail(exception.Message));
             }
             catch (KeyNotFoundException exception)
             {
                 return NotFound(ApiResponse<CustomerDto>.Fail(exception.Message));
+            }
+        }
+
+        [HttpGet("Customer/Search")]
+        public async Task<IActionResult> FindCustomersAsync([FromQuery] string postalCode, [FromQuery] string houseNumber)
+        {
+            try
+            {
+                List<CustomerDto> customers = await registerDataService.FindCustomersByAddressAsync(postalCode, houseNumber);
+                return Ok(ApiResponse<List<CustomerDto>>.Ok(customers));
+            }
+            catch (ArgumentException exception)
+            {
+                return BadRequest(ApiResponse<List<CustomerDto>>.Fail(exception.Message));
             }
         }
 

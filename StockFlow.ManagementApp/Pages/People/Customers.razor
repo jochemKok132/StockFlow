@@ -1,5 +1,5 @@
 ﻿@page "/customers";
-@attribute [Authorize]
+@attribute [Authorize(Roles = Permissions.ViewCustomers)]
 @inject ICustomerService customerService
 
 <div class="tasks-header">
@@ -50,6 +50,7 @@
                 <th @onclick="() => OrderBy(CustomerOrderBy.SavedPoints)" class="sortable">
                     Saved points @SortingArrow(CustomerOrderBy.SavedPoints)
                 </th>
+                <th>Moving sale</th>
             </tr>
         </thead>
         <tbody>
@@ -80,6 +81,24 @@
                         <td>@customer.PostalCode</td>
                         <td>@customer.HouseNumber</td>
                         <td>@customer.SavedPoints</td>
+                        <td>
+                            @if (SalePricing.IsMovingSaleActive(customer.MovingSaleUntil, DateTime.Today))
+                            {
+                                <span class="status-badge status-ok">Until @customer.MovingSaleUntil!.Value.ToString("dd-MM-yyyy")</span>
+                            }
+                            else if (customer.MovingSaleStatus == MovingSaleStatusDto.Pending)
+                            {
+                                <span class="status-badge status-update">Waiting for approval</span>
+                            }
+                            else if (customer.MovingSaleUntil is { } ended)
+                            {
+                                <span class="status-badge status-ended">Ended @ended.ToString("dd-MM-yyyy")</span>
+                            }
+                            else if (customer.MovingSaleStatus == MovingSaleStatusDto.Rejected)
+                            {
+                                <span class="status-badge status-ended">Rejected</span>
+                            }
+                        </td>
                     </tr>
                 }
             }

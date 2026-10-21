@@ -6,6 +6,7 @@ using StockFlow.Shared.DTOs.Customer.CustomerAuthentication;
 using StockFlow.Shared.DTOs.Pagination;
 using StockFlow.Application.Interfaces;
 using System.Security.Authentication;
+using System.Security.Claims;
 
 namespace StockFlow.API.Controllers
 {
@@ -13,7 +14,7 @@ namespace StockFlow.API.Controllers
     [Route("[controller]")]
     public class CustomerController(ICustomerService customerService) : ControllerBase
     {
-        [Authorize(Roles = "Manager,Admin,ShiftLeader,Tester")]
+        [Authorize(Roles = Permissions.ViewCustomers)]
         [HttpGet("GetAll")]
         public async Task<IActionResult> GetAllAsync([FromQuery] CustomerPaginationDto pagination)
         {
@@ -28,7 +29,7 @@ namespace StockFlow.API.Controllers
             }
         }
 
-        [Authorize(Roles = AuthRoles.Employees)]
+        [Authorize(Roles = Permissions.Employees)]
         [HttpGet("GetById/{id:guid}")]
         public async Task<IActionResult> GetByIdAsync(Guid id)
         {
@@ -43,7 +44,7 @@ namespace StockFlow.API.Controllers
             }
         }
 
-        [Authorize(Roles = AuthRoles.Employees)]
+        [Authorize(Roles = Permissions.Employees)]
         [HttpGet("GetByEmail/{email}")]
         public async Task<IActionResult> GetByEmailAsync(string email)
         {
@@ -58,7 +59,7 @@ namespace StockFlow.API.Controllers
             }
         }
 
-        [Authorize(Roles = "Manager,Admin")]
+        [Authorize(Roles = Permissions.ManageCustomers)]
         [HttpPut("Update")]
         public async Task<IActionResult> UpdateAsync(UpdateCustomerDto request)
         {
@@ -129,6 +130,65 @@ namespace StockFlow.API.Controllers
             catch (KeyNotFoundException exception)
             {
                 return NotFound(ApiResponse<object>.Fail(exception.Message));
+            }
+        }
+
+        [Authorize(Roles = AuthRoles.Customer)]
+        [HttpPost("MovingSale")]
+        public async Task<IActionResult> RequestMovingSaleAsync(MovingSaleRequest request)
+        {
+            if (!User.TryGetUserId(out Guid customerId))
+                return Unauthorized(ApiResponse<CustomerDto>.Fail(ApiMessages.NotLoggedIn));
+
+            try
+            {
+                CustomerDto customer = await customerService.RequestMovingSaleAsync(customerId, request);
+                return Ok(ApiResponse<CustomerDto>.Ok(customer, "Your moving sale request was sent. A shift leader will check it."));
+            }
+            catch (ArgumentException exception)
+            {
+                return BadRequest(ApiResponse<CustomerDto>.Fail(exception.Message));
+            }
+            catch (KeyNotFoundException exception)
+            {
+                return NotFound(ApiResponse<CustomerDto>.Fail(exception.Message));
+            }
+        }
+
+        [Authorize(Roles = Permissions.ViewMovingSales)]
+        [HttpGet("MovingSaleRequests")]
+        public async Task<IActionResult> GetMovingSaleRequestsAsync()
+        {
+            List<CustomerDto> customers = await customerService.GetMovingSaleRequestsAsync();
+            return Ok(ApiResponse<List<CustomerDto>>.Ok(customers));
+        }
+
+        [Authorize(Roles = Permissions.ApproveMovingSales)]
+        [HttpPost("MovingSale/{id:guid}/Approve")]
+        public Task<IActionResult> ApproveMovingSaleAsync(Guid id) =>
+            ReviewMovingSaleAsync(() => customerService.ApproveMovingSaleAsync(id, ReviewerId()), "Moving sale approved.");
+
+        [Authorize(Roles = Permissions.ApproveMovingSales)]
+        [HttpPost("MovingSale/{id:guid}/Reject")]
+        public Task<IActionResult> RejectMovingSaleAsync(Guid id) =>
+            ReviewMovingSaleAsync(() => customerService.RejectMovingSaleAsync(id, ReviewerId()), "Moving sale rejected.");
+
+        private string ReviewerId() => User.FindFirstValue(ClaimTypes.Thumbprint) ?? "";
+
+        private async Task<IActionResult> ReviewMovingSaleAsync(Func<Task<CustomerDto>> review, string message)
+        {
+            try
+            {
+                CustomerDto customer = await review();
+                return Ok(ApiResponse<CustomerDto>.Ok(customer, message));
+            }
+            catch (ArgumentException exception)
+            {
+                return BadRequest(ApiResponse<CustomerDto>.Fail(exception.Message));
+            }
+            catch (KeyNotFoundException exception)
+            {
+                return NotFound(ApiResponse<CustomerDto>.Fail(exception.Message));
             }
         }
 

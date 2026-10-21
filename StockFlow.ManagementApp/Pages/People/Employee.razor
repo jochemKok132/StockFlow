@@ -1,5 +1,5 @@
 ﻿@page "/employees";
-@attribute [Authorize]
+@attribute [Authorize(Roles = Permissions.ViewEmployees)]
 @inject IEmployeeService employeeService
 @inject AuthenticationStateProvider AuthStateProvider
 
@@ -83,10 +83,12 @@
                         @if (canManage)
                         {
                             <td class="actions-cell">
-                                <div class="table-actions">
-                                    <button class="btn-edit" @onclick="() => OpenUpdate(Employee)" @onclick:stopPropagation="true"><i class="bi bi-pencil"></i> Edit</button>
-                                    <button class="btn-delete" disabled="@viewOnly" title="@(viewOnly ? AccessRules.ViewOnlyMessage : null)" @onclick="() => DeleteItem(Employee)" @onclick:stopPropagation="true"><i class="bi bi-trash"></i> Delete</button>
-                                </div>
+                                @if (CanEdit(Employee))
+                                {
+                                    <div class="table-actions">
+                                        <button class="btn-edit" @onclick="() => OpenUpdate(Employee)" @onclick:stopPropagation="true"><i class="bi bi-pencil"></i> Edit</button>
+                                    </div>
+                                }
                             </td>
                         }
                     </tr>
@@ -132,6 +134,7 @@
     private bool showChanges = false;
     private bool canManage;
     private bool viewOnly;
+    private EmployeeRoleDto actorRole = EmployeeRoleDto.None;
     private Dictionary<string, List<SelectOption>> roleLookups = new();
 
     private object? itemType;
@@ -152,25 +155,21 @@
     {
         var authState = await AuthStateProvider.GetAuthenticationStateAsync();
         viewOnly = authState.User.IsInRole(AccessRules.ViewOnlyRole);
-        bool isAdmin = authState.User.IsInRole(AccessRules.AdminRole);
+        actorRole = authState.User.EmployeeRole();
         roleLookups = new()
         {
             [nameof(CreateEmployeeDto.Role)] = Enum.GetValues<EmployeeRoleDto>()
-                .Where(role => role != EmployeeRoleDto.None && (isAdmin || role != EmployeeRoleDto.Tester))
+                .Where(role => viewOnly ? RoleHierarchy.IsBelow(actorRole, role) : RoleHierarchy.CanManage(actorRole, role))
                 .Select(role => new SelectOption(role.ToString(), System.Text.RegularExpressions.Regex.Replace(role.ToString(), "(?<=[a-z])(?=[A-Z])", " ")))
                 .ToList(),
         };
-        canManage = authState.User.IsInRole("Manager") || authState.User.IsInRole("Admin") || viewOnly;
+        canManage = authState.User.CanOpen(Permissions.ManageEmployees);
 
         await LoadEmployee();
     }
-    private async Task DeleteItem(EmployeeDto shelf)
-    {
-        if (!canManage || viewOnly) return;
-
-        await employeeService.SoftDeleteEmployeeAsync(shelf.Id);
-        await ResetAndLoad();
-    }
+    private bool CanEdit(EmployeeDto employee) => viewOnly
+        ? RoleHierarchy.IsBelow(actorRole, employee.Role)
+        : RoleHierarchy.CanManage(actorRole, employee.Role);
     private async Task OpenUpdate(EmployeeDto dto)
     {
         if (!canManage) return;
