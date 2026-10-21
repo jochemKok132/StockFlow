@@ -119,6 +119,7 @@ A short list of everything StockFlow can do right now, followed by the [to-do li
 - Light colour scheme, every colour a `:root` variable
 - Only `px` and `%` units, corners 4 px or less
 - No transitions, flat surfaces with 1 px borders
+- StockFlow logo (stencil S) in the sidebar, on the login page, as the browser tab icon, and as the cash register's exe and window icon
 
 ## Tests and CI
 
@@ -155,6 +156,7 @@ A short list of everything StockFlow can do right now, followed by the [to-do li
 - [ ] Write off stock (*afboeken*) with a reason, with a few basic reasons to pick from (damaged, expired, stolen, lost, other); show it in the stock logs and the product history
 - [ ] Downsize product images on upload
 - [ ] Show the barcode in the product details
+- [ ] Barcode image (scannable) of the product barcode in the product details
 - [ ] Minimum and maximum stock per product
 - [ ] Non-orderable products
 - [ ] Recall products
@@ -195,6 +197,10 @@ A short list of everything StockFlow can do right now, followed by the [to-do li
 
 
 
+## Receipts
+
+- [ ] Scannable barcode image of the receipt id at the bottom of the receipt PDF, so a return can start by scanning the receipt
+
 ## Login
 
 - [ ] Refresh tokens
@@ -207,5 +213,4 @@ A short list of everything StockFlow can do right now, followed by the [to-do li
 
 ## Look and feel
 
-- [ ] Logo
 - [ ] A house style that is clean and welcoming, but also modern

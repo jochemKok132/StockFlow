@@ -30,11 +30,28 @@ namespace StockFlow.CashRegister.Screens
 
         private static Font Font(float size, FontStyle style = FontStyle.Regular) => new(Family, size, style);
 
+        private static readonly Lazy<Icon?> AppIcon = new(LoadAppIcon);
+
         public static void ApplyForm(Form form)
         {
             form.BackColor = DashboardColor;
             form.ForeColor = TextColor;
             form.Font = Font(10);
+
+            if (AppIcon.Value is { } icon)
+                form.Icon = icon;
+        }
+
+        private static Icon? LoadAppIcon()
+        {
+            try
+            {
+                return Environment.ProcessPath is { } path ? Icon.ExtractAssociatedIcon(path) : null;
+            }
+            catch
+            {
+                return null;
+            }
         }
 
         public static void ApplyPage(Control control)

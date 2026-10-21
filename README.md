@@ -507,6 +507,18 @@ The management app follows a house style (`wwwroot/css/app.css` plus scoped `.ra
 
 The cash register mirrors the same palette in `Screens/Theme.cs`.
 
+### Logo
+
+The logo is a white stencil **S** on a `#111111` rounded square.
+
+| File | Used for |
+|---|---|
+| `StockFlow.ManagementApp/wwwroot/logo.svg` | The master file. Sidebar, login page and the browser tab icon |
+| `StockFlow.ManagementApp/wwwroot/favicon.png` (32 px), `icon-192.png`, `icon-512.png` | Tab icon for browsers without SVG icons, home screen icon (`apple-touch-icon`) |
+| `StockFlow.CashRegister/app.ico` (16 – 256 px) | The `.exe` icon (`<ApplicationIcon>` in the `.csproj`) and the icon of every cash register window (`Theme.ApplyForm`) |
+
+To change the logo, edit `logo.svg` and export the PNG and ICO sizes again from it.
+
 ---
 
 ## Tests
