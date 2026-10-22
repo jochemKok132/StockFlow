@@ -12,6 +12,7 @@ namespace StockFlow.ManagementApp.Interfaces.Stock
         Task<string> CreateProductAsync(CreateProductDto product);
         Task<string> UpdateProductAsync(UpdateProductDto product);
         Task<string> SoftDeleteProductAsync(Guid id);
+        Task<(int? stock, string message)> WriteOffAsync(WriteOffRequest request);
     }
 }
 

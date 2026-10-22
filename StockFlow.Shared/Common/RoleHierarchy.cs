@@ -14,6 +14,7 @@ namespace StockFlow.Shared.Common
             EmployeeRoleDto.Admin,
             EmployeeRoleDto.Tester,
             EmployeeRoleDto.Manager,
+            EmployeeRoleDto.Support,
             EmployeeRoleDto.ShiftLeader,
             EmployeeRoleDto.ServiceDesk,
             EmployeeRoleDto.Cashier,

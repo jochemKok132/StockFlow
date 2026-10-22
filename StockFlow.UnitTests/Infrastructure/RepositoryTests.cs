@@ -57,6 +57,94 @@ namespace StockFlow.UnitTests.Infrastructure
         }
     }
 
+    public class TicketRepositoryTests : RepositoryTestBase
+    {
+        private async Task AddTicketAsync(Employee employee, int number, TicketType type, TicketStatus status = TicketStatus.Open)
+        {
+            Context.Tickets.Add(new StockFlow.Domain.Entities.Support.Ticket
+            {
+                Id = Guid.NewGuid(),
+                TicketNumber = number,
+                Type = type,
+                Status = status,
+                Title = $"Ticket {number}",
+                Description = "x",
+                CreatedById = employee.Id,
+            });
+            await Context.SaveChangesAsync();
+        }
+
+        [Fact]
+        public async Task GetNextTicketNumberAsync_NoTickets_StartsAt1001()
+        {
+            var sut = new TicketRepository(Context);
+
+            Assert.Equal(TicketRepository.FirstTicketNumber, await sut.GetNextTicketNumberAsync());
+        }
+
+        [Fact]
+        public async Task GetNextTicketNumberAsync_WithTickets_ReturnsHighestPlusOne()
+        {
+            var employee = await AddEmployeeAsync();
+            await AddTicketAsync(employee, 1001, TicketType.Support);
+            await AddTicketAsync(employee, 1007, TicketType.Bug);
+            var sut = new TicketRepository(Context);
+
+            Assert.Equal(1008, await sut.GetNextTicketNumberAsync());
+        }
+
+        [Fact]
+        public async Task GetByTypesAsync_FiltersOnTypeAndStatusAndPutsOpenFirst()
+        {
+            var employee = await AddEmployeeAsync();
+            await AddTicketAsync(employee, 1001, TicketType.Bug, TicketStatus.Done);
+            await AddTicketAsync(employee, 1002, TicketType.Support);
+            await AddTicketAsync(employee, 1003, TicketType.Feature);
+            var sut = new TicketRepository(Context);
+
+            var feedback = (await sut.GetByTypesAsync([TicketType.Bug, TicketType.Feature], null)).ToList();
+            var done = await sut.GetByTypesAsync([TicketType.Bug, TicketType.Feature], TicketStatus.Done);
+
+            Assert.Equal([1003, 1001], feedback.Select(t => t.TicketNumber));
+            Assert.Equal(employee.EmployeeId, feedback[0].CreatedBy.EmployeeId);
+            Assert.Equal(1001, Assert.Single(done).TicketNumber);
+        }
+
+        [Fact]
+        public async Task GetForEmployeeAsync_ReturnsOnlyThatEmployeesTickets()
+        {
+            var first = await AddEmployeeAsync("000001");
+            var second = await AddEmployeeAsync("000002");
+            await AddTicketAsync(first, 1001, TicketType.Support);
+            await AddTicketAsync(second, 1002, TicketType.Support);
+            var sut = new TicketRepository(Context);
+
+            var result = await sut.GetForEmployeeAsync(first.Id);
+
+            Assert.Equal(1001, Assert.Single(result).TicketNumber);
+        }
+    }
+
+    public class DeletedItemsRepositoryTests : RepositoryTestBase
+    {
+        [Fact]
+        public async Task RestoreAsync_DeletedProduct_IsVisibleAgain()
+        {
+            var product = await AddProductAsync(500000001);
+            product.SoftDeleted = true;
+            product.SoftDeletedAt = DateTime.UtcNow;
+            await Context.SaveChangesAsync();
+            var sut = new DeletedItemsRepository(Context);
+
+            Assert.Single(await sut.GetDeletedProductsAsync());
+
+            await sut.RestoreAsync(product);
+
+            Assert.Empty(await sut.GetDeletedProductsAsync());
+            Assert.False(Context.Products.Single().SoftDeleted);
+        }
+    }
+
     public class CustomerRepositoryTests : RepositoryTestBase
     {
         private readonly CustomerRepository _sut;

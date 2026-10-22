@@ -299,7 +299,6 @@ namespace StockFlow.Infrastructure.Data.Migrations
                     b.ToTable("Employees");
                 });
 
-
             modelBuilder.Entity("StockFlow.Domain.Entities.Stock.Product", b =>
                 {
                     b.Property<Guid>("Id")
@@ -477,6 +476,59 @@ namespace StockFlow.Infrastructure.Data.Migrations
                     b.ToTable("Shelves");
                 });
 
+            modelBuilder.Entity("StockFlow.Domain.Entities.Support.Ticket", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("CreatedById")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime?>("HandledAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid?>("HandledById")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Response")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("TicketNumber")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("Type")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CreatedById");
+
+                    b.HasIndex("HandledById");
+
+                    b.HasIndex("TicketNumber")
+                        .IsUnique();
+
+                    b.ToTable("Tickets");
+                });
+
             modelBuilder.Entity("ProductSales", b =>
                 {
                     b.HasOne("StockFlow.Domain.Entities.Stock.Product", null)
@@ -583,6 +635,24 @@ namespace StockFlow.Infrastructure.Data.Migrations
                     b.Navigation("Brand");
 
                     b.Navigation("Shelf");
+                });
+
+            modelBuilder.Entity("StockFlow.Domain.Entities.Support.Ticket", b =>
+                {
+                    b.HasOne("StockFlow.Domain.Entities.People.Employee", "CreatedBy")
+                        .WithMany()
+                        .HasForeignKey("CreatedById")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("StockFlow.Domain.Entities.People.Employee", "HandledBy")
+                        .WithMany()
+                        .HasForeignKey("HandledById")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("CreatedBy");
+
+                    b.Navigation("HandledBy");
                 });
 
             modelBuilder.Entity("StockFlow.Domain.Entities.AuditLogs.CashRegisterLogs", b =>

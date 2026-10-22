@@ -2,6 +2,7 @@
 @using System.ComponentModel.DataAnnotations
 @using System.Globalization
 @using System.Reflection
+@inject ConfirmService Confirm
 @using Microsoft.AspNetCore.Components.Forms
 
 @if (Show)
@@ -152,6 +153,9 @@
         editing = false;
         typedLengths.Clear();
         snapshot = item is null ? null : CreateSnapshot();
+        snapshotValues = item is null
+            ? []
+            : EditableProperties.ToDictionary(prop => prop.Name, prop => System.Text.Json.JsonSerializer.Serialize(Normalize(prop.GetValue(item))));
     }
 
     private bool IsUpdate =>
@@ -167,6 +171,16 @@
 
         return System.Text.Json.JsonSerializer.Serialize(values);
     }
+
+    private Dictionary<string, string> snapshotValues = [];
+
+    private List<string> ChangedFields() =>
+        EditableProperties
+            .Where(prop => !IsHidden(prop) &&
+                           (!snapshotValues.TryGetValue(prop.Name, out var old) ||
+                            old != System.Text.Json.JsonSerializer.Serialize(Normalize(prop.GetValue(item)))))
+            .Select(prop => prop.PropertyType == typeof(byte[]) ? $"{DisplayName(prop)} (new image)" : DisplayName(prop))
+            .ToList();
 
     private static object? Normalize(object? value) => value switch
     {
@@ -368,15 +382,17 @@
             return;
         }
 
-        if (file.Size > FieldLimits.MaxImageBytes)
+        if (file.Size > ImageFormats.MaxOriginalBytes)
         {
-            Error = $"'{file.Name}' exceeds the {FieldLimits.MaxImageBytes / (1024 * 1024)} MB limit.";
+            Error = $"'{file.Name}' exceeds the {ImageFormats.MaxOriginalBytes / (1024 * 1024)} MB limit.";
             return;
         }
 
         try
         {
-            using var stream = file.OpenReadStream(FieldLimits.MaxImageBytes);
+            var resized = await file.RequestImageFileAsync(ImageFormats.ResizedContentType(file.ContentType), ImageFormats.MaxDimension, ImageFormats.MaxDimension);
+
+            using var stream = resized.OpenReadStream(FieldLimits.MaxImageBytes);
             using var ms = new MemoryStream();
             await stream.CopyToAsync(ms);
 
@@ -393,7 +409,7 @@
         }
         catch (IOException)
         {
-            Error = $"'{file.Name}' exceeds the {FieldLimits.MaxImageBytes / (1024 * 1024)} MB limit.";
+            Error = $"'{file.Name}' is still bigger than {FieldLimits.MaxImageBytes / (1024 * 1024)} MB after downsizing.";
         }
     }
 
@@ -411,6 +427,13 @@
         editing = false;
         if (ViewOnly) return;
         if (IsUpdate && !HasChanges) return;
+
+        if (IsUpdate)
+        {
+            var changed = ChangedFields();
+            if (!await Confirm.AskAsync($"Save {Title.ToLowerInvariant()}", "Save these changes?", "Save", details: changed.Select(f => $"{f} changed").ToList()))
+                return;
+        }
 
         if (OnSave.HasDelegate)
         {

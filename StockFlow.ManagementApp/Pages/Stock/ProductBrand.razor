@@ -2,6 +2,7 @@
 @attribute [Authorize]
 @inject IProductBrandService productBrandService
 @inject AuthenticationStateProvider AuthStateProvider
+@inject ConfirmService Confirm
 
 <div class="tasks-header">
     <div>
@@ -142,6 +143,7 @@
     private async Task DeleteItem(ProductBrandDto product)
     {
         if (!canManage || viewOnly) return;
+        if (!await Confirm.AskAsync("Delete brand", $"Delete the brand {product.BrandName}?", "Delete", danger: true, details: ["An admin can restore it later under Deleted items."])) return;
 
         await productBrandService.SoftDeleteProductBrandAsync(product.Id);
         await ResetAndLoad();

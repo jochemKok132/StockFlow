@@ -16,5 +16,6 @@ namespace StockFlow.Application.Interfaces.ManagementApp.Stock
         Task SoftDeleteProductAsync(Guid id, Guid employeeId);
         Task UpdateProductStockAsync(Guid id, int amount, Guid employeeId, LogTypeDto logType = LogTypeDto.Sold);
         Task<ProductDto> GetProductByBarcodeAsync(int barcode);
+        Task<int> WriteOffStockAsync(WriteOffRequest request, Guid employeeId);
     }
 }

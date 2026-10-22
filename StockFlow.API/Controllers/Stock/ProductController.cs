@@ -41,6 +41,28 @@ namespace StockFlow.API.Controllers
             }
         }
 
+        [Authorize(Roles = Permissions.WriteOffStock)]
+        [HttpPost("WriteOff")]
+        public async Task<IActionResult> WriteOffAsync(WriteOffRequest request)
+        {
+            if (!User.TryGetUserId(out Guid userId))
+                return Unauthorized(ApiResponse<int>.Fail(ApiMessages.NotLoggedIn));
+
+            try
+            {
+                int stock = await productService.WriteOffStockAsync(request, userId);
+                return Ok(ApiResponse<int>.Ok(stock, $"{request.Amount} written off. Stock is now {stock}."));
+            }
+            catch (ArgumentException exception)
+            {
+                return BadRequest(ApiResponse<int>.Fail(exception.Message));
+            }
+            catch (KeyNotFoundException exception)
+            {
+                return NotFound(ApiResponse<int>.Fail(exception.Message));
+            }
+        }
+
         [Authorize(Roles = Permissions.ManageStock)]
         [HttpPost("Create")]
         public async Task<IActionResult> CreateAsync(CreateProductDto request)

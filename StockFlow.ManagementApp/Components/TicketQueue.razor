@@ -1,0 +1,189 @@
+﻿@inject ITicketService TicketService
+@inject AuthenticationStateProvider AuthStateProvider
+@inject ConfirmService Confirm
+
+<div class="card">
+    <div class="filters-bar">
+        <div class="filters">
+            <div class="filter-group">
+                <label>Status</label>
+                <select @bind="status" @bind:after="LoadAsync">
+                    <option value="">All</option>
+                    @foreach (var value in Enum.GetValues<TicketStatusDto>())
+                    {
+                        <option value="@value">@(value == TicketStatusDto.InProgress ? "In progress" : value.ToString())</option>
+                    }
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <table class="tasks-table">
+        <thead>
+            <tr>
+                <th>Ticket</th>
+                @if (Feedback)
+                {
+                    <th>Type</th>
+                }
+                <th>Title</th>
+                <th>From</th>
+                <th>Status</th>
+                <th>Sent</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (loading)
+            {
+                <tr><td class="loading">Loading...</td></tr>
+            }
+            else if (!string.IsNullOrEmpty(error))
+            {
+                <tr><td class="alert-danger">@error</td></tr>
+            }
+            else if (tickets.Count == 0)
+            {
+                <tr><td class="empty-state">No tickets found.</td></tr>
+            }
+            else
+            {
+                @foreach (var ticket in tickets)
+                {
+                    <tr class="clickable-row" @onclick="() => Open(ticket)">
+                        <td class="id-cell">#@ticket.TicketNumber</td>
+                        @if (Feedback)
+                        {
+                            <td>@TicketStatusBadge.TypeLabel(ticket.Type)</td>
+                        }
+                        <td><strong>@ticket.Title</strong></td>
+                        <td>
+                            <span>@ticket.CreatedByName</span>
+                            <span class="sub-text">@ticket.CreatedByEmployeeId</span>
+                        </td>
+                        <td><TicketStatusBadge Status="ticket.Status" /></td>
+                        <td class="date-cell">@ticket.CreatedAt.ToLocalTime().ToString("dd-MM-yyyy HH:mm")</td>
+                    </tr>
+                }
+            }
+        </tbody>
+    </table>
+</div>
+
+@if (selected is { } open)
+{
+    <ModalOverlay OnClose="Close">
+        <div class="panel-header">
+            <div>
+                <span class="panel-label">@TicketStatusBadge.TypeLabel(open.Type) #@open.TicketNumber</span>
+                <h3>@open.Title</h3>
+                <p>@open.CreatedByName (@open.CreatedByEmployeeId) &middot; @open.CreatedAt.ToLocalTime().ToString("dd-MM-yyyy HH:mm")</p>
+            </div>
+            <button class="btn-icon" title="Close" @onclick="Close">
+                <i class="bi bi-x-lg"></i>
+            </button>
+        </div>
+
+        <p class="ticket-description">@open.Description</p>
+
+        @if (open.HandledAt is { } handledAt)
+        {
+            <span class="sub-text">Last handled by @open.HandledByName (@open.HandledByEmployeeId) on @handledAt.ToLocalTime().ToString("dd-MM-yyyy HH:mm")</span>
+        }
+
+        <div class="field">
+            <label for="ticket-status">Status</label>
+            <select id="ticket-status" @bind="handle.Status" disabled="@(!canHandle)">
+                @foreach (var value in Enum.GetValues<TicketStatusDto>())
+                {
+                    <option value="@value">@(value == TicketStatusDto.InProgress ? "In progress" : value.ToString())</option>
+                }
+            </select>
+        </div>
+        <div class="field">
+            <label for="ticket-response">Answer for @open.CreatedByName</label>
+            <textarea id="ticket-response" rows="4" maxlength="@FieldLimits.Description" @bind="handle.Response" @bind:event="oninput" readonly="@(!canHandle)"></textarea>
+        </div>
+
+        @if (!string.IsNullOrEmpty(message))
+        {
+            <div class="alert-danger">@message</div>
+        }
+
+        <div class="form-actions">
+            <button type="button" class="btn-cancel" @onclick="Close">Cancel</button>
+            @if (canHandle)
+            {
+                <button type="button" class="btn-save" disabled="@(saving || viewOnly)" title="@(viewOnly ? AccessRules.ViewOnlyMessage : null)" @onclick="SaveAsync">
+                    <i class="bi bi-check-lg"></i> Save
+                </button>
+            }
+        </div>
+    </ModalOverlay>
+}
+
+@code {
+    [Parameter] public bool Feedback { get; set; }
+    [Parameter] public string HandleRoles { get; set; } = "";
+
+    private List<TicketDto> tickets = [];
+    private TicketStatusDto? status;
+    private TicketDto? selected;
+    private HandleTicketRequest handle = new();
+    private bool loading;
+    private bool saving;
+    private bool canHandle;
+    private bool viewOnly;
+    private string error = "";
+    private string message = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        canHandle = authState.User.CanOpen(HandleRoles);
+        viewOnly = authState.User.IsInRole(AccessRules.ViewOnlyRole);
+        await LoadAsync();
+    }
+
+    private async Task LoadAsync()
+    {
+        loading = true;
+        (tickets, error) = await TicketService.GetQueueAsync(Feedback, status);
+        loading = false;
+    }
+
+    private void Open(TicketDto ticket)
+    {
+        selected = ticket;
+        message = "";
+        handle = new HandleTicketRequest
+        {
+            Status = ticket.Status == TicketStatusDto.Open ? TicketStatusDto.InProgress : ticket.Status,
+            Response = ticket.Response,
+        };
+    }
+
+    private void Close() => selected = null;
+
+    private async Task SaveAsync()
+    {
+        if (selected is not { } ticket || !canHandle || viewOnly || saving) return;
+
+        string statusLabel = handle.Status == TicketStatusDto.InProgress ? "In progress" : handle.Status.ToString();
+        if (!await Confirm.AskAsync($"Save ticket #{ticket.TicketNumber}", $"Save this ticket as {statusLabel}?", "Save",
+                details: string.IsNullOrWhiteSpace(handle.Response) ? [] : [$"{ticket.CreatedByName} sees your answer under Help & feedback"]))
+            return;
+
+        saving = true;
+        var (saved, result) = await TicketService.HandleAsync(Feedback, ticket.TicketNumber, handle);
+        saving = false;
+
+        if (saved is null)
+        {
+            message = result;
+            return;
+        }
+
+        selected = null;
+        await LoadAsync();
+    }
+}

@@ -14,6 +14,8 @@
         public const int EmployeePassword = 12;
         public const int CustomerPassword = 128;
         public const int Quantity = 3;
+        public const int WriteOffNote = 200;
+        public const int MaxWriteOffAmount = 999;
         public const int MaxImageBytes = 5 * 1024 * 1024;
         public const string TooLongMessage = "{0} can be at most {1} characters.";
     }

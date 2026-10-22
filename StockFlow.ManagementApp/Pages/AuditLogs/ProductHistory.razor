@@ -83,6 +83,10 @@
                     <span class="stat-label">Units returned</span>
                 </div>
                 <div class="stat">
+                    <span class="stat-value">@UnitsWrittenOff</span>
+                    <span class="stat-label">Units written off</span>
+                </div>
+                <div class="stat">
                     <span class="stat-value">@UnitsAdded</span>
                     <span class="stat-label">Units added</span>
                 </div>
@@ -168,6 +172,7 @@
                 EditMode="false"
                 ReadMode="true"
                 product="history?.Product"
+                OnWrittenOff="ReloadAfterWriteOff"
                 OnClose="() => showDetails = false" />
 
 @code {
@@ -202,6 +207,10 @@
         rows.Where(r => r.Log.LogType == LogTypeDto.Returned && r.StockNew > r.StockOld)
             .Sum(r => r.StockNew!.Value - r.StockOld!.Value);
 
+    private int UnitsWrittenOff =>
+        rows.Where(r => r.Log.LogType == LogTypeDto.WrittenOff && r.StockNew < r.StockOld)
+            .Sum(r => r.StockOld!.Value - r.StockNew!.Value);
+
     private int UnitsAdded =>
         rows.Where(r => r.Log.LogType != LogTypeDto.Sold && r.Log.LogType != LogTypeDto.Returned && r.StockNew > r.StockOld)
             .Sum(r => r.StockNew!.Value - r.StockOld!.Value);
@@ -229,6 +238,15 @@
             await LoadHistory(barcode);
         else
             Nav.NavigateTo($"producthistory?barcode={barcode}");
+    }
+
+    private async Task ReloadAfterWriteOff(int stock)
+    {
+        if (loadedBarcode is int barcode)
+        {
+            loadedBarcode = null;
+            await LoadHistory(barcode);
+        }
     }
 
     private async Task LoadHistory(int barcode)
@@ -282,6 +300,7 @@
         LogTypeDto.Sold => "badge-sold",
         LogTypeDto.Returned => "badge-returned",
         LogTypeDto.Delete => "badge-delete",
+        LogTypeDto.WrittenOff => "badge-writtenoff",
         _ => "",
     };
 

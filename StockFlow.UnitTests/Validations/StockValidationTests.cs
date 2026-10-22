@@ -5,6 +5,75 @@ using StockFlow.UnitTests.Helpers;
 
 namespace StockFlow.UnitTests.Validations
 {
+    public class WriteOffValidationTests
+    {
+        private static WriteOffRequest Valid() => new() { ProductId = Guid.NewGuid(), Amount = 1, Reason = WriteOffReasonDto.Lost };
+
+        [Fact]
+        public void Validate_ValidRequest_DoesNotThrow()
+        {
+            Assert.Null(Record.Exception(() => Valid().Validate()));
+        }
+
+        [Theory]
+        [InlineData(0)]
+        [InlineData(-1)]
+        [InlineData(1000)]
+        public void Validate_AmountOutOfRange_ThrowsArgumentException(int amount)
+        {
+            var request = Valid();
+            request.Amount = amount;
+
+            Assert.Throws<ArgumentException>(() => request.Validate());
+        }
+
+        [Fact]
+        public void Validate_NoProduct_ThrowsArgumentException()
+        {
+            var request = Valid();
+            request.ProductId = Guid.Empty;
+
+            Assert.Throws<ArgumentException>(() => request.Validate());
+        }
+
+        [Fact]
+        public void Validate_UnknownReason_ThrowsArgumentException()
+        {
+            var request = Valid();
+            request.Reason = (WriteOffReasonDto)42;
+
+            Assert.Throws<ArgumentException>(() => request.Validate());
+        }
+
+        [Fact]
+        public void Validate_OtherWithoutNote_ThrowsArgumentException()
+        {
+            var request = Valid();
+            request.Reason = WriteOffReasonDto.Other;
+
+            Assert.Throws<ArgumentException>(() => request.Validate());
+        }
+
+        [Fact]
+        public void Validate_OtherWithNote_DoesNotThrow()
+        {
+            var request = Valid();
+            request.Reason = WriteOffReasonDto.Other;
+            request.Note = "Tester in de winkel";
+
+            Assert.Null(Record.Exception(() => request.Validate()));
+        }
+
+        [Fact]
+        public void Validate_NoteTooLong_ThrowsArgumentException()
+        {
+            var request = Valid();
+            request.Note = new string('x', FieldLimits.WriteOffNote + 1);
+
+            Assert.Throws<ArgumentException>(() => request.Validate());
+        }
+    }
+
     public class ProductValidationTests
     {
         private static CreateProductDto Valid() => TestData.CreateProductDto(Guid.NewGuid(), Guid.NewGuid());

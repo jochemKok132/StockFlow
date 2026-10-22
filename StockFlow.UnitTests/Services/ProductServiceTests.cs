@@ -210,6 +210,59 @@ namespace StockFlow.UnitTests.Services
         }
 
         [Fact]
+        public async Task WriteOffStockAsync_Damaged_LowersStockAndLogsReasonAndNote()
+        {
+            var product = TestData.Product(stock: 10);
+            _productRepository.Setup(r => r.GetByIdAsync(product.Id)).ReturnsAsync(product);
+            CreateStockLogsDto? log = null;
+            _stockLogsService.Setup(s => s.CreateStockLogsAsync(It.IsAny<CreateStockLogsDto>())).Callback<CreateStockLogsDto>(l => log = l);
+
+            int stock = await _sut.WriteOffStockAsync(new WriteOffRequest { ProductId = product.Id, Amount = 2, Reason = WriteOffReasonDto.Damaged, Note = "  dropped  " }, Guid.NewGuid());
+
+            Assert.Equal(8, stock);
+            Assert.Equal(8, product.Stock);
+            _productRepository.Verify(r => r.UpdateAsync(product), Times.Once);
+            Assert.NotNull(log);
+            Assert.Equal(LogTypeDto.WrittenOff, log.LogType);
+            Assert.Equal(product.Barcode.ToString(), log.Identifier);
+            Assert.Contains("Stock: New: 8. Old: 10", log.Messages);
+            Assert.Contains("Reason: Damaged", log.Messages);
+            Assert.Contains("Note: dropped", log.Messages);
+        }
+
+        [Fact]
+        public async Task WriteOffStockAsync_WithoutNote_LogsOnlyTheReason()
+        {
+            var product = TestData.Product(stock: 3);
+            _productRepository.Setup(r => r.GetByIdAsync(product.Id)).ReturnsAsync(product);
+            CreateStockLogsDto? log = null;
+            _stockLogsService.Setup(s => s.CreateStockLogsAsync(It.IsAny<CreateStockLogsDto>())).Callback<CreateStockLogsDto>(l => log = l);
+
+            await _sut.WriteOffStockAsync(new WriteOffRequest { ProductId = product.Id, Amount = 1, Reason = WriteOffReasonDto.Expired }, Guid.NewGuid());
+
+            Assert.NotNull(log);
+            Assert.DoesNotContain(log.Messages, m => m.StartsWith("Note:"));
+            Assert.Contains("Reason: Expired", log.Messages);
+        }
+
+        [Fact]
+        public async Task WriteOffStockAsync_ProductNotFound_ThrowsKeyNotFoundException()
+        {
+            _productRepository.Setup(r => r.GetByIdAsync(It.IsAny<Guid>())).ReturnsAsync((Product?)null);
+
+            await Assert.ThrowsAsync<KeyNotFoundException>(() => _sut.WriteOffStockAsync(new WriteOffRequest { ProductId = Guid.NewGuid(), Amount = 1 }, Guid.NewGuid()));
+        }
+
+        [Fact]
+        public async Task WriteOffStockAsync_Invalid_DoesNotTouchStock()
+        {
+            await Assert.ThrowsAsync<ArgumentException>(() => _sut.WriteOffStockAsync(new WriteOffRequest { ProductId = Guid.NewGuid(), Amount = 0 }, Guid.NewGuid()));
+
+            _productRepository.Verify(r => r.UpdateAsync(It.IsAny<Product>()), Times.Never);
+            _stockLogsService.Verify(s => s.CreateStockLogsAsync(It.IsAny<CreateStockLogsDto>()), Times.Never);
+        }
+
+        [Fact]
         public async Task UpdateProductStockAsync_ZeroChange_ThrowsArgumentException()
         {
             await Assert.ThrowsAsync<ArgumentException>(() => _sut.UpdateProductStockAsync(Guid.NewGuid(), 0, Guid.NewGuid()));

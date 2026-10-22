@@ -12,10 +12,11 @@ A short list of everything StockFlow can do right now, followed by the [to-do li
 - View-only Tester account to give to visitors: sees every page and form but can't save, refused by the API too; only visible to and created by the admin
 - One shared permissions map used by both the API and the management app
 - Employee hierarchy: you can only create, edit and give out roles below your own
+- Support role that handles the support requests of other employees, and can view employees, customers, statistics and all logs and restore deleted items
 - The admin and Tester accounts are hidden from everyone except the admin
 - Passwords stored as BCrypt hashes only, never in a log
 - SQLite database that migrates and seeds itself on startup
-- Seed data: 23 employees (including a Tester), 15 customers, 150 products, 25 brands, 15 shelves, 2 sales plus the moving sale
+- Seed data: 24 employees (including a Tester and a Support account), 15 customers, 150 products, 25 brands, 15 shelves, 2 sales plus the moving sale
 - Soft delete for products, brands, sales and shelves
 - Users never see a GUID: forms, error messages and logs always use an identifier (barcode, brand name, shelf name, receipt id, employee id)
 - Maximum length on every text field, checked in the apps and again in the API
@@ -83,10 +84,13 @@ A short list of everything StockFlow can do right now, followed by the [to-do li
 - Live character counter under every text field (orange near the limit, red at the limit)
 - Overlays only close when the click starts and ends outside them
 - Image picker only accepts PNG, JPEG, GIF and WebP, checked on the file contents
+- Product images are downsized in the browser to at most 800 px before upload
+- Product details show the barcode as text and as a scannable Code 128 barcode
+- Write off stock from the product details with a reason (damaged, expired, stolen, lost, other) and a note, for every employee except the Tester
 - Employees: create with password, edit with optional password reset, only roles below your own
 - Customers: list, filter, sort and edit
 - Cash register logs with receipt filter, products overlay, returned amounts and a points column
-- Download any receipt as a till-style PDF
+- Download any receipt as a till-style PDF, with a scannable barcode of the receipt id at the bottom to start a return
 - Moving sales page to approve or reject requests
 - Statistics page: revenue, purchases, average receipt, % of purchases with a customer card, discounts, points, returns, new customers, revenue per day and top 10 products
 - Stock logs with old → new values
@@ -94,6 +98,10 @@ A short list of everything StockFlow can do right now, followed by the [to-do li
 - Customer logs and employee logs (including logins)
 - Releases page: management app and cash register versions (no API version), *Up to date* / *Update available*, cash register download, release notes
 - Version shown in the sidebar
+- Confirmation popup before every delete or update (an edited item lists the fields that changed)
+- Help & feedback page for every employee: send a support request, bug report or feature request (ticket #1001 and up) and follow its status and answer
+- Support requests page for the Support role, and a Bugs & features overview for the admin, to set the status and answer
+- Deleted items page for Support and the admin: every deleted product, brand, sale and shelf, with Restore (a product only after its brand and shelf)
 - The logged-in employee (name, employee id and role) shown in the sidebar
 
 ## Validation
@@ -107,7 +115,7 @@ A short list of everything StockFlow can do right now, followed by the [to-do li
 
 ## Audit logging
 
-- Stock logs for every create, update, delete, sale and return
+- Stock logs for every create, update, delete, sale, return, write-off and restore
 - Cash register logs with prices at the time of sale, sales, discount, points used and earned
 - Employee logs for create, update and login
 - Customer logs for registration, login, update, password change, points changes and moving sale requests, approvals and rejections
@@ -123,7 +131,7 @@ A short list of everything StockFlow can do right now, followed by the [to-do li
 
 ## Tests and CI
 
-- 483 xUnit + Moq unit tests: services, validations, mappings, shared rules, repositories (in-memory SQLite), controllers and the GitHub release service
+- 517 xUnit + Moq unit tests: services, validations, mappings, shared rules, repositories (in-memory SQLite), controllers and the GitHub release service
 - Build with 0 warnings
 - CI builds and tests every push and pull request to `master`
 
@@ -153,10 +161,6 @@ A short list of everything StockFlow can do right now, followed by the [to-do li
 
 ## Products
 
-- [ ] Write off stock (*afboeken*) with a reason, with a few basic reasons to pick from (damaged, expired, stolen, lost, other); show it in the stock logs and the product history
-- [ ] Downsize product images on upload
-- [ ] Show the barcode in the product details
-- [ ] Barcode image (scannable) of the product barcode in the product details
 - [ ] Minimum and maximum stock per product
 - [ ] Non-orderable products
 - [ ] Recall products
@@ -189,17 +193,9 @@ A short list of everything StockFlow can do right now, followed by the [to-do li
 
 ## Employees and permissions
 
-- [ ] Support role with its own permissions: a page to request support, and a page for the support person to handle the requests
-- [ ] Bug report / feature request screen for all employees, with an overview for the admin
-- [ ] Admin-only panel with deleted items that can be reinstated
-- [ ] Confirmation popup before deleting or updating
 - [ ] Staff schedule (*rooster*) management: generated automatically 4 weeks ahead, can be changed, the manager has to confirm it
 
 
-
-## Receipts
-
-- [ ] Scannable barcode image of the receipt id at the bottom of the receipt PDF, so a return can start by scanning the receipt
 
 ## Login
 

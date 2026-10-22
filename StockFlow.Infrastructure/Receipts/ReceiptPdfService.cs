@@ -12,6 +12,8 @@ namespace StockFlow.Infrastructure.Receipts
     public class ReceiptPdfService(IOptions<ReceiptOptions> options) : IReceiptPdfService
     {
         private static readonly CultureInfo Dutch = CultureInfo.GetCultureInfo("nl-NL");
+        private const float BarcodeWidthMm = 60;
+        private const float BarcodeHeightMm = 14;
 
         static ReceiptPdfService()
         {
@@ -95,6 +97,10 @@ namespace StockFlow.Infrastructure.Receipts
 
                         column.Item().AlignCenter().Text("Bedankt voor uw aankoop!");
                         column.Item().AlignCenter().Text("Bewaar deze bon voor ruilen of retour.").FontColor(Colors.Grey.Darken2);
+
+                        column.Item().PaddingTop(8).AlignCenter().Width(BarcodeWidthMm, Unit.Millimetre).Height(BarcodeHeightMm, Unit.Millimetre)
+                            .Svg(Code128.ToSvg(receipt.ReceiptId, 2, 60));
+                        column.Item().AlignCenter().Text(receipt.ReceiptId).FontSize(8).LetterSpacing(0.2f);
                     });
                 });
             }).GeneratePdf();

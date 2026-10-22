@@ -1,0 +1,151 @@
+﻿@page "/help"
+@attribute [Authorize(Roles = Permissions.Employees)]
+@inject ITicketService TicketService
+@inject AuthenticationStateProvider AuthStateProvider
+
+<div class="tasks-header">
+    <div>
+        <h2>Help &amp; feedback</h2>
+        <p>Ask the support team for help, report a bug or suggest a new feature. You can follow your tickets below.</p>
+    </div>
+</div>
+
+<div class="card ticket-card">
+    <span class="panel-label">New ticket</span>
+    <div class="field-row">
+        <div class="field">
+            <label for="ticket-type">Type</label>
+            <select id="ticket-type" @bind="request.Type">
+                @foreach (var type in Enum.GetValues<TicketTypeDto>())
+                {
+                    <option value="@type">@TicketStatusBadge.TypeLabel(type)</option>
+                }
+            </select>
+        </div>
+        <div class="field field-grow">
+            <label for="ticket-title">Title</label>
+            <input id="ticket-title" type="text" maxlength="@FieldLimits.Name" @bind="request.Title" @bind:event="oninput" placeholder="@Placeholder" />
+        </div>
+    </div>
+    <div class="field">
+        <label for="ticket-description">Description</label>
+        <textarea id="ticket-description" rows="5" maxlength="@FieldLimits.Description" @bind="request.Description" @bind:event="oninput"
+                  placeholder="What happened, what did you expect, and where in StockFlow?"></textarea>
+        <span class="char-counter">@request.Description.Length / @FieldLimits.Description</span>
+    </div>
+
+    @if (!string.IsNullOrEmpty(message))
+    {
+        <div class="@(failed ? "alert-danger" : "notice-ok")">@message</div>
+    }
+
+    <div class="form-actions">
+        <button type="button" class="btn-save" disabled="@(sending || viewOnly)" title="@(viewOnly ? AccessRules.ViewOnlyMessage : null)" @onclick="SendAsync">
+            <i class="bi bi-send"></i> @(sending ? "Sending..." : "Send")
+        </button>
+    </div>
+</div>
+
+<div class="card">
+    <span class="panel-label">My tickets</span>
+    <table class="tasks-table">
+        <thead>
+            <tr>
+                <th>Ticket</th>
+                <th>Type</th>
+                <th>Title</th>
+                <th>Status</th>
+                <th>Answer</th>
+                <th>Sent</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (loading)
+            {
+                <tr><td class="loading">Loading...</td></tr>
+            }
+            else if (!string.IsNullOrEmpty(error))
+            {
+                <tr><td class="alert-danger">@error</td></tr>
+            }
+            else if (tickets.Count == 0)
+            {
+                <tr><td class="empty-state">You haven't sent any tickets yet.</td></tr>
+            }
+            else
+            {
+                @foreach (var ticket in tickets)
+                {
+                    <tr>
+                        <td class="id-cell">#@ticket.TicketNumber</td>
+                        <td>@TicketStatusBadge.TypeLabel(ticket.Type)</td>
+                        <td><strong>@ticket.Title</strong></td>
+                        <td><TicketStatusBadge Status="ticket.Status" /></td>
+                        <td>
+                            @if (!string.IsNullOrWhiteSpace(ticket.Response))
+                            {
+                                <span>@ticket.Response</span>
+                                <span class="sub-text">@ticket.HandledByName (@ticket.HandledByEmployeeId)</span>
+                            }
+                            else
+                            {
+                                <span class="sub-text">No answer yet</span>
+                            }
+                        </td>
+                        <td class="date-cell">@ticket.CreatedAt.ToLocalTime().ToString("dd-MM-yyyy HH:mm")</td>
+                    </tr>
+                }
+            }
+        </tbody>
+    </table>
+</div>
+
+@code {
+    private CreateTicketRequest request = new();
+    private List<TicketDto> tickets = [];
+    private bool loading;
+    private bool sending;
+    private bool failed;
+    private bool viewOnly;
+    private string error = "";
+    private string message = "";
+
+    private string Placeholder => request.Type switch
+    {
+        TicketTypeDto.Bug => "e.g. Save button doesn't work on the shelves page",
+        TicketTypeDto.Feature => "e.g. Filter products on brand",
+        _ => "e.g. I can't log in to the cash register",
+    };
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        viewOnly = authState.User.IsInRole(AccessRules.ViewOnlyRole);
+        await LoadAsync();
+    }
+
+    private async Task LoadAsync()
+    {
+        loading = true;
+        (tickets, error) = await TicketService.GetMineAsync();
+        loading = false;
+    }
+
+    private async Task SendAsync()
+    {
+        if (viewOnly || sending) return;
+
+        sending = true;
+        var (ticket, result) = await TicketService.CreateAsync(request);
+        sending = false;
+
+        failed = ticket is null;
+        message = result;
+
+        if (ticket is not null)
+        {
+            request = new CreateTicketRequest { Type = request.Type };
+            await LoadAsync();
+        }
+    }
+}

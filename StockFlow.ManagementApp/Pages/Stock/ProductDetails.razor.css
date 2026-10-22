@@ -1,4 +1,4 @@
-.image-wrapper {
+﻿.image-wrapper {
     display: flex;
     align-items: center;
     justify-content: center;
@@ -93,3 +93,76 @@
         line-height: 1.5;
         color: var(--TextColor);
     }
+
+
+.barcode-image {
+    margin-top: 8px;
+    max-width: 100%;
+    overflow: hidden;
+}
+
+    .barcode-image ::deep svg {
+        display: block;
+        max-width: 100%;
+        height: 56px;
+    }
+
+.write-off {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 16px;
+    border: 1px solid var(--BorderColor);
+    border-radius: var(--RadiusSmall);
+    background: var(--DashboardColor);
+}
+
+    .write-off label {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        margin: 0;
+        font-size: 12px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.6px;
+        color: var(--MutedText);
+    }
+
+    .write-off input,
+    .write-off select {
+        width: 100%;
+        padding: 7px 11px;
+        font-size: 14px;
+        font-weight: 400;
+        text-transform: none;
+        letter-spacing: 0;
+        color: var(--TextColor);
+        background: var(--TaskbarColor);
+        border: 1px solid var(--BorderColor);
+        border-radius: var(--RadiusSmall);
+        outline: none;
+    }
+
+        .write-off input:focus,
+        .write-off select:focus {
+            border-color: var(--AccentColor);
+        }
+
+    .write-off .btn-delete {
+        align-self: flex-start;
+    }
+
+.write-off-fields {
+    display: grid;
+    grid-template-columns: 30% 1fr;
+    gap: 12px;
+}
+
+.write-off-done {
+    padding: 8px 12px;
+    font-size: 13px;
+    color: var(--SuccessText);
+    background: var(--SuccessBg);
+    border-radius: var(--RadiusSmall);
+}

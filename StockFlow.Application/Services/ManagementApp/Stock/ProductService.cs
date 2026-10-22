@@ -141,6 +141,26 @@ namespace StockFlow.Application.Services.ManagementApp.Stock
             return productDto;
         }
 
+        public async Task<int> WriteOffStockAsync(WriteOffRequest request, Guid employeeId)
+        {
+            request.Validate();
+
+            var product = await productRepository.GetByIdAsync(request.ProductId);
+            if (product == null || product.SoftDeleted) throw new KeyNotFoundException("Product not found.");
+
+            var log = product.ChangeStock(-request.Amount, employeeId, LogTypeDto.WrittenOff);
+            log.Messages.Add($"Reason: {request.Reason}");
+            if (!string.IsNullOrWhiteSpace(request.Note))
+                log.Messages.Add($"Note: {request.Note.Trim()}");
+
+            product.ChangeStock(-request.Amount);
+
+            await productRepository.UpdateAsync(product);
+            await stockLogsService.CreateStockLogsAsync(log);
+
+            return product.Stock;
+        }
+
         public async Task UpdateProductStockAsync(Guid id, int amount, Guid employeeId, LogTypeDto logType = LogTypeDto.Sold)
         {
             ProductValidation.ValidateStockChange(amount);

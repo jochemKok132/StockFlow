@@ -778,3 +778,113 @@ body {
     color: var(--MutedText);
     background: var(--SurfaceColor);
 }
+
+
+.modal-overlay.confirm {
+    z-index: 1100;
+}
+
+    .modal-overlay.confirm .modal-box {
+        max-width: 420px;
+    }
+
+.confirm-message {
+    margin: 0;
+    font-size: 14px;
+    color: var(--TextColor);
+}
+
+.confirm-details {
+    margin: 0;
+    padding: 12px 16px 12px 32px;
+    font-size: 13px;
+    color: var(--TextColor);
+    background: var(--DashboardColor);
+    border: 1px solid var(--BorderColor);
+    border-radius: var(--RadiusSmall);
+}
+
+
+.ticket-card {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    margin-bottom: 16px;
+}
+
+.field-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+}
+
+.field {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.field-grow {
+    flex: 1;
+    min-width: 240px;
+}
+
+    .field label {
+        margin: 0;
+        font-size: 12px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.6px;
+        color: var(--MutedText);
+    }
+
+    .field input,
+    .field select,
+    .field textarea {
+        width: 100%;
+        padding: 7px 11px;
+        font-size: 14px;
+        color: var(--TextColor);
+        background: var(--TaskbarColor);
+        border: 1px solid var(--BorderColor);
+        border-radius: var(--RadiusSmall);
+        outline: none;
+        resize: vertical;
+    }
+
+        .field input:focus,
+        .field select:focus,
+        .field textarea:focus {
+            border-color: var(--AccentColor);
+        }
+
+        .field select:disabled,
+        .field textarea[readonly] {
+            color: var(--MutedText);
+            background: var(--DashboardColor);
+        }
+
+.char-counter {
+    align-self: flex-end;
+    font-size: 12px;
+    color: var(--MutedText);
+}
+
+.notice-ok {
+    padding: 8px 12px;
+    font-size: 13px;
+    color: var(--SuccessText);
+    background: var(--SuccessBg);
+    border-radius: var(--RadiusSmall);
+}
+
+.ticket-description {
+    margin: 0;
+    padding: 12px 16px;
+    font-size: 14px;
+    white-space: pre-wrap;
+    color: var(--TextColor);
+    background: var(--DashboardColor);
+    border: 1px solid var(--BorderColor);
+    border-radius: var(--RadiusSmall);
+}

@@ -12,5 +12,7 @@ namespace StockFlow.Shared.DTOs.Enums
         Login,
         Sold,
         Returned,
+        WrittenOff,
+        Restored,
     }
 }

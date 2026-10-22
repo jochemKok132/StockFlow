@@ -1,0 +1,11 @@
+﻿@page "/supportrequests"
+@attribute [Authorize(Roles = Permissions.ViewSupport)]
+
+<div class="tasks-header">
+    <div>
+        <h2>Support requests</h2>
+        <p>Questions and problems sent by employees. Open a request to change its status and answer it; the employee sees your answer under Help &amp; feedback.</p>
+    </div>
+</div>
+
+<TicketQueue Feedback="false" HandleRoles="@Permissions.HandleSupport" />

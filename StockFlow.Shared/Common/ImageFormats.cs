@@ -3,11 +3,20 @@
     public static class ImageFormats
     {
         public const string Accept = "image/png,image/jpeg,image/gif,image/webp";
+        public const int MaxDimension = 800;
+        public const long MaxOriginalBytes = 20 * 1024 * 1024;
 
         private static readonly string[] ContentTypes = ["image/png", "image/jpeg", "image/gif", "image/webp"];
 
         public static bool IsAllowedContentType(string? contentType) =>
             contentType is not null && ContentTypes.Contains(contentType.ToLowerInvariant());
+
+        public static string ResizedContentType(string? contentType) => contentType?.ToLowerInvariant() switch
+        {
+            "image/jpeg" => "image/jpeg",
+            "image/webp" => "image/webp",
+            _ => "image/png",
+        };
 
         public static bool IsImage(ReadOnlySpan<byte> bytes) => DetectContentType(bytes) is not null;
 

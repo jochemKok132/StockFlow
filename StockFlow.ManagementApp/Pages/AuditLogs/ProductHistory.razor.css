@@ -219,6 +219,11 @@
     color: var(--DangerText);
 }
 
+.badge-writtenoff {
+    background: var(--DangerBg);
+    color: var(--DangerText);
+}
+
 .stock-change {
     display: flex;
     align-items: center;

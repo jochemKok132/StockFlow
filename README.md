@@ -108,6 +108,7 @@ All employee passwords are **`001273`**.
 | 000010 – 000012 | Cashier |
 | 000013 – 000022 | FloorWorker |
 | 000023 | Tester (view-only demo account, see [Tester account](#tester-account)) |
+| 000024 | Support (handles support requests, see [Help and support](#help-and-support)) |
 
 ### Customers
 
@@ -143,7 +144,7 @@ All rules live in `StockFlow.Shared/Common/IdentifierFormats.cs` and are shared 
 
 ## Roles and permissions
 
-Roles: `Admin`, `Manager`, `ShiftLeader`, `ServiceDesk`, `Cashier`, `FloorWorker`, `Tester` (employees) and `Customer` (given to customers when they log in or register).
+Roles: `Admin`, `Manager`, `Support`, `ShiftLeader`, `ServiceDesk`, `Cashier`, `FloorWorker`, `Tester` (employees) and `Customer` (given to customers when they log in or register).
 
 All role lists live in one place, `StockFlow.Shared/Common/Permissions.cs`. The API uses them in its `[Authorize(Roles = ...)]` attributes and the management app uses the same constants for its page attributes, sidebar items and buttons, so the menu, the pages and the API can't disagree any more. A button is only shown to roles that may use it (Tester sees it too, but disabled).
 
@@ -151,17 +152,22 @@ All role lists live in one place, `StockFlow.Shared/Common/Permissions.cs`. The 
 |---|---|
 | View inventory, brands, sales, shelves | Every logged-in employee |
 | Create / update / delete products, brands, sales, shelves | Manager, Admin (`ManageStock`) |
+| Write off stock | Every employee except the Tester (`WriteOffStock`) |
 | Cash register (scan, look up customers, purchase, returns) | Cashier, ServiceDesk, ShiftLeader, Manager, Admin (`CashRegister`) |
-| Cash register logs, receipt PDFs | Cashier, ServiceDesk, ShiftLeader, Manager, Admin (`CashRegisterLogs`) |
-| Stock logs, product history | ServiceDesk, ShiftLeader, Manager, Admin (`StockLogs`) |
-| Employee logs | ShiftLeader, Manager, Admin (`EmployeeLogs`) |
-| Customer logs | Manager, Admin (`CustomerLogs`) |
-| View employees | ShiftLeader, Manager, Admin (`ViewEmployees`) |
+| Cash register logs, receipt PDFs | Cashier, ServiceDesk, ShiftLeader, Support, Manager, Admin (`CashRegisterLogs`) |
+| Stock logs, product history | ServiceDesk, ShiftLeader, Support, Manager, Admin (`StockLogs`) |
+| Employee logs | ShiftLeader, Support, Manager, Admin (`EmployeeLogs`) |
+| Customer logs | Support, Manager, Admin (`CustomerLogs`) |
+| View employees | ShiftLeader, Support, Manager, Admin (`ViewEmployees`) |
 | Create / update employees | Manager, Admin (`ManageEmployees`), only for roles below their own (see [Employee hierarchy](#employee-hierarchy)) |
-| View customers | ShiftLeader, Manager, Admin (`ViewCustomers`) |
+| View customers | ShiftLeader, Support, Manager, Admin (`ViewCustomers`) |
 | Update customers | Manager, Admin (`ManageCustomers`) |
 | Approve or reject moving sales | ShiftLeader, Manager, Admin (`ApproveMovingSales`) |
-| Statistics | Manager, Admin (`Statistics`) |
+| Statistics | Support, Manager, Admin (`Statistics`) |
+| Send a support request, bug report or feature request, see your own tickets | Every employee (the Tester can look but not send) |
+| Handle support requests | Support, Admin (`HandleSupport`) |
+| Handle bug reports and feature requests | Admin (`HandleFeedback`) |
+| See and restore deleted items | Support, Admin (`RestoreDeleted`) |
 | Register a customer account | Anyone (no login) |
 | View own customer account (`Customer/Me`), change own password, request a moving sale | Customer |
 | Look up customers or employees by id / email through the API | Employees only (a customer token is refused) |
@@ -169,7 +175,7 @@ All role lists live in one place, `StockFlow.Shared/Common/Permissions.cs`. The 
 
 ### Employee hierarchy
 
-`StockFlow.Shared/Common/RoleHierarchy.cs` orders the roles: **Admin > Tester > Manager > ShiftLeader > ServiceDesk > Cashier > FloorWorker**.
+`StockFlow.Shared/Common/RoleHierarchy.cs` orders the roles: **Admin > Tester > Manager > Support > ShiftLeader > ServiceDesk > Cashier > FloorWorker**.
 
 - Only roles that may manage employees (Manager, Admin) can create or edit employees, and only **employees below their own role**. A manager can manage shift leaders and everyone below, but not other managers, the tester or the admin; the admin can manage everyone except other admins.
 - You can only give out **roles below your own**. The role select in the employee form only offers those roles, and the **Edit** button only shows on employees you may change. The API checks the same rules and answers *You can only give out roles below your own.* or *You can only change employees below your own role.*
@@ -194,18 +200,22 @@ Blazor WebAssembly app (`StockFlow.ManagementApp`). Log in with an employee id a
 | Page | Route | Features |
 |---|---|---|
 | Releases | `/` (home, also the version link at the bottom of the sidebar) | The version of the management app and of the newest cash register (*Up to date* / *Update available*; the API version is not shown to employees, and the public site will be added here later), a download card for the newest cash register zip, and every GitHub release with its notes, badges (*Latest*, *Pre-release*, *Running here*) and download links. |
-| Inventory | `/inventory` | Paged and sortable product list with filters. Click a row for the product details panel (image, price incl. sale, location, stock, tags, brand, description). Create, edit and delete for managers. In the create / edit form, brand and shelf are searchable selects and sales tags are a searchable multi-select that shows which sale each tag belongs to. |
+| Inventory | `/inventory` | Paged and sortable product list with filters. Click a row for the product details panel (image, price incl. sale, barcode as text and as a scannable barcode image, location, stock, tags, brand, description, and the write-off form, see [Writing off stock](#writing-off-stock)). Create, edit and delete for managers. In the create / edit form, brand and shelf are searchable selects and sales tags are a searchable multi-select that shows which sale each tag belongs to. |
 | Brands | `/productbrands` | List, create, edit, delete brands. |
 | Sales | `/sales` | List, create, edit, delete sales. Columns: deal (`-10%`, `2+1`, `2nd half price`, `3 for €10.00`), period, status (*Scheduled* / *Active* / *Ended*), tags, products and items sold. Filter on status; *Ended (history)* shows past sales. See [Sales](#sales). Sales tags are a searchable multi-select with the tags already in use; new tags can be added by typing them. |
 | Shelves | `/shelves` | List, create, edit, delete shelves. |
 | Cash register logs | `/cashregisterlogs` | Every purchase with its receipt id, customer and employee; filterable by receipt id. The products column also shows how many items were returned. Click **Products** to see what was sold, the amounts, how many were returned per product, the price per item, applied sales, the discount and the total. Click a product to open its details. **Download** saves the receipt as a PDF (see [Receipt PDFs](#receipt-pdfs)). |
-| Stock logs | `/stocklogs` | Every create / update / sale / return / delete of products, brands, sales and shelves. **Open message** shows what changed (old → new). |
-| Product history | `/producthistory?barcode=…` | Enter a barcode to see the product, current stock, units sold, units returned, units added and the full history. Toggle between all changes and stock changes only. The barcode is kept in the URL so searches can be bookmarked or linked. |
+| Stock logs | `/stocklogs` | Every create / update / sale / return / write-off / delete of products, brands, sales and shelves. **Open message** shows what changed (old → new) and, for a write-off, the reason and note. |
+| Product history | `/producthistory?barcode=…` | Enter a barcode to see the product, current stock, units sold, units returned, units written off, units added and the full history (a write-off shows its reason and note under *Other changes*). Toggle between all changes and stock changes only. The barcode is kept in the URL so searches can be bookmarked or linked. |
 | Customer logs | `/customerlogs` | Customer changes, filterable by customer id, name, email and log type. |
 | Employee logs | `/employeelogs` | Employee changes and logins. |
 | Employees | `/employees` | List, create (with password), edit (optional password reset). The role is a searchable select with only the roles below yours; **Edit** only shows on employees below you ([Employee hierarchy](#employee-hierarchy)). |
 | Customers | `/customers` | Customer list with customer id, filterable and sortable. The *Moving sale* column shows *Until dd-MM-yyyy*, *Waiting for approval*, *Ended* or *Rejected*. |
 | Moving sales | `/movingsales` | Moving sale requests waiting for approval: customer, current address, new address and request time, with **Approve** and **Reject** (ShiftLeader and up). See [Moving sales](#moving-sales). |
+| Help & feedback | `/help` | Every employee: send a support request, bug report or feature request and follow your own tickets (status and answer). See [Help and support](#help-and-support). |
+| Support requests | `/supportrequests` | Support and Admin: all support requests, filter on status, open one to set the status and answer it. |
+| Bugs & features | `/feedback` | Admin: all bug reports and feature requests, filter on status, open one to set the status and answer it. |
+| Deleted items | `/deleteditems` | Support and Admin: every deleted product, brand, sale and shelf, with **Restore**. See [Deleted items](#deleted-items). |
 | Statistics | `/statistics` | Revenue and customer card use for a period (default the last 30 days, quick buttons for the last 7 days, the last 30 days and this month). See [Statistics](#statistics). |
 
 Forms are generated by the reusable `EditItem` component from the DTO type. Validation errors from the API are shown above the form and the form stays open.
@@ -226,6 +236,40 @@ Forms are generated by the reusable `EditItem` component from the DTO type. Vali
 | Customer password | 128 |
 
 **Images:** the product image picker only offers PNG, JPEG, GIF and WebP files (`accept`), refuses other content types, and checks the file's first bytes (`ImageFormats.IsImage`) before using it, so a renamed PDF is refused. The API does the same byte check and the 5 MB limit again.
+
+**Image downsizing:** the browser shrinks every product image before it is uploaded, so the longest side is at most **800 px** (`ImageFormats.MaxDimension`). Smaller images are never enlarged. JPEG stays JPEG and WebP stays WebP; PNG and GIF become PNG (so transparency is kept, a GIF loses its animation). The original may be up to 20 MB; after shrinking it has to fit the 5 MB limit.
+
+### Confirmations
+
+Everything that deletes or changes something asks first in a small popup (`ConfirmService` + `ConfirmHost` in the layout): deleting a product, brand, sale or shelf, saving an edited item (the popup lists which fields changed), writing off stock, approving or rejecting a moving sale, restoring a deleted item and saving a ticket. **Cancel** or clicking outside the popup does nothing. Creating something new doesn't ask, because nothing existing changes.
+
+### Help and support
+
+Every employee can open **Help & feedback** and send a ticket: a **support request** (a question or problem), a **bug report** or a **feature request**, with a title and a description. Tickets get a number from **#1001** upwards and start as *Open*. Below the form the employee sees their own tickets with the status and the answer.
+
+- **Support requests** go to the **Support** role (and the admin) on the *Support requests* page.
+- **Bug reports and feature requests** go to the **admin** on the *Bugs & features* page.
+- Opening a ticket there shows the full description; the handler sets the status (*Open*, *In progress*, *Done* or *Rejected*) and writes an answer. The employee sees the answer and who handled it.
+
+The **Support** role sits below the manager in the [hierarchy](#employee-hierarchy), so a manager or the admin can give it out. Besides the support page it can see the normal pages every employee sees (inventory, brands, sales, shelves), plus the employees, customers, statistics and all logs (stock logs, product history, cash register logs and receipt PDFs, employee logs, customer logs), and it can restore deleted items. It can't use the cash register or create, edit or delete employees, customers or stock.
+
+### Deleted items
+
+Deleting a product, brand, sale or shelf only hides it (soft delete). The **Deleted items** page (Support and Admin) lists everything that was deleted, newest first, with its identifier (barcode, brand name, sale name or shelf name). **Restore** makes it visible again and writes a stock log of type *Restored*. A product can only come back when its brand and shelf aren't deleted; otherwise the page says which one to restore first.
+
+### Writing off stock
+
+Every employee except the Tester can write off stock (*afboeken*) from the **product details** panel, which opens from the inventory, the product history and the cash register logs.
+
+1. Enter the **amount** (1 – 999) and pick a **reason**: *Damaged*, *Expired*, *Stolen*, *Lost* or *Other*.
+2. Add a **note** (up to 200 characters). It's optional, except for *Other*, where it's required.
+3. Click **Write off**. The stock goes down by that amount (stock may go negative, like with sales) and the panel shows the new stock.
+
+`POST Product/WriteOff` writes a stock log of type *WrittenOff* with `Stock: New: x. Old: y`, `Reason: …` and `Note: …`. It shows on the stock logs page (filter on *WrittenOff*) and in the product history, which counts the units written off.
+
+### Barcodes
+
+`StockFlow.Shared/Common/Code128.cs` turns a barcode or receipt id into a **Code 128** barcode (set C for digits, so it stays short) and draws it as an SVG. The product details panel shows it under the barcode number, and the receipt PDF shows the receipt id at the bottom. Both can be scanned straight into the cash register: a product barcode adds the product, a receipt barcode starts a return.
 
 **No GUIDs:** users never see an internal id. Forms hide GUID fields that have no searchable select, error messages say *Product not found.* instead of quoting an id, and logs use identifiers (barcode, brand name, shelf name, receipt id, employee id).
 
@@ -256,11 +300,11 @@ A customer can't send a new request while one is waiting or while the moving sal
 
 ### Receipt PDFs
 
-**Download** on the cash register logs page asks the API for `GET CashRegisterLogs/Receipt/{receiptId}/Pdf` and saves `bon-<receiptId>.pdf`. The PDF looks like a till receipt (80 mm wide, made with QuestPDF in `StockFlow.Infrastructure/Receipts/ReceiptPdfService.cs`): store name and address, receipt id, date and time, employee, customer, every line with amount, price and applied sale, returned items, discount, points used and earned, the total and the VAT included. Store name, address lines, VAT percentage and time zone come from the `Receipt` section in `appsettings.json`. The cash register itself doesn't print receipts yet.
+**Download** on the cash register logs page asks the API for `GET CashRegisterLogs/Receipt/{receiptId}/Pdf` and saves `bon-<receiptId>.pdf`. The PDF looks like a till receipt (80 mm wide, made with QuestPDF in `StockFlow.Infrastructure/Receipts/ReceiptPdfService.cs`): store name and address, receipt id, date and time, employee, customer, every line with amount, price and applied sale, returned items, discount, points used and earned, the total and the VAT included. Store name, address lines, VAT percentage and time zone come from the `Receipt` section in `appsettings.json`. At the bottom is a scannable Code 128 barcode of the receipt id, so a return can start by scanning the receipt into the cash register. The cash register itself doesn't print receipts yet.
 
 ### Statistics
 
-`GET Statistics/Overview?from=yyyy-MM-dd&to=yyyy-MM-dd` (Manager, Admin, Tester) and the **Statistics** page show for the chosen period:
+`GET Statistics/Overview?from=yyyy-MM-dd&to=yyyy-MM-dd` (Support, Manager, Admin, Tester) and the **Statistics** page show for the chosen period:
 
 - revenue, number of purchases and the average receipt
 - **% of purchases with a customer card**
@@ -368,7 +412,7 @@ Both clients read this envelope in their `HttpService.ReadAnswer`.
 
 | Controller | Endpoints |
 |---|---|
-| `Product` | `GET GetAll`, `GET GetById/{id}`, `POST Create`, `PUT Update`, `DELETE SoftDelete/{id}` |
+| `Product` | `GET GetAll`, `GET GetById/{id}`, `POST Create`, `PUT Update`, `DELETE SoftDelete/{id}`, `POST WriteOff` (returns the new stock) |
 | `ProductBrand` | `GET GetAll`, `POST Create`, `PUT Update`, `DELETE SoftDelete/{id}` |
 | `Sales` | `GET GetAll` (filter `status`: Scheduled / Active / Ended), `POST Create`, `PUT Update`, `DELETE SoftDelete/{id}` |
 | `Shelf` | `GET GetAll`, `POST Create`, `PUT Update`, `DELETE SoftDelete/{id}` |
@@ -378,6 +422,8 @@ Both clients read this envelope in their `HttpService.ReadAnswer`.
 | `StockLogs` | `GET GetAll`, `GET ProductHistory/{barcode}`, `POST Create` |
 | `CashRegisterLogs` | `GET GetAll` (filters include `receiptId`), `GET Receipt/{receiptId}/Pdf` (the receipt as a PDF file), `POST Create` (returns the receipt id) |
 | `Statistics` | `GET Overview?from=&to=` |
+| `Ticket` | `POST Create`, `GET Mine`, `GET Support?status=`, `GET Feedback?status=`, `PUT Support/{ticketNumber}`, `PUT Feedback/{ticketNumber}` |
+| `DeletedItems` | `GET GetAll?type=`, `POST Restore/{type}/{id}` |
 | `CustomerLogs` | `GET GetAll`, `POST Create` |
 | `EmployeeLogs` | `GET GetAll`, `POST Create` |
 | `Releases` | `GET` (employees: all GitHub releases with notes and assets), `GET Latest` (anonymous: newest non-pre-release, used by the cash register's update check), `GET Version` (anonymous: the running API version) |
@@ -410,6 +456,7 @@ Validations are extension methods in `StockFlow.Application/Validations` that th
 | Customer password | At least 8 characters with upper case, lower case, digit and special character; new and confirm must match and differ from the current password |
 | Purchase | At least one line, amount 1 – 999 per line, no negative prices or totals, the customer must exist, sales only with a customer and only on days inside the sale's period, the moving sale only for a customer whose moving sale is running; points not negative, only with a customer, not more than the customer has, not worth more than the receipt, and all or nothing (exactly `min(customer points, receipt total in cents)`) |
 | Stock change | Not 0 |
+| Write-off | Product must exist, amount 1 – 999, a valid reason, note up to 200 characters and required for *Other* |
 | Product history | Barcode must be 9 digits |
 | Return | Receipt id must be 10 digits starting with 9 and exist, at least one item, amount 1 – 999 per item, every product must be on the receipt, never more than bought minus already returned |
 
@@ -428,7 +475,7 @@ Validations are extension methods in `StockFlow.Application/Validations` that th
 
 | Log | Written when |
 |---|---|
-| Stock logs | Product, brand, sale or shelf is created, updated or deleted; a product is sold (*Sold*) or returned (*Returned*) |
+| Stock logs | Product, brand, sale or shelf is created, updated or deleted; a product is sold (*Sold*), returned (*Returned*) or written off (*WrittenOff*, with reason and note); a deleted item is restored (*Restored*) |
 | Cash register logs | A purchase is completed (receipt id, lines, prices at time of sale, applied sales, total, discount, points used, points earned, customer). A return raises `ReturnedAmount` on the lines of the original receipt. |
 | Employee logs | Employee created, updated, logged in |
 | Customer logs | Customer registered, logged in, updated, password changed, saved points changed at the register (purchase or return), moving sale requested, approved or rejected |
@@ -449,6 +496,7 @@ Validations are extension methods in `StockFlow.Application/Validations` that th
 - `AddPointsEarned` adds the `PointsEarned` column (default 0) to `CashRegisterLogs`.
 - `AddSaleTypesAndMovingSale` adds `SaleType`, `BuyAmount`, `FreeAmount`, `StartDate` and `EndDate` to `Sales` (existing sales become *Percentage* without dates), the moving sale itself and `MovingSaleRequestedAt` / `MovingSaleUntil` to `Customers`.
 - `AddMovingSaleApprovalAndBundles` adds `BundlePrice` to `Sales` and the moving sale approval columns (`MovingSaleStatus`, `MovingSalePostalCode`, `MovingSaleHouseNumber`, `MovingSaleReviewedAt`, `MovingSaleReviewedBy`) to `Customers`.
+- `AddTickets` adds the `Tickets` table (unique `TicketNumber`, the employee who sent it and the one who handled it).
 
 Adding a migration in the Package Manager Console (set **Default project** to `StockFlow.Infrastructure`, startup project `StockFlow.API`):
 
@@ -523,7 +571,7 @@ To change the logo, edit `logo.svg` and export the PNG and ICO sizes again from 
 
 ## Tests
 
-`StockFlow.UnitTests` (xUnit + Moq, about 480 tests). Run with `dotnet test` from the repository root or the Test Explorer. The release workflow runs them before anything is published.
+`StockFlow.UnitTests` (xUnit + Moq, about 520 tests). Run with `dotnet test` from the repository root or the Test Explorer. The release workflow runs them before anything is published.
 
 | Folder | Covers |
 |---|---|
@@ -531,7 +579,7 @@ To change the logo, edit `logo.svg` and export the PNG and ICO sizes again from 
 | `Services/AuditLogs/` | `CashRegisterLogsService` (receipt ids), `CustomerLogsService`, `EmployeeLogsService`, `StockLogsService` (product history) |
 | `Validations/` | All validation rules: customers, employees, passwords, products, sales, shelves, brands, pagination, logs, purchases and returns |
 | `Mappings/` | `DifferenceFinder` (log messages), enum mappings, entity ↔ DTO mappings |
-| `Common/` | Shared rules: `LoyaltyPoints`, `ReturnRules`, `IdentifierFormats`, `ImageFormats` (detecting PNG / JPEG / GIF / WebP, allowed content types), `AppVersion` (display, comparing versions) |
+| `Common/` | Shared rules: `LoyaltyPoints`, `ReturnRules`, `IdentifierFormats`, `ImageFormats` (detecting PNG / JPEG / GIF / WebP, allowed content types, the format after downsizing), `Code128` (codes, checksum, stop pattern, SVG), `AppVersion` (display, comparing versions) |
 | `Infrastructure/` | `GitHubReleaseService` against a fake GitHub (mapping, drafts skipped, cash register asset, caching, stale fallback, errors), BCrypt `Password`, and the repositories against a real in-memory SQLite database (new customer / employee / receipt ids, barcodes, tag matching, soft delete, receipt filter, unique receipt ids) |
 | `Api/` | Controllers: status codes and `ApiResponse` envelopes for the cash register, customer, employee and releases endpoints (200 / 400 / 401 / 404 / 503), and `ViewOnlyGuard` (Tester changes refused, reads and login allowed) |
 

@@ -1,0 +1,11 @@
+﻿@page "/feedback"
+@attribute [Authorize(Roles = Permissions.ViewFeedback)]
+
+<div class="tasks-header">
+    <div>
+        <h2>Bug reports &amp; feature requests</h2>
+        <p>Everything employees reported or asked for. Open a ticket to plan it, mark it done or reject it, and leave an answer.</p>
+    </div>
+</div>
+
+<TicketQueue Feedback="true" HandleRoles="@Permissions.HandleFeedback" />

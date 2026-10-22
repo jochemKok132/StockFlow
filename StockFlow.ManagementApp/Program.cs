@@ -38,6 +38,9 @@ namespace StockFlow.ManagementApp
             builder.Services.AddScoped<ICustomerService, CustomerService>();
             builder.Services.AddScoped<IEmployeeService, EmployeeService>();
             builder.Services.AddScoped<ILookupService, LookupService>();
+            builder.Services.AddScoped<ConfirmService>();
+            builder.Services.AddScoped<ITicketService, TicketService>();
+            builder.Services.AddScoped<IDeletedItemsService, DeletedItemsService>();
             builder.Services.AddScoped<IReleaseService, ReleaseService>();
             builder.Services.AddScoped<IStatisticsService, StatisticsService>();
             builder.Services.AddTransient<AuthHandler>();

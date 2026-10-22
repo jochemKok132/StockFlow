@@ -53,6 +53,14 @@ namespace StockFlow.ManagementApp.Services.Stock
                 return $"Error: {response.Message}";
         }
 
+        public async Task<(int? stock, string message)> WriteOffAsync(WriteOffRequest request)
+        {
+            var response = await httpService.PostAsync<int, WriteOffRequest>("Product/WriteOff", request);
+            return response.Succeeded
+                ? (response.Value, response.Message ?? "Written off.")
+                : (null, response.Message ?? "The write-off could not be saved.");
+        }
+
         public async Task<string> UpdateProductAsync(UpdateProductDto product)
         {
             var response = await httpService.PutAsync<string, UpdateProductDto>($"Product/Update", product);

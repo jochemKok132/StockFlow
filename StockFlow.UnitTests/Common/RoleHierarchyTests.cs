@@ -9,6 +9,8 @@ namespace StockFlow.UnitTests.Common
         [InlineData(EmployeeRoleDto.Admin, EmployeeRoleDto.Tester, true)]
         [InlineData(EmployeeRoleDto.Admin, EmployeeRoleDto.Admin, false)]
         [InlineData(EmployeeRoleDto.Manager, EmployeeRoleDto.ShiftLeader, true)]
+        [InlineData(EmployeeRoleDto.Manager, EmployeeRoleDto.Support, true)]
+        [InlineData(EmployeeRoleDto.Support, EmployeeRoleDto.Cashier, false)]
         [InlineData(EmployeeRoleDto.Manager, EmployeeRoleDto.FloorWorker, true)]
         [InlineData(EmployeeRoleDto.Manager, EmployeeRoleDto.Manager, false)]
         [InlineData(EmployeeRoleDto.Manager, EmployeeRoleDto.Tester, false)]
@@ -26,7 +28,7 @@ namespace StockFlow.UnitTests.Common
         {
             var result = RoleHierarchy.AssignableRoles(EmployeeRoleDto.Manager);
 
-            Assert.Equal([EmployeeRoleDto.ShiftLeader, EmployeeRoleDto.ServiceDesk, EmployeeRoleDto.Cashier, EmployeeRoleDto.FloorWorker], result);
+            Assert.Equal([EmployeeRoleDto.Support, EmployeeRoleDto.ShiftLeader, EmployeeRoleDto.ServiceDesk, EmployeeRoleDto.Cashier, EmployeeRoleDto.FloorWorker], result);
         }
 
         [Fact]

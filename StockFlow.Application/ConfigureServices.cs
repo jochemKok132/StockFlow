@@ -41,6 +41,8 @@ namespace StockFlow.Application
             services.AddScoped<IEmployeeService, EmployeeService>();
             services.AddScoped<ICustomerService, CustomerService>();
             services.AddScoped<IRegisterDataService, RegisterDataService>();
+            services.AddScoped<ITicketService, TicketService>();
+            services.AddScoped<IDeletedItemsService, DeletedItemsService>();
 
             return services;
         }

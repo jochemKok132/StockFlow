@@ -14,5 +14,6 @@ namespace StockFlow.Domain.Enums
         FloorWorker,
         None,
         Tester,
+        Support,
     }
 }

@@ -14,5 +14,6 @@ namespace StockFlow.Shared.DTOs.Enums
         FloorWorker,
         None,
         Tester,
+        Support,
     }
 }

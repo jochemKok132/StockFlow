@@ -1,5 +1,6 @@
 ﻿using StockFlow.Shared.Common;
 using StockFlow.Shared.DTOs.Stock.Product;
+using StockFlow.Shared.DTOs.Enums;
 
 namespace StockFlow.Application.Validations.Stock
 {
@@ -16,6 +17,23 @@ namespace StockFlow.Application.Validations.Stock
             Guard.NotNull(dto, "Product");
             Guard.NotEmpty(dto.Id, "Product id");
             ValidateFields(dto.ProductName, dto.Description, dto.Price, dto.Stock, dto.Location, dto.ProductImage, dto.SalesTags, dto.BrandId, dto.ShelfId);
+        }
+
+        public static void Validate(this WriteOffRequest request)
+        {
+            Guard.NotNull(request, "Write-off");
+            Guard.NotEmpty(request.ProductId, "Product");
+
+            if (request.Amount < 1 || request.Amount > FieldLimits.MaxWriteOffAmount)
+                throw new ArgumentException($"The amount to write off must be between 1 and {FieldLimits.MaxWriteOffAmount}.");
+
+            if (!Enum.IsDefined(request.Reason))
+                throw new ArgumentException("Choose a reason for the write-off.");
+
+            Guard.Optional(request.Note, "Note", FieldLimits.WriteOffNote);
+
+            if (request.Reason == WriteOffReasonDto.Other && string.IsNullOrWhiteSpace(request.Note))
+                throw new ArgumentException("Explain the reason in the note when you choose Other.");
         }
 
         public static void ValidateStockChange(int amount)

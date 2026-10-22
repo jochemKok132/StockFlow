@@ -4,6 +4,7 @@ using StockFlow.Domain.Entities.Stock;
 using StockFlow.Domain.Entities.AuditLogs;
 using StockFlow.Infrastructure.Data.Seeders;
 using StockFlow.Domain.Entities.CashRegister;
+using StockFlow.Domain.Entities.Support;
 
 namespace StockFlow.Infrastructure.Data
 {
@@ -20,6 +21,7 @@ namespace StockFlow.Infrastructure.Data
         public DbSet<StockLogs> StockLogs { get; set; }
         public DbSet<EmployeeLogs> EmployeeLogs { get; set; }
         public DbSet<RegisterItemDetail> RegisterItemDetails { get; set; }
+        public DbSet<Ticket> Tickets { get; set; }
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
@@ -44,6 +46,22 @@ namespace StockFlow.Infrastructure.Data
             builder.Entity<CashRegisterLogs>()
                    .HasIndex(e => e.ReceiptId)
                    .IsUnique();
+
+            builder.Entity<Ticket>()
+                   .HasIndex(t => t.TicketNumber)
+                   .IsUnique();
+
+            builder.Entity<Ticket>()
+                   .HasOne(t => t.CreatedBy)
+                   .WithMany()
+                   .HasForeignKey(t => t.CreatedById)
+                   .OnDelete(DeleteBehavior.Restrict);
+
+            builder.Entity<Ticket>()
+                   .HasOne(t => t.HandledBy)
+                   .WithMany()
+                   .HasForeignKey(t => t.HandledById)
+                   .OnDelete(DeleteBehavior.Restrict);
 
             builder.Entity<CashRegisterLogs>()
                    .HasOne(a => a.Employee)

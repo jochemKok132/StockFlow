@@ -3,6 +3,7 @@
 @inject IProductService productsService
 @inject ILookupService LookupService
 @inject AuthenticationStateProvider AuthStateProvider
+@inject ConfirmService Confirm
 
 <div class="tasks-header">
     <div>
@@ -127,6 +128,7 @@
        product="selectedProduct"
        Loading="detailsLoading"
        Error="@detailsError"
+       OnWrittenOff="_ => LoadProducts()"
        OnClose="CloseDetails"/>
 
 <EditItem Show="showChanges"
@@ -201,6 +203,7 @@
     private async Task DeleteItem(ProductBulkViewDto product)
     {
         if (!canManage || viewOnly) return;
+        if (!await Confirm.AskAsync("Delete product", $"Delete {product.ProductName} ({product.Barcode})?", "Delete", danger: true, details: ["An admin can restore it later under Deleted items."])) return;
 
         await productsService.SoftDeleteProductAsync(product.Id);
         await ResetAndLoad();

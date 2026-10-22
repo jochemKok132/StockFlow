@@ -3,6 +3,7 @@
 @inject AuthenticationStateProvider AuthStateProvider
 @inject ISalesService salesService
 @inject ILookupService LookupService
+@inject ConfirmService Confirm
 
 <div class="tasks-header">
     <div>
@@ -177,6 +178,7 @@
     private async Task DeleteItem(SalesDto product)
     {
         if (!canManage || viewOnly) return;
+        if (!await Confirm.AskAsync("Delete sale", $"Delete the sale {product.SaleName}?", "Delete", danger: true, details: ["An admin can restore it later under Deleted items."])) return;
 
         await salesService.SoftDeleteSalesAsync(product.Id);
         await ResetAndLoad();

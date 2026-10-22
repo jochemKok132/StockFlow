@@ -2,6 +2,7 @@
 @attribute [Authorize]
 @inject IShelfService shelfService
 @inject AuthenticationStateProvider AuthStateProvider
+@inject ConfirmService Confirm
 
 <div class="tasks-header">
     <div>
@@ -159,6 +160,7 @@
     private async Task DeleteItem(ShelfDto shelf)
     {
         if (!canManage || viewOnly) return;
+        if (!await Confirm.AskAsync("Delete shelf", $"Delete the shelf {shelf.ShelfName}?", "Delete", danger: true, details: ["An admin can restore it later under Deleted items."])) return;
 
         await shelfService.SoftDeleteShelfAsync(shelf.Id);
         await ResetAndLoad();

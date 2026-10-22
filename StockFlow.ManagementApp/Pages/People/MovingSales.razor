@@ -2,6 +2,7 @@
 @attribute [Authorize(Roles = Permissions.ViewMovingSales)]
 @inject ICustomerService customerService
 @inject AuthenticationStateProvider AuthStateProvider
+@inject ConfirmService Confirm
 
 <div class="tasks-header">
     <div>
@@ -93,6 +94,13 @@
     private async Task Review(CustomerDto customer, bool approve)
     {
         if (!canReview || viewOnly) return;
+
+        string address = Address(customer.MovingSalePostalCode, customer.MovingSaleHouseNumber);
+        bool confirmed = approve
+            ? await Confirm.AskAsync("Approve moving sale", $"Approve the moving sale for {customer.FullName} ({customer.CustomerId})?", "Approve",
+                details: [$"Address changes to {address}", $"{SalePricing.MovingSalePercentage}% off for {SalePricing.MovingSaleDays} days"])
+            : await Confirm.AskAsync("Reject moving sale", $"Reject the moving sale for {customer.FullName} ({customer.CustomerId})?", "Reject", danger: true);
+        if (!confirmed) return;
 
         busy = true;
         message = approve

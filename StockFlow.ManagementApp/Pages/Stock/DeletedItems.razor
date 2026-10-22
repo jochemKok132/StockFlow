@@ -1,0 +1,128 @@
+﻿@page "/deleteditems"
+@attribute [Authorize(Roles = Permissions.ViewDeleted)]
+@inject IDeletedItemsService DeletedItemsService
+@inject AuthenticationStateProvider AuthStateProvider
+@inject ConfirmService Confirm
+
+<div class="tasks-header">
+    <div>
+        <h2>Deleted items</h2>
+        <p>Products, brands, sales and shelves that were deleted. Restore one to make it visible again everywhere.</p>
+    </div>
+</div>
+
+<div class="card">
+    <div class="filters-bar">
+        <div class="filters">
+            <div class="filter-group">
+                <label>Type</label>
+                <select @bind="type" @bind:after="LoadAsync">
+                    <option value="">All</option>
+                    @foreach (var value in Enum.GetValues<DeletedItemTypeDto>())
+                    {
+                        <option value="@value">@TypeLabel(value)</option>
+                    }
+                </select>
+            </div>
+        </div>
+    </div>
+
+    @if (!string.IsNullOrEmpty(message))
+    {
+        <div class="@(failed ? "alert-danger" : "notice-ok")">@message</div>
+    }
+
+    <table class="tasks-table">
+        <thead>
+            <tr>
+                <th>Type</th>
+                <th>Identifier</th>
+                <th>Name</th>
+                <th>Details</th>
+                <th>Deleted</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (loading)
+            {
+                <tr><td class="loading">Loading...</td></tr>
+            }
+            else if (!string.IsNullOrEmpty(error))
+            {
+                <tr><td class="alert-danger">@error</td></tr>
+            }
+            else if (items.Count == 0)
+            {
+                <tr><td class="empty-state">Nothing has been deleted.</td></tr>
+            }
+            else
+            {
+                @foreach (var item in items)
+                {
+                    <tr>
+                        <td>@TypeLabel(item.Type)</td>
+                        <td class="id-cell">@item.Identifier</td>
+                        <td><strong>@item.Name</strong></td>
+                        <td>@(string.IsNullOrWhiteSpace(item.Details) ? "-" : item.Details)</td>
+                        <td class="date-cell">@(item.DeletedAt == default ? "-" : item.DeletedAt.ToLocalTime().ToString("dd-MM-yyyy HH:mm"))</td>
+                        <td class="actions-cell">
+                            <button class="btn-edit" disabled="@(busy || viewOnly || !canRestore)" title="@(viewOnly ? AccessRules.ViewOnlyMessage : null)" @onclick="() => RestoreAsync(item)">
+                                <i class="bi bi-arrow-counterclockwise"></i> Restore
+                            </button>
+                        </td>
+                    </tr>
+                }
+            }
+        </tbody>
+    </table>
+</div>
+
+@code {
+    private List<DeletedItemDto> items = [];
+    private DeletedItemTypeDto? type;
+    private bool loading;
+    private bool busy;
+    private bool failed;
+    private bool canRestore;
+    private bool viewOnly;
+    private string error = "";
+    private string message = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        canRestore = authState.User.CanOpen(Permissions.RestoreDeleted);
+        viewOnly = authState.User.IsInRole(AccessRules.ViewOnlyRole);
+        await LoadAsync();
+    }
+
+    private async Task LoadAsync()
+    {
+        loading = true;
+        (items, error) = await DeletedItemsService.GetAllAsync(type);
+        loading = false;
+    }
+
+    private async Task RestoreAsync(DeletedItemDto item)
+    {
+        if (!canRestore || viewOnly || busy) return;
+        if (!await Confirm.AskAsync($"Restore {TypeLabel(item.Type).ToLowerInvariant()}", $"Restore {item.Name} ({item.Identifier})?", "Restore"))
+            return;
+
+        busy = true;
+        var (restored, result) = await DeletedItemsService.RestoreAsync(item);
+        busy = false;
+
+        failed = !restored;
+        message = result;
+        if (restored)
+            await LoadAsync();
+    }
+
+    private static string TypeLabel(DeletedItemTypeDto type) => type switch
+    {
+        DeletedItemTypeDto.ProductBrand => "Brand",
+        _ => type.ToString(),
+    };
+}

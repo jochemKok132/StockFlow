@@ -1,0 +1,27 @@
+﻿<span class="status-badge @CssClass">@Label</span>
+
+@code {
+    [Parameter] public TicketStatusDto Status { get; set; }
+
+    private string CssClass => Status switch
+    {
+        TicketStatusDto.Open => "status-update",
+        TicketStatusDto.InProgress => "status-running",
+        TicketStatusDto.Done => "status-ok",
+        _ => "status-ended",
+    };
+
+    private string Label => Status switch
+    {
+        TicketStatusDto.InProgress => "In progress",
+        _ => Status.ToString(),
+    };
+
+    public static string TypeLabel(TicketTypeDto type) => type switch
+    {
+        TicketTypeDto.Support => "Support request",
+        TicketTypeDto.Bug => "Bug report",
+        TicketTypeDto.Feature => "Feature request",
+        _ => type.ToString(),
+    };
+}

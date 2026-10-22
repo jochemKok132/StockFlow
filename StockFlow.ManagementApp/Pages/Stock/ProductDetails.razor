@@ -1,4 +1,8 @@
-﻿@if (Show)
+﻿@inject IProductService ProductService
+@inject AuthenticationStateProvider AuthStateProvider
+@inject ConfirmService Confirm
+
+@if (Show)
 {
     <ModalOverlay OnClose="OnClose" CssClass="drawer">
         <div class="panel-header">
@@ -46,7 +50,10 @@
 
             <dl class="details">
                 <dt>Barcode</dt>
-                <dd>@product.Barcode</dd>
+                <dd>
+                    <strong>@product.Barcode</strong>
+                    <div class="barcode-image">@((MarkupString)Code128.ToSvg(product.Barcode.ToString(), 2, 56))</div>
+                </dd>
                 <dt>Location</dt>
                 <dd>@(product.Shelf?.ShelfLocation)-@product.Location</dd>
                 <dt>Stock</dt>
@@ -78,6 +85,39 @@
                     <p>@product.Description</p>
                 </div>
             }
+
+            @if (canWriteOff)
+            {
+                <div class="write-off">
+                    <span class="panel-label">Write off stock</span>
+                    <div class="write-off-fields">
+                        <label>
+                            <span>Amount</span>
+                            <input type="number" min="1" max="@FieldLimits.MaxWriteOffAmount" @bind="writeOff.Amount" />
+                        </label>
+                        <label>
+                            <span>Reason</span>
+                            <select @bind="writeOff.Reason">
+                                @foreach (var reason in Enum.GetValues<WriteOffReasonDto>())
+                                {
+                                    <option value="@reason">@reason</option>
+                                }
+                            </select>
+                        </label>
+                    </div>
+                    <label>
+                        <span>Note @(writeOff.Reason == WriteOffReasonDto.Other ? "(required)" : "(optional)")</span>
+                        <input type="text" maxlength="@FieldLimits.WriteOffNote" @bind="writeOff.Note" @bind:event="oninput" placeholder="e.g. fell off the shelf" />
+                    </label>
+                    @if (!string.IsNullOrEmpty(writeOffMessage))
+                    {
+                        <div class="@(writeOffFailed ? "alert-danger" : "write-off-done")">@writeOffMessage</div>
+                    }
+                    <button type="button" class="btn-delete" disabled="@(writingOff || viewOnly)" title="@(viewOnly ? AccessRules.ViewOnlyMessage : null)" @onclick="WriteOffAsync">
+                        <i class="bi bi-box-arrow-down"></i> @(writingOff ? "Saving..." : $"Write off {writeOff.Amount}")
+                    </button>
+                </div>
+            }
         }
     </ModalOverlay>
 }
@@ -90,6 +130,55 @@
     [Parameter] public string Error { get; set; } = "";
 
     [Parameter] public EventCallback OnClose { get; set; }
+    [Parameter] public EventCallback<int> OnWrittenOff { get; set; }
+
+    private bool canWriteOff;
+    private bool viewOnly;
+    private bool writingOff;
+    private bool writeOffFailed;
+    private string writeOffMessage = "";
+    private Guid? shownProductId;
+    private WriteOffRequest writeOff = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        canWriteOff = authState.User.CanOpen(Permissions.WriteOffStock);
+        viewOnly = authState.User.IsInRole(AccessRules.ViewOnlyRole);
+    }
+
+    protected override void OnParametersSet()
+    {
+        if (product?.Id == shownProductId) return;
+
+        shownProductId = product?.Id;
+        writeOff = new WriteOffRequest();
+        writeOffMessage = "";
+        writeOffFailed = false;
+    }
+
+    private async Task WriteOffAsync()
+    {
+        if (product is null || viewOnly || writingOff) return;
+        if (!await Confirm.AskAsync("Write off stock", $"Write off {writeOff.Amount} of {product.ProductName} ({product.Barcode})?", "Write off", danger: true,
+                details: [$"Reason: {writeOff.Reason}", $"Stock goes from {product.Stock} to {product.Stock - writeOff.Amount}"]))
+            return;
+
+        writingOff = true;
+        writeOff.ProductId = product.Id;
+        var (stock, message) = await ProductService.WriteOffAsync(writeOff);
+        writingOff = false;
+
+        writeOffFailed = stock is null;
+        writeOffMessage = message;
+
+        if (stock is int newStock)
+        {
+            product.Stock = newStock;
+            writeOff = new WriteOffRequest();
+            await OnWrittenOff.InvokeAsync(newStock);
+        }
+    }
 
     private SalesDto? BestSale => product is null ? null : SalePricing.BestSale(product, 1, DateTime.Today);
 
