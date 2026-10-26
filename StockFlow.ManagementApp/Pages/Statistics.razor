@@ -52,7 +52,7 @@ else if (stats is not null)
         </div>
         <div class="card stat-tile">
             <span class="stat-label">With customer card</span>
-            <span class="stat-value">@stats.CustomerCardPercentage.ToString("0.#", Dutch)%</span>
+            <span class="stat-value">@stats.CustomerCardPercentage.ToString("0.#", Culture)%</span>
             <span class="stat-sub">@stats.PurchasesWithCustomer of @stats.Purchases purchases</span>
         </div>
         <div class="card stat-tile">
@@ -88,7 +88,7 @@ else if (stats is not null)
             <div class="bar-chart" role="img" aria-label="Daily revenue">
                 @foreach (var day in stats.Days)
                 {
-                    <div class="bar-column" title="@day.Date.ToString("ddd dd-MM", Dutch): @Money(day.Revenue), @day.Purchases purchases, @day.CustomerCardPercentage.ToString("0.#", Dutch)% with card">
+                    <div class="bar-column" title="@day.Date.ToString("ddd dd-MM", Culture): @Money(day.Revenue), @day.Purchases purchases, @day.CustomerCardPercentage.ToString("0.#", Culture)% with card">
                         <div class="bar" style="height: @BarHeight(day.Revenue)"></div>
                         <span class="bar-label">@day.Date.ToString(stats.Days.Count > 14 ? "dd" : "dd-MM")</span>
                     </div>
@@ -108,10 +108,10 @@ else if (stats is not null)
                     @foreach (var day in stats.Days.Where(d => d.Purchases > 0).OrderByDescending(d => d.Date))
                     {
                         <tr>
-                            <td>@day.Date.ToString("ddd dd-MM-yyyy", Dutch)</td>
+                            <td>@day.Date.ToString("ddd dd-MM-yyyy", Culture)</td>
                             <td class="number-cell">@day.Purchases</td>
                             <td class="number-cell">@Money(day.Revenue)</td>
-                            <td class="number-cell">@day.CustomerCardPercentage.ToString("0.#", Dutch)%</td>
+                            <td class="number-cell">@day.CustomerCardPercentage.ToString("0.#", Culture)%</td>
                         </tr>
                     }
                 </tbody>
@@ -158,7 +158,7 @@ else if (stats is not null)
 }
 
 @code {
-    private static readonly CultureInfo Dutch = CultureInfo.GetCultureInfo("nl-NL");
+    private static readonly CultureInfo Culture = CultureInfo.GetCultureInfo("en-IE");
 
     private DateTime to = DateTime.Today;
     private DateTime from = DateTime.Today.AddDays(-29);
@@ -205,5 +205,5 @@ else if (stats is not null)
         return $"{Math.Max(2, Math.Round(revenue / max * 100)).ToString(CultureInfo.InvariantCulture)}%";
     }
 
-    private static string Money(decimal value) => value.ToString("C", Dutch);
+    private static string Money(decimal value) => value.ToString("C", Culture);
 }

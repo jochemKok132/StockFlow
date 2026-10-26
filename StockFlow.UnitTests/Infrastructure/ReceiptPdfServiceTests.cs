@@ -9,7 +9,7 @@ namespace StockFlow.UnitTests.Infrastructure
         [Fact]
         public void Create_Receipt_ReturnsAPdf()
         {
-            var sut = new ReceiptPdfService(Options.Create(new ReceiptOptions { StoreName = "StockFlow Bouwmarkt", AddressLines = ["Teststraat 1"] }));
+            var sut = new ReceiptPdfService(Options.Create(new ReceiptOptions { StoreName = "StockFlow Hardware Store", AddressLines = ["Test Street 1"] }));
             var receipt = new CashRegisterLogsDto
             {
                 ReceiptId = "9000000001",
@@ -24,11 +24,11 @@ namespace StockFlow.UnitTests.Infrastructure
                 [
                     new RegisterItemDetailDto
                     {
-                        Product = new ProductDto { ProductName = "Hamer", Price = 5m },
+                        Product = new ProductDto { ProductName = "Hammer", Price = 5m },
                         Amount = 3,
                         ReturnedAmount = 1,
                         PriceAtTimeOfSale = 3.333333m,
-                        Sale = new SalesDto { SaleName = "Gereedschap", Description = "x", SaleType = SaleTypeDto.MultiBuy, BuyAmount = 2, FreeAmount = 1 },
+                        Sale = new SalesDto { SaleName = "Tools", Description = "x", SaleType = SaleTypeDto.MultiBuy, BuyAmount = 2, FreeAmount = 1 },
                     },
                 ],
             };

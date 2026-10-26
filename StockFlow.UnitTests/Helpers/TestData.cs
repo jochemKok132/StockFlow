@@ -34,7 +34,7 @@
         public static Shelf Shelf(bool softDeleted = false) => new()
         {
             Id = Guid.NewGuid(),
-            ShelfName = "Gereedschap",
+            ShelfName = "Tools",
             ShelfLocation = "002",
             ShelfHallway = "A",
             SoftDeleted = softDeleted,
@@ -43,10 +43,10 @@
         public static Sales Sale(int percentageOff = 20, params string[] tags) => new()
         {
             Id = Guid.NewGuid(),
-            SaleName = "Zomer",
-            Description = "Zomerkorting",
+            SaleName = "Summer",
+            Description = "Summer discount",
             PercentageOff = percentageOff,
-            SalesTags = tags.Length == 0 ? ["tuin"] : tags,
+            SalesTags = tags.Length == 0 ? ["garden"] : tags,
         };
 
         public static Product Product(int stock = 10, decimal price = 10m, ProductBrand? brand = null, Shelf? shelf = null)
@@ -56,13 +56,13 @@
             return new Product
             {
                 Id = Guid.NewGuid(),
-                ProductName = "Hamer",
-                Description = "Klauwhamer",
+                ProductName = "Hammer",
+                Description = "Claw Hammer",
                 Price = price,
                 Barcode = 500000001,
                 Stock = stock,
                 Location = 3,
-                SalesTags = ["gereedschap"],
+                SalesTags = ["tools"],
                 BrandId = brand.Id,
                 Brand = brand,
                 ShelfId = shelf.Id,
@@ -72,12 +72,12 @@
 
         public static CreateProductDto CreateProductDto(Guid brandId, Guid shelfId) => new()
         {
-            ProductName = "Hamer",
-            Description = "Klauwhamer",
+            ProductName = "Hammer",
+            Description = "Claw Hammer",
             Price = 12.99m,
             Stock = 5,
             Location = 3,
-            SalesTags = ["gereedschap"],
+            SalesTags = ["tools"],
             BrandId = brandId,
             ShelfId = shelfId,
         };
@@ -85,7 +85,7 @@
         public static UpdateProductDto UpdateProductDto(Product product, params string[] tags) => new()
         {
             Id = product.Id,
-            ProductName = "Hamer XL",
+            ProductName = "Hammer XL",
             Description = product.Description,
             Price = product.Price,
             Stock = product.Stock,
@@ -99,8 +99,8 @@
         {
             Name = "  Jan Jansen ",
             Email = " Jan@Example.com ",
-            Password = "Welkom123!",
-            ConfirmPassword = "Welkom123!",
+            Password = "Welcome123!",
+            ConfirmPassword = "Welcome123!",
             PostalCode = "1234ab",
             HouseNumber = "12a",
         };

@@ -27,7 +27,7 @@ namespace StockFlow.CashRegister.Services
                 return (new ProductDto(), $"Error: {response.Message}");
 
             if (response.Value is null)
-                return (new ProductDto(), "Error: Product niet gevonden.");
+                return (new ProductDto(), "Error: Product not found.");
 
             return (response.Value, "");
         }
@@ -51,7 +51,7 @@ namespace StockFlow.CashRegister.Services
                 return (null, $"Error: {response.Message}");
 
             if (response.Value is null)
-                return (null, "Error: Klant niet gevonden.");
+                return (null, "Error: Customer not found.");
 
             return (response.Value, "");
         }
@@ -64,7 +64,7 @@ namespace StockFlow.CashRegister.Services
                 return (null, $"Error: {response.Message}");
 
             if (response.Value is null)
-                return (null, "Error: Bon niet gevonden.");
+                return (null, "Error: Receipt not found.");
 
             return (response.Value, "");
         }
@@ -77,7 +77,7 @@ namespace StockFlow.CashRegister.Services
                 return (null, $"Error: {response.Message}");
 
             if (response.Value is null)
-                return (null, "Error: De retour kon niet worden verwerkt.");
+                return (null, "Error: The return could not be processed.");
 
             return (response.Value, "");
         }

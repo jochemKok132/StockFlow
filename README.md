@@ -259,7 +259,7 @@ Deleting a product, brand, sale or shelf only hides it (soft delete). The **Dele
 
 ### Writing off stock
 
-Every employee except the Tester can write off stock (*afboeken*) from the **product details** panel, which opens from the inventory, the product history and the cash register logs.
+Every employee except the Tester can write off stock from the **product details** panel, which opens from the inventory, the product history and the cash register logs.
 
 1. Enter the **amount** (1 – 999) and pick a **reason**: *Damaged*, *Expired*, *Stolen*, *Lost* or *Other*.
 2. Add a **note** (up to 200 characters). It's optional, except for *Other*, where it's required.
@@ -294,13 +294,13 @@ Customers who move get **10 % off everything that isn't already on sale, for 90 
 1. The customer asks for it with their new address: `POST Customer/MovingSale` (customer login) with `postalCode` and `houseNumber`. This is for the public site, which doesn't exist yet. The request waits for approval; nothing changes yet.
 2. A shift leader or higher opens **Moving sales** in the management app and clicks **Approve** or **Reject**.
 3. **Approve** moves the customer to the new address and starts the moving sale for 90 days. **Reject** keeps the old address and gives no discount.
-4. At the register, attaching that customer applies the moving sale to every product without its own active sale. The customer card shows *verhuiskorting 10% t/m dd-MM-yyyy*.
+4. At the register, attaching that customer applies the moving sale to every product without its own active sale. The customer card shows *moving sale 10% until dd-MM-yyyy*.
 
 A customer can't send a new request while one is waiting or while the moving sale is still running. Every step is written to the customer logs (*MovingSale: Requested*, the new address, *Approved by 000003, until …* or *Rejected by …*, and the address change). The percentage, name, description and dates of the moving sale can be edited on the Sales page.
 
 ### Receipt PDFs
 
-**Download** on the cash register logs page asks the API for `GET CashRegisterLogs/Receipt/{receiptId}/Pdf` and saves `bon-<receiptId>.pdf`. The PDF looks like a till receipt (80 mm wide, made with QuestPDF in `StockFlow.Infrastructure/Receipts/ReceiptPdfService.cs`): store name and address, receipt id, date and time, employee, customer, every line with amount, price and applied sale, returned items, discount, points used and earned, the total and the VAT included. Store name, address lines, VAT percentage and time zone come from the `Receipt` section in `appsettings.json`. At the bottom is a scannable Code 128 barcode of the receipt id, so a return can start by scanning the receipt into the cash register. The cash register itself doesn't print receipts yet.
+**Download** on the cash register logs page asks the API for `GET CashRegisterLogs/Receipt/{receiptId}/Pdf` and saves `receipt-<receiptId>.pdf`. The PDF looks like a till receipt (80 mm wide, made with QuestPDF in `StockFlow.Infrastructure/Receipts/ReceiptPdfService.cs`): store name and address, receipt id, date and time, employee, customer, every line with amount, price and applied sale, returned items, discount, points used and earned, the total and the VAT included. Store name, address lines, VAT percentage and time zone come from the `Receipt` section in `appsettings.json`. At the bottom is a scannable Code 128 barcode of the receipt id, so a return can start by scanning the receipt into the cash register. The cash register itself doesn't print receipts yet.
 
 ### Statistics
 
@@ -318,15 +318,15 @@ A customer can't send a new request while one is waiting or while the moving sal
 
 ## Cash register
 
-WinForms app (`StockFlow.CashRegister`), Dutch UI.
+WinForms app (`StockFlow.CashRegister`), English UI. Amounts are shown as euros (`€12.50`).
 
 ### Flow
 
 1. Log in with an employee id and password.
-2. Scan or type a **product barcode** (9 digits) or a **customer id** (8 digits, starts with 8) in the same input and press Enter. The input takes at most 10 characters (the length of a receipt id); the quantity dialog takes at most 3 (999) and the login fields at most 6 and 12. A customer without their card can be found with **Klant zoeken [F9]**: type their postal code and house number, pick the right person if more people live there, and click **Koppelen**.
+2. Scan or type a **product barcode** (9 digits) or a **customer id** (8 digits, starts with 8) in the same input and press Enter. The input takes at most 10 characters (the length of a receipt id); the quantity dialog takes at most 3 (999) and the login fields at most 6 and 12. A customer without their card can be found with **Find customer by address [F9]**: type their postal code and house number, pick the right person if more people live there, and click **Link**.
 3. Optionally attach a customer. **Sales only apply when a customer is attached.** Attaching a customer reprices the receipt with each product's best active sale (any [sale type](#sales), or the customer's moving sale for products without a sale); removing the customer restores the normal prices.
-4. Optionally press **Punten gebruiken [F4]** to pay part of the receipt with the customer's saved points.
-5. Press **Afrekenen [F10]**, choose PIN or cash, complete with **F12**. The confirmation shows the receipt id.
+4. Optionally press **Use points [F4]** to pay part of the receipt with the customer's saved points.
+5. Press **Checkout [F10]**, choose PIN or cash, complete with **F12**. The confirmation shows the receipt id.
 
 On completion the stock of every product is lowered by the sold amount (stock may go negative), a cash register log is written, and a stock log entry of type *Sold* is written per product.
 
@@ -338,7 +338,7 @@ On completion the stock of every product is lowered by the sold amount (stock ma
 - **All or nothing, no minimum:** pressing F4 spends as many points as possible: all of the customer's points, or exactly the receipt total if the customer has more. The cashier can't pick a smaller amount. Examples: 1,250 points on an €8.40 receipt uses 840 points and leaves €0.00 to pay (410 points stay); 50 points on a €10.00 receipt uses all 50 (−€0.50); any number of points can pay a €0.05 receipt (5 points).
 - When the points cover the whole receipt, the payment screen can be completed without choosing PIN or cash.
 - The button is enabled when a customer with at least 1 point is attached. Pressing F4 again turns it off; changing or removing the customer resets it.
-- The summary shows `Punten: -€x` and `Spaart: +n punten`; the payment screen shows the points used and the points that will be earned next to the customer, and the confirmation shows the points earned.
+- The summary shows `Points: -€x` and `Earns: +n points`; the payment screen shows the points used and the points that will be earned next to the customer, and the confirmation shows the points earned.
 - The server checks everything again (see [Validation rules](#validation-rules)), applies `earned − used` to the customer's saved points in one step and stores `PointsUsed` and `PointsEarned` on the cash register log.
 - Every purchase where points were used or earned writes one customer log entry (type *Update*) with `SavedPoints: New: x. Old: y` (or `SavedPoints: Unchanged (x)` when used and earned cancel out), `Receipt: <receipt id>`, `PointsUsed: n (-€x)` and `PointsEarned: n`. Open it on the customer logs page with **Open message**.
 - The cash register logs page has a **Points** column (`-used` in red, `+earned` in green), and the products overlay shows the points earned, the points used and their euro value.
@@ -347,9 +347,9 @@ On completion the stock of every product is lowered by the sold amount (stock ma
 
 Items can only be returned with the receipt.
 
-1. With an empty receipt on screen, type or scan the **receipt id** (10 digits, starts with 9) and press Enter. The register loads that receipt and switches to return mode (the card shows `RETOUR`, the receipt id, date and customer).
+1. With an empty receipt on screen, type or scan the **receipt id** (10 digits, starts with 9) and press Enter. The register loads that receipt and switches to return mode (the card shows `RETURN`, the receipt id, date and customer).
 2. Scan every item that comes back. Only products that are on that receipt are accepted, and never more than `bought − already returned` per product. F2 changes the amount within that limit, F6 removes a line.
-3. Press **Retour afronden [F10]** and confirm. The refund amount is shown.
+3. Press **Finish return [F10]** and confirm. The refund amount is shown.
 4. F3 or F5 stops the return without changing anything.
 
 When a return is completed the server checks everything again, raises `ReturnedAmount` on the receipt lines (so the same items can't be returned twice), raises the stock of each product, writes a stock log entry of type *Returned* per product and takes back the points earned on the returned items.
@@ -512,7 +512,7 @@ dotnet ef migrations add <Name> --project StockFlow.Infrastructure --startup-pro
 dotnet ef database update --project StockFlow.Infrastructure --startup-project StockFlow.API
 ```
 
-Seeders: `EmployeeSeeder`, `CustomerSeeder`, `ShelfSeeder`, `ProductBrandSeeder`, `ProductSeeder`, `SalesSeeder` (registered in `ApplicationDBContext.OnConfiguring` through `UseSeeding`).
+Seeders: `EmployeeSeeder`, `CustomerSeeder`, `ShelfSeeder`, `ProductBrandSeeder`, `ProductSeeder`, `SalesSeeder` (registered in `ApplicationDBContext.OnConfiguring` through `UseSeeding`). All seed data (product names, descriptions, brands, shelves and sales) is in English; seeders only fill empty tables, so a database that was seeded earlier keeps its old product names.
 
 ---
 

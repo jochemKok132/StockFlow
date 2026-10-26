@@ -11,7 +11,7 @@ namespace StockFlow.Infrastructure.Receipts
 {
     public class ReceiptPdfService(IOptions<ReceiptOptions> options) : IReceiptPdfService
     {
-        private static readonly CultureInfo Dutch = CultureInfo.GetCultureInfo("nl-NL");
+        private static readonly CultureInfo Culture = CultureInfo.GetCultureInfo("en-IE");
         private const float BarcodeWidthMm = 60;
         private const float BarcodeHeightMm = 14;
 
@@ -48,18 +48,18 @@ namespace StockFlow.Infrastructure.Receipts
 
                         Divider(column);
 
-                        Pair(column, "Bon", receipt.ReceiptId);
-                        Pair(column, "Datum", LocalTime(receipt.CreatedAt, settings.TimeZone).ToString("dd-MM-yyyy HH:mm", Dutch));
+                        Pair(column, "Receipt", receipt.ReceiptId);
+                        Pair(column, "Date", LocalTime(receipt.CreatedAt, settings.TimeZone).ToString("dd-MM-yyyy HH:mm", Culture));
                         if (receipt.Employee is not null)
-                            Pair(column, "Medewerker", receipt.Employee.EmployeeId);
+                            Pair(column, "Employee", receipt.Employee.EmployeeId);
                         if (receipt.Customer is not null)
-                            Pair(column, "Klant", $"{receipt.Customer.FullName} ({receipt.Customer.CustomerId})");
+                            Pair(column, "Customer", $"{receipt.Customer.FullName} ({receipt.Customer.CustomerId})");
 
                         Divider(column);
 
                         foreach (var line in lines)
                         {
-                            string name = line.Product?.ProductName ?? "Onbekend product";
+                            string name = line.Product?.ProductName ?? "Unknown product";
                             column.Item().Row(row =>
                             {
                                 row.RelativeItem().Text(name).SemiBold();
@@ -71,32 +71,32 @@ namespace StockFlow.Infrastructure.Receipts
                                 column.Item().PaddingLeft(6).Text($"{SalePricing.Describe(line.Sale)} {line.Sale.SaleName}").FontColor(Colors.Grey.Darken2);
 
                             if (line.ReturnedAmount > 0)
-                                column.Item().PaddingLeft(6).Text($"{line.ReturnedAmount} retour").FontColor(Colors.Grey.Darken2);
+                                column.Item().PaddingLeft(6).Text($"{line.ReturnedAmount} returned").FontColor(Colors.Grey.Darken2);
                         }
 
                         Divider(column);
 
-                        Pair(column, "Artikelen", Money(linesTotal));
+                        Pair(column, "Items", Money(linesTotal));
                         if (discount > 0)
-                            Pair(column, "Waarvan korting", Money(discount));
+                            Pair(column, "Of which discount", Money(discount));
                         if (receipt.PointsUsed > 0)
-                            Pair(column, $"Punten ({receipt.PointsUsed})", $"-{Money(pointsValue)}");
+                            Pair(column, $"Points ({receipt.PointsUsed})", $"-{Money(pointsValue)}");
 
                         column.Item().PaddingTop(2).Row(row =>
                         {
-                            row.RelativeItem().Text("TOTAAL").Bold().FontSize(11);
+                            row.RelativeItem().Text("TOTAL").Bold().FontSize(11);
                             row.ConstantItem(70).AlignRight().Text(Money(total)).Bold().FontSize(11);
                         });
 
                         if (vat > 0)
-                            Pair(column, $"Btw {settings.VatPercentage.ToString("0.##", Dutch)}% (inbegrepen)", Money(vat));
+                            Pair(column, $"VAT {settings.VatPercentage.ToString("0.##", Culture)}% (included)", Money(vat));
                         if (receipt.PointsEarned > 0)
-                            Pair(column, "Gespaarde punten", receipt.PointsEarned.ToString(Dutch));
+                            Pair(column, "Points earned", receipt.PointsEarned.ToString(Culture));
 
                         Divider(column);
 
-                        column.Item().AlignCenter().Text("Bedankt voor uw aankoop!");
-                        column.Item().AlignCenter().Text("Bewaar deze bon voor ruilen of retour.").FontColor(Colors.Grey.Darken2);
+                        column.Item().AlignCenter().Text("Thank you for your purchase!");
+                        column.Item().AlignCenter().Text("Keep this receipt for exchanges or returns.").FontColor(Colors.Grey.Darken2);
 
                         column.Item().PaddingTop(8).AlignCenter().Width(BarcodeWidthMm, Unit.Millimetre).Height(BarcodeHeightMm, Unit.Millimetre)
                             .Svg(Code128.ToSvg(receipt.ReceiptId, 2, 60));
@@ -116,7 +116,7 @@ namespace StockFlow.Infrastructure.Receipts
         private static void Divider(ColumnDescriptor column) =>
             column.Item().PaddingVertical(3).LineHorizontal(0.5f).LineColor(Colors.Grey.Lighten1);
 
-        private static string Money(decimal value) => value.ToString("C", Dutch);
+        private static string Money(decimal value) => value.ToString("C", Culture);
 
         private static DateTime LocalTime(DateTime utc, string timeZone)
         {

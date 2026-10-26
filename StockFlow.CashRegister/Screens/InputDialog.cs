@@ -29,7 +29,7 @@ namespace StockFlow.CashRegister.Screens
             var btnOk = new Button { Text = "OK", Location = new Point(24, 120), Size = new Size(150, 40), DialogResult = DialogResult.OK };
             Theme.ApplyPrimary(btnOk);
 
-            var btnCancel = new Button { Text = "Annuleren", Location = new Point(186, 120), Size = new Size(150, 40), DialogResult = DialogResult.Cancel };
+            var btnCancel = new Button { Text = "Cancel", Location = new Point(186, 120), Size = new Size(150, 40), DialogResult = DialogResult.Cancel };
             Theme.ApplySecondary(btnCancel);
 
             form.AcceptButton = btnOk;

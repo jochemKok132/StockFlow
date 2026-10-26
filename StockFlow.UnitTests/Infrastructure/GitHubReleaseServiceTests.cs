@@ -16,7 +16,7 @@ namespace StockFlow.UnitTests.Infrastructure
                 "tag_name": "v1.2.0", "name": "", "body": "## Changes\n- Returns", "draft": false, "prerelease": false,
                 "published_at": "2026-10-10T10:00:00Z", "html_url": "https://github.com/x/y/releases/tag/v1.2.0",
                 "assets": [
-                  { "name": "StockFlow.CashRegister-v1.2.0-win-x64.zip", "size": 73400320, "browser_download_url": "https://github.com/x/y/releases/download/v1.2.0/kassa.zip", "download_count": 7 },
+                  { "name": "StockFlow.CashRegister-v1.2.0-win-x64.zip", "size": 73400320, "browser_download_url": "https://github.com/x/y/releases/download/v1.2.0/cashregister.zip", "download_count": 7 },
                   { "name": "notes.txt", "size": 12, "browser_download_url": "https://github.com/x/y/notes.txt", "download_count": 1 }
                 ]
               },

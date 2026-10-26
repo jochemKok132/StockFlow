@@ -12,7 +12,7 @@ namespace StockFlow.CashRegister.Screens
         {
             using var form = new Form
             {
-                Text = "Klant zoeken op adres",
+                Text = "Find customer by address",
                 FormBorderStyle = FormBorderStyle.FixedDialog,
                 StartPosition = FormStartPosition.CenterParent,
                 MaximizeBox = false,
@@ -22,15 +22,15 @@ namespace StockFlow.CashRegister.Screens
             };
             Theme.ApplyForm(form);
 
-            var lblPostalCode = new Label { Text = "Postcode", Location = new Point(24, 20), Size = new Size(180, 20) };
+            var lblPostalCode = new Label { Text = "Postal code", Location = new Point(24, 20), Size = new Size(180, 20) };
             var txtPostalCode = new TextBox { Location = new Point(24, 42), Size = new Size(180, 27), MaxLength = FieldLimits.PostalCode, CharacterCasing = CharacterCasing.Upper };
-            var lblHouseNumber = new Label { Text = "Huisnummer", Location = new Point(216, 20), Size = new Size(180, 20) };
+            var lblHouseNumber = new Label { Text = "House number", Location = new Point(216, 20), Size = new Size(180, 20) };
             var txtHouseNumber = new TextBox { Location = new Point(216, 42), Size = new Size(180, 27), MaxLength = FieldLimits.HouseNumber, CharacterCasing = CharacterCasing.Upper };
-            var btnSearch = new Button { Text = "Zoeken", Location = new Point(24, 84), Size = new Size(372, 36) };
-            var lblResult = new Label { Text = "Vul een postcode en huisnummer in.", Location = new Point(24, 130), Size = new Size(372, 20) };
+            var btnSearch = new Button { Text = "Search", Location = new Point(24, 84), Size = new Size(372, 36) };
+            var lblResult = new Label { Text = "Enter a postal code and house number.", Location = new Point(24, 130), Size = new Size(372, 20) };
             var lstCustomers = new ListBox { Location = new Point(24, 154), Size = new Size(372, 150), IntegralHeight = false };
-            var btnOk = new Button { Text = "Koppelen", Location = new Point(24, 320), Size = new Size(180, 40), Enabled = false };
-            var btnCancel = new Button { Text = "Annuleren", Location = new Point(216, 320), Size = new Size(180, 40), DialogResult = DialogResult.Cancel };
+            var btnOk = new Button { Text = "Link", Location = new Point(24, 320), Size = new Size(180, 40), Enabled = false };
+            var btnCancel = new Button { Text = "Cancel", Location = new Point(216, 320), Size = new Size(180, 40), DialogResult = DialogResult.Cancel };
 
             Theme.ApplyCaption(lblPostalCode);
             Theme.ApplyCaption(lblHouseNumber);
@@ -51,7 +51,7 @@ namespace StockFlow.CashRegister.Screens
                 btnSearch.Enabled = false;
                 lstCustomers.Items.Clear();
                 btnOk.Enabled = false;
-                lblResult.Text = "Zoeken...";
+                lblResult.Text = "Searching...";
 
                 var (customers, error) = await cashRegister.FindCustomersByAddressAsync(txtPostalCode.Text.Trim(), txtHouseNumber.Text.Trim());
                 found = customers;
@@ -65,9 +65,9 @@ namespace StockFlow.CashRegister.Screens
 
                 lblResult.Text = found.Count switch
                 {
-                    0 => "Geen klant gevonden op dit adres.",
-                    1 => "1 klant gevonden.",
-                    _ => $"{found.Count} klanten gevonden. Kies de juiste klant.",
+                    0 => "No customer found at this address.",
+                    1 => "1 customer found.",
+                    _ => $"{found.Count} customers found. Choose the right customer.",
                 };
 
                 foreach (var customer in found)

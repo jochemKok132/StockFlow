@@ -86,7 +86,7 @@ namespace StockFlow.CashRegister
             lblMethodsHeader.Dock = DockStyle.Fill;
             lblMethodsHeader.Margin = new Padding(0);
             lblMethodsHeader.Name = "lblMethodsHeader";
-            lblMethodsHeader.Text = "BETAALWIJZE";
+            lblMethodsHeader.Text = "PAYMENT METHOD";
             lblMethodsHeader.TextAlign = ContentAlignment.MiddleLeft;
             methodsGrid.ColumnCount = 2;
             methodsGrid.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50F));
@@ -108,11 +108,11 @@ namespace StockFlow.CashRegister
             btnCash.Margin = new Padding(6, 0, 0, 0);
             btnCash.Name = "btnCash";
             btnCash.TabIndex = 1;
-            btnCash.Text = "CONTANT\r\n[F2]";
+            btnCash.Text = "CASH\r\n[F2]";
             lblQuickCashHeader.Dock = DockStyle.Fill;
             lblQuickCashHeader.Margin = new Padding(0);
             lblQuickCashHeader.Name = "lblQuickCashHeader";
-            lblQuickCashHeader.Text = "SNEL CONTANT";
+            lblQuickCashHeader.Text = "QUICK CASH";
             lblQuickCashHeader.TextAlign = ContentAlignment.BottomLeft;
             quickCashGrid.ColumnCount = 4;
             for (int i = 0; i < 4; i++)
@@ -138,7 +138,7 @@ namespace StockFlow.CashRegister
             ConfigureQuickButton(btn20, "btn20", "€ 20", 3);
             ConfigureQuickButton(btn50, "btn50", "€ 50", 4);
             ConfigureQuickButton(btn100, "btn100", "€ 100", 5);
-            ConfigureQuickButton(btnClear, "btnClear", "Wissen", 6);
+            ConfigureQuickButton(btnClear, "btnClear", "Clear", 6);
             rightPanel.ColumnCount = 1;
             rightPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
             rightPanel.Controls.Add(summaryCard, 0, 0);
@@ -176,11 +176,11 @@ namespace StockFlow.CashRegister
             summaryTable.RowStyles.Add(new RowStyle(SizeType.Percent, 33.33F));
             summaryTable.RowStyles.Add(new RowStyle(SizeType.Percent, 33.34F));
             summaryTable.TabIndex = 0;
-            ConfigureSummaryLabel(lblTotalDueCaption, "lblTotalDueCaption", "TE BETALEN", ContentAlignment.MiddleLeft);
+            ConfigureSummaryLabel(lblTotalDueCaption, "lblTotalDueCaption", "TO PAY", ContentAlignment.MiddleLeft);
             ConfigureSummaryLabel(lblTotalDue, "lblTotalDue", "", ContentAlignment.MiddleRight);
-            ConfigureSummaryLabel(lblTenderedCaption, "lblTenderedCaption", "ONTVANGEN", ContentAlignment.MiddleLeft);
+            ConfigureSummaryLabel(lblTenderedCaption, "lblTenderedCaption", "RECEIVED", ContentAlignment.MiddleLeft);
             ConfigureSummaryLabel(lblTendered, "lblTendered", "", ContentAlignment.MiddleRight);
-            ConfigureSummaryLabel(lblChangeCaption, "lblChangeCaption", "TERUGGELD", ContentAlignment.MiddleLeft);
+            ConfigureSummaryLabel(lblChangeCaption, "lblChangeCaption", "CHANGE", ContentAlignment.MiddleLeft);
             ConfigureSummaryLabel(lblChange, "lblChange", "", ContentAlignment.MiddleRight);
             lblMessage.Dock = DockStyle.Bottom;
             lblMessage.Name = "lblMessage";
@@ -189,12 +189,12 @@ namespace StockFlow.CashRegister
             btnBack.Margin = new Padding(0, 0, 0, 8);
             btnBack.Name = "btnBack";
             btnBack.TabIndex = 1;
-            btnBack.Text = "Terug naar scannen  [ESC]";
+            btnBack.Text = "Back to scanning  [ESC]";
             btnComplete.Dock = DockStyle.Fill;
             btnComplete.Margin = new Padding(0);
             btnComplete.Name = "btnComplete";
             btnComplete.TabIndex = 2;
-            btnComplete.Text = "TRANSACTIE VOLTOOIEN  [F12]";
+            btnComplete.Text = "COMPLETE TRANSACTION  [F12]";
             Controls.Add(mainLayout);
             Name = "PurchasingScreen";
             Size = new Size(1280, 740);

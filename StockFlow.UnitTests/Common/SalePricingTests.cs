@@ -7,7 +7,7 @@
         private static SalesDto Percentage(int percentage, DateTime? start = null, DateTime? end = null) => new()
         {
             Id = Guid.NewGuid(),
-            SaleName = "Korting",
+            SaleName = "Discount",
             Description = "x",
             SaleType = SaleTypeDto.Percentage,
             PercentageOff = percentage,
@@ -28,7 +28,7 @@
         private static SalesDto SecondHalf() => new()
         {
             Id = Guid.NewGuid(),
-            SaleName = "2e halve prijs",
+            SaleName = "Second half price",
             Description = "x",
             SaleType = SaleTypeDto.SecondItemHalfPrice,
         };
@@ -36,7 +36,7 @@
         private static SalesDto Bundle(int size, decimal price) => new()
         {
             Id = Guid.NewGuid(),
-            SaleName = $"{size} voor {price}",
+            SaleName = $"{size} for {price}",
             Description = "x",
             SaleType = SaleTypeDto.Bundle,
             BuyAmount = size,

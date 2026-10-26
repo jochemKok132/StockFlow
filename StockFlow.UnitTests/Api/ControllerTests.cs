@@ -121,11 +121,11 @@ namespace StockFlow.UnitTests.Api
         [Fact]
         public async Task GetProductAsync_Barcode_ReturnsProduct()
         {
-            _productService.Setup(s => s.GetProductByBarcodeAsync(500000001)).ReturnsAsync(new ProductDto { ProductName = "Hamer" });
+            _productService.Setup(s => s.GetProductByBarcodeAsync(500000001)).ReturnsAsync(new ProductDto { ProductName = "Hammer" });
 
             var result = await CreateSut().GetProductAsync("500000001");
 
-            Assert.Equal("Hamer", result.Body<ProductDto>().Value?.ProductName);
+            Assert.Equal("Hammer", result.Body<ProductDto>().Value?.ProductName);
         }
 
         [Fact]

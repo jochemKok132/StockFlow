@@ -76,7 +76,7 @@ namespace StockFlow.UnitTests.Services
 
         private static RegisterItemDetailDto Line(Guid productId, decimal price, int amount) => new()
         {
-            Product = new ProductDto { Id = productId, ProductName = "Hamer" },
+            Product = new ProductDto { Id = productId, ProductName = "Hammer" },
             PriceAtTimeOfSale = price,
             Amount = amount,
         };

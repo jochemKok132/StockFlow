@@ -25,7 +25,7 @@ namespace StockFlow.UnitTests.Validations
         }
 
         [Theory]
-        [InlineData("geen-email")]
+        [InlineData("no-email")]
         [InlineData("")]
         public void ValidateRegister_InvalidEmail_ThrowsArgumentException(string email)
         {
@@ -36,10 +36,10 @@ namespace StockFlow.UnitTests.Validations
         }
 
         [Theory]
-        [InlineData("welkom123!")]
-        [InlineData("WELKOM123!")]
-        [InlineData("Welkom!!!")]
-        [InlineData("Welkom123")]
+        [InlineData("welcome123!")]
+        [InlineData("WELCOME123!")]
+        [InlineData("Welcome!!!")]
+        [InlineData("Welcome123")]
         [InlineData("We1!")]
         public void ValidateRegister_WeakPassword_ThrowsArgumentException(string password)
         {
@@ -103,7 +103,7 @@ namespace StockFlow.UnitTests.Validations
         [Fact]
         public void ValidateChangePassword_SameAsCurrent_ThrowsArgumentException()
         {
-            var request = new ChangePasswordRequest { CurrentPassword = "Welkom123!", NewPassword = "Welkom123!", ConfirmPassword = "Welkom123!" };
+            var request = new ChangePasswordRequest { CurrentPassword = "Welcome123!", NewPassword = "Welcome123!", ConfirmPassword = "Welcome123!" };
 
             Assert.Throws<ArgumentException>(() => request.Validate());
         }
@@ -111,7 +111,7 @@ namespace StockFlow.UnitTests.Validations
         [Fact]
         public void ValidateChangePassword_ConfirmationDiffers_ThrowsArgumentException()
         {
-            var request = new ChangePasswordRequest { CurrentPassword = "Oud12345!", NewPassword = "Nieuw123!", ConfirmPassword = "Nieuw124!" };
+            var request = new ChangePasswordRequest { CurrentPassword = "Old12345!", NewPassword = "NewPass1!", ConfirmPassword = "NewPass2!" };
 
             Assert.Throws<ArgumentException>(() => request.Validate());
         }

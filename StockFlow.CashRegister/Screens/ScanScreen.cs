@@ -163,7 +163,7 @@ namespace StockFlow.CashRegister
             {
                 if (IsReturning)
                 {
-                    ShowError("Tijdens een retour kan geen klant gekoppeld worden.");
+                    ShowError("A customer can't be linked during a return.");
                     txtBarcode.SelectAll();
                 }
                 else await AddCustomerAsync(input);
@@ -172,10 +172,10 @@ namespace StockFlow.CashRegister
                 await LoadReceiptAsync(input);
             else
             {
-                ShowError($"Voer een barcode van {IdentifierFormats.ProductBarcodeLength} cijfers, " +
-                          $"een klantnummer van {IdentifierFormats.CustomerIdLength} cijfers " +
-                          $"(begint met {IdentifierFormats.CustomerIdPrefix}) of een bonnummer van " +
-                          $"{IdentifierFormats.ReceiptIdLength} cijfers (begint met {IdentifierFormats.ReceiptIdPrefix}) in.");
+                ShowError($"Enter a barcode of {IdentifierFormats.ProductBarcodeLength} digits, " +
+                          $"a customer id of {IdentifierFormats.CustomerIdLength} digits " +
+                          $"(starting with {IdentifierFormats.CustomerIdPrefix}) or a receipt id of " +
+                          $"{IdentifierFormats.ReceiptIdLength} digits (starting with {IdentifierFormats.ReceiptIdPrefix}).");
                 txtBarcode.SelectAll();
             }
         }
@@ -184,14 +184,14 @@ namespace StockFlow.CashRegister
         {
             if (IsReturning)
             {
-                ShowError($"Er is al een retour geopend voor bon {_receipt!.ReceiptId}. Rond deze eerst af of stop de retour [F3].");
+                ShowError($"A return is already open for receipt {_receipt!.ReceiptId}. Finish it first or stop the return [F3].");
                 txtBarcode.SelectAll();
                 return;
             }
 
             if (HasItems)
             {
-                ShowError("Rond eerst de huidige bon af of annuleer deze voordat je een retour start.");
+                ShowError("Finish or cancel the current receipt before you start a return.");
                 txtBarcode.SelectAll();
                 return;
             }
@@ -210,7 +210,7 @@ namespace StockFlow.CashRegister
                 int returnable = receipt.ProductsSold.Sum(p => p.Amount - p.ReturnedAmount);
                 if (returnable <= 0)
                 {
-                    ShowError($"Alle artikelen van bon {receipt.ReceiptId} zijn al geretourneerd.");
+                    ShowError($"All items on receipt {receipt.ReceiptId} have already been returned.");
                     txtBarcode.SelectAll();
                     return;
                 }
@@ -218,7 +218,7 @@ namespace StockFlow.CashRegister
                 SetCustomer(null);
                 _receipt = receipt;
                 txtBarcode.Clear();
-                ShowNotice($"Retour voor bon {receipt.ReceiptId}: nog {returnable} artikel(en) terug te nemen. Scan de artikelen die terugkomen.");
+                ShowNotice($"Return for receipt {receipt.ReceiptId}: {returnable} item(s) can still be returned. Scan the items that come back.");
                 RefreshView();
             }
             catch (Exception ex)
@@ -250,7 +250,7 @@ namespace StockFlow.CashRegister
             var sold = _receipt.ProductsSold.FirstOrDefault(p => p.Product is not null && p.Product.Barcode == barcode);
             if (sold is null)
             {
-                ShowError($"Dit product staat niet op bon {_receipt.ReceiptId}.");
+                ShowError($"This product is not on receipt {_receipt.ReceiptId}.");
                 txtBarcode.SelectAll();
                 return;
             }
@@ -264,8 +264,8 @@ namespace StockFlow.CashRegister
             if ((line?.Amount ?? 0) >= max)
             {
                 ShowError(max <= 0
-                    ? $"{sold.Product.ProductName} van bon {_receipt.ReceiptId} is al volledig geretourneerd."
-                    : $"Van {sold.Product.ProductName} kunnen maximaal {max} stuks retour (gekocht: {bought}, al retour: {alreadyReturned}).");
+                    ? $"{sold.Product.ProductName} from receipt {_receipt.ReceiptId} has already been fully returned."
+                    : $"At most {max} of {sold.Product.ProductName} can be returned (bought: {bought}, already returned: {alreadyReturned}).");
                 txtBarcode.SelectAll();
                 return;
             }
@@ -293,8 +293,8 @@ namespace StockFlow.CashRegister
 
             int count = _lines.Sum(l => l.Amount);
             var answer = MessageBox.Show(FindForm(),
-                $"{count} artikel(en) retour nemen van bon {_receipt.ReceiptId}?\r\nTerug te betalen: {Theme.Money(RefundTotal)}",
-                "StockFlow Kassa", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+                $"Return {count} item(s) from receipt {_receipt.ReceiptId}?\r\nTo refund: {Theme.Money(RefundTotal)}",
+                "StockFlow Cash Register", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
 
             if (answer != DialogResult.Yes) return;
 
@@ -315,8 +315,8 @@ namespace StockFlow.CashRegister
                 }
 
                 Clear();
-                string points = result.PointsDeducted > 0 ? $"   ·   {result.PointsDeducted} gespaarde punten afgeschreven" : "";
-                ShowNotice($"Retour verwerkt voor bon {result.ReceiptId}: {result.ItemsReturned} artikel(en). Terugbetalen: {Theme.Money(result.RefundAmount)}{points}");
+                string points = result.PointsDeducted > 0 ? $"   ·   {result.PointsDeducted} saved points deducted" : "";
+                ShowNotice($"Return processed for receipt {result.ReceiptId}: {result.ItemsReturned} item(s). Refund: {Theme.Money(result.RefundAmount)}{points}");
             }
             catch (Exception ex)
             {
@@ -344,8 +344,8 @@ namespace StockFlow.CashRegister
                 SetCustomer(customer);
                 txtBarcode.Clear();
                 ShowNotice(CurrentDiscount > 0
-                    ? $"Klant {customer.FullName} gekoppeld. Aanbiedingen toegepast: {Theme.Money(CurrentDiscount)} korting."
-                    : $"Klant {customer.FullName} gekoppeld aan deze bon.");
+                    ? $"Customer {customer.FullName} linked. Sales applied: {Theme.Money(CurrentDiscount)} discount."
+                    : $"Customer {customer.FullName} linked to this receipt.");
             }
             catch (Exception ex)
             {
@@ -375,7 +375,7 @@ namespace StockFlow.CashRegister
 
             if (!_usePoints && _customer.SavedPoints <= 0)
             {
-                ShowError("De klant heeft geen punten om te gebruiken.");
+                ShowError("The customer has no points to use.");
                 return;
             }
 
@@ -391,15 +391,15 @@ namespace StockFlow.CashRegister
 
             if (_receipt is not null)
             {
-                string customer = _receipt.Customer is null ? "Geen klant" : $"Klant: {_receipt.Customer.FullName}";
-                string pointsText = _receipt.PointsUsed > 0 ? $"   ·   {_receipt.PointsUsed} punten gebruikt" : "";
-                lblCustomer.Text = $"RETOUR   ·   Bon {_receipt.ReceiptId}   ·   {_receipt.CreatedAt.ToLocalTime():dd-MM-yyyy HH:mm}   ·   {customer}{pointsText}";
-                btnRemoveCustomer.Text = "Retour stoppen [F3]";
+                string customer = _receipt.Customer is null ? "No customer" : $"Customer: {_receipt.Customer.FullName}";
+                string pointsText = _receipt.PointsUsed > 0 ? $"   ·   {_receipt.PointsUsed} points used" : "";
+                lblCustomer.Text = $"RETURN   ·   Receipt {_receipt.ReceiptId}   ·   {_receipt.CreatedAt.ToLocalTime():dd-MM-yyyy HH:mm}   ·   {customer}{pointsText}";
+                btnRemoveCustomer.Text = "Stop return [F3]";
                 btnUsePoints.Visible = false;
                 return;
             }
 
-            btnRemoveCustomer.Text = "Klant verwijderen [F3]";
+            btnRemoveCustomer.Text = "Remove customer [F3]";
             btnUsePoints.Visible = true;
 
             if (_customer is null)
@@ -410,13 +410,13 @@ namespace StockFlow.CashRegister
 
             int points = PointsToUse;
             string movingSale = _customer.MovingSale is { } sale
-                ? $"   ·   verhuiskorting {sale.PercentageOff}% t/m {_customer.MovingSaleUntil:dd-MM-yyyy}"
+                ? $"   ·   moving sale {sale.PercentageOff}% until {_customer.MovingSaleUntil:dd-MM-yyyy}"
                 : "";
             lblCustomer.Text = (points > 0
-                ? $"Klant: {_customer.FullName}   ·   {_customer.CustomerId}   ·   {points} van {_customer.SavedPoints} punten gebruikt (-{Theme.Money(LoyaltyPoints.ToEuros(points))})"
-                : $"Klant: {_customer.FullName}   ·   {_customer.CustomerId}   ·   {_customer.SavedPoints} punten ({Theme.Money(LoyaltyPoints.ToEuros(_customer.SavedPoints))})") + movingSale;
+                ? $"Customer: {_customer.FullName}   ·   {_customer.CustomerId}   ·   {points} of {_customer.SavedPoints} points used (-{Theme.Money(LoyaltyPoints.ToEuros(points))})"
+                : $"Customer: {_customer.FullName}   ·   {_customer.CustomerId}   ·   {_customer.SavedPoints} points ({Theme.Money(LoyaltyPoints.ToEuros(_customer.SavedPoints))})") + movingSale;
 
-            btnUsePoints.Text = _usePoints ? "Punten niet gebruiken [F4]" : "Punten gebruiken [F4]";
+            btnUsePoints.Text = _usePoints ? "Don't use points [F4]" : "Use points [F4]";
             btnUsePoints.Enabled = _customer.SavedPoints > 0;
             Theme.SetSelected(btnUsePoints, _usePoints);
         }
@@ -443,8 +443,8 @@ namespace StockFlow.CashRegister
 
             SetCustomer(customer);
             ShowNotice(CurrentDiscount > 0
-                ? $"Klant {customer.FullName} gekoppeld. Aanbiedingen toegepast: {Theme.Money(CurrentDiscount)} korting."
-                : $"Klant {customer.FullName} gekoppeld aan deze bon.");
+                ? $"Customer {customer.FullName} linked. Sales applied: {Theme.Money(CurrentDiscount)} discount."
+                : $"Customer {customer.FullName} linked to this receipt.");
             txtBarcode.Focus();
         }
 
@@ -491,10 +491,10 @@ namespace StockFlow.CashRegister
 
             var line = _lines[index];
             int max = IsReturning ? Returnable(line.Product) : 999;
-            string? answer = InputDialog.Ask(FindForm()!, "Aantal wijzigen",
+            string? answer = InputDialog.Ask(FindForm()!, "Change quantity",
                 IsReturning
-                    ? $"Aantal retour voor {line.Product.ProductName} (maximaal {max})"
-                    : $"Nieuw aantal voor {line.Product.ProductName}",
+                    ? $"Quantity to return for {line.Product.ProductName} (at most {max})"
+                    : $"New quantity for {line.Product.ProductName}",
                 line.Amount.ToString(),
                 FieldLimits.Quantity);
 
@@ -502,7 +502,7 @@ namespace StockFlow.CashRegister
 
             if (!int.TryParse(answer, out int quantity) || quantity < 1 || quantity > max)
             {
-                ShowError($"Voer een aantal tussen 1 en {max} in.");
+                ShowError($"Enter a quantity between 1 and {max}.");
                 return;
             }
 
@@ -528,14 +528,14 @@ namespace StockFlow.CashRegister
             bool returning = IsReturning;
             if (HasItems)
             {
-                var answer = MessageBox.Show(FindForm(), returning ? "De retour annuleren?" : "De huidige bon annuleren?",
-                    "StockFlow Kassa", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+                var answer = MessageBox.Show(FindForm(), returning ? "Cancel the return?" : "Cancel the current receipt?",
+                    "StockFlow Cash Register", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
 
                 if (answer != DialogResult.Yes) return;
             }
 
             Clear();
-            ShowNotice(returning ? "Retour geannuleerd." : "Bon geannuleerd.");
+            ShowNotice(returning ? "Return cancelled." : "Receipt cancelled.");
         }
 
         private void ParkSale()
@@ -545,7 +545,7 @@ namespace StockFlow.CashRegister
             _parked = [.. _lines];
             _parkedCustomer = _customer;
             Clear();
-            ShowNotice("Bon geparkeerd. Gebruik Heropenen [F8] om verder te gaan.");
+            ShowNotice("Receipt parked. Use Reopen [F8] to continue.");
         }
 
         private void RecallSale()
@@ -578,7 +578,7 @@ namespace StockFlow.CashRegister
                     : $"{line.Product.ProductName}   ({SalePricing.Describe(line.Sale)} {line.Sale.SaleName})";
 
                 if (IsReturning)
-                    description += $"   (retour, max {Returnable(line.Product)})";
+                    description += $"   (return, max {Returnable(line.Product)})";
 
                 gridItems.Rows.Add(
                     line.Product.Barcode.ToString(),
@@ -601,24 +601,24 @@ namespace StockFlow.CashRegister
             decimal discount = CurrentDiscount;
             int points = PointsToUse;
             var summary = IsReturning
-                ? $"Retour: {_lines.Sum(l => l.Amount)} artikel(en)"
-                : $"Artikelen: {_lines.Sum(l => l.Amount)}";
+                ? $"Return: {_lines.Sum(l => l.Amount)} item(s)"
+                : $"Items: {_lines.Sum(l => l.Amount)}";
             if (IsReturning && _receipt!.PointsUsed > 0)
-                summary += "   ·   Terugbetaling naar rato (punten gebruikt)";
+                summary += "   ·   Refund pro rata (points used)";
             if (discount > 0)
-                summary += $"   ·   Korting: {Theme.Money(discount)}";
+                summary += $"   ·   Discount: {Theme.Money(discount)}";
             if (points > 0)
-                summary += $"   ·   Punten: -{Theme.Money(LoyaltyPoints.ToEuros(points))}";
+                summary += $"   ·   Points: -{Theme.Money(LoyaltyPoints.ToEuros(points))}";
             if (PointsToEarn > 0)
-                summary += $"   ·   Spaart: +{PointsToEarn} punten";
+                summary += $"   ·   Earns: +{PointsToEarn} points";
             lblItemCount.Text = summary;
 
             UpdateCustomerView();
-            lblSubtotal.Text = $"Subtotaal (excl. BTW): {Theme.Money(total - vat)}";
-            lblVat.Text = $"BTW ({VatRate:P0}): {Theme.Money(vat)}";
+            lblSubtotal.Text = $"Subtotal (excl. VAT): {Theme.Money(total - vat)}";
+            lblVat.Text = $"VAT ({VatRate:P0}): {Theme.Money(vat)}";
             lblTotalAmount.Text = IsReturning && total > 0 ? $"-{Theme.Money(total)}" : Theme.Money(total);
-            lblScan.Text = IsReturning ? $"RETOUR BON {_receipt!.ReceiptId}  ·  SCAN DE ARTIKELEN (9 CIJFERS)" : _scanCaption;
-            btnCheckout.Text = IsReturning ? "RETOUR AFRONDEN  [F10]" : "AFREKENEN  [F10]";
+            lblScan.Text = IsReturning ? $"RETURN RECEIPT {_receipt!.ReceiptId}  ·  SCAN THE ITEMS (9 DIGITS)" : _scanCaption;
+            btnCheckout.Text = IsReturning ? "FINISH RETURN  [F10]" : "CHECKOUT  [F10]";
 
             btnQuantity.Enabled = HasItems;
             btnDeleteLine.Enabled = HasItems;

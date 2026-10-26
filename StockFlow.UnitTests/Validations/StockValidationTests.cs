@@ -59,7 +59,7 @@ namespace StockFlow.UnitTests.Validations
         {
             var request = Valid();
             request.Reason = WriteOffReasonDto.Other;
-            request.Note = "Tester in de winkel";
+            request.Note = "Tester in the store";
 
             Assert.Null(Record.Exception(() => request.Validate()));
         }
@@ -145,7 +145,7 @@ namespace StockFlow.UnitTests.Validations
         public void ValidateCreate_EmptyTag_ThrowsArgumentException()
         {
             var dto = Valid();
-            dto.SalesTags = ["tuin", " "];
+            dto.SalesTags = ["garden", " "];
 
             Assert.Throws<ArgumentException>(() => dto.Validate());
         }
@@ -179,7 +179,7 @@ namespace StockFlow.UnitTests.Validations
         [Fact]
         public void ValidateCreate_SecondItemHalfPrice_NeedsNoOtherFields()
         {
-            var dto = new CreateSalesDto { SaleName = "2e halve prijs", Description = "x", SaleType = SaleTypeDto.SecondItemHalfPrice, SalesTags = ["tuin"] };
+            var dto = new CreateSalesDto { SaleName = "Second half price", Description = "x", SaleType = SaleTypeDto.SecondItemHalfPrice, SalesTags = ["garden"] };
 
             Assert.Null(Record.Exception(() => dto.Validate()));
         }
@@ -187,7 +187,7 @@ namespace StockFlow.UnitTests.Validations
         [Fact]
         public void ValidateCreate_ValidBundle_DoesNotThrow()
         {
-            var dto = new CreateSalesDto { SaleName = "3 voor 10", Description = "x", SaleType = SaleTypeDto.Bundle, BuyAmount = 3, BundlePrice = 10m, SalesTags = ["tuin"] };
+            var dto = new CreateSalesDto { SaleName = "3 for 10", Description = "x", SaleType = SaleTypeDto.Bundle, BuyAmount = 3, BundlePrice = 10m, SalesTags = ["garden"] };
 
             Assert.Null(Record.Exception(() => dto.Validate()));
         }
@@ -200,7 +200,7 @@ namespace StockFlow.UnitTests.Validations
         [InlineData(3, 100000.01)]
         public void ValidateCreate_InvalidBundle_ThrowsArgumentException(int size, double price)
         {
-            var dto = new CreateSalesDto { SaleName = "bundel", Description = "x", SaleType = SaleTypeDto.Bundle, BuyAmount = size, BundlePrice = (decimal)price, SalesTags = ["tuin"] };
+            var dto = new CreateSalesDto { SaleName = "bundle", Description = "x", SaleType = SaleTypeDto.Bundle, BuyAmount = size, BundlePrice = (decimal)price, SalesTags = ["garden"] };
 
             Assert.Throws<ArgumentException>(() => dto.Validate());
         }
@@ -208,7 +208,7 @@ namespace StockFlow.UnitTests.Validations
         [Fact]
         public void ValidateCreate_MultiBuy_DoesNotNeedAPercentage()
         {
-            var dto = new CreateSalesDto { SaleName = "1+1", Description = "x", SaleType = SaleTypeDto.MultiBuy, BuyAmount = 1, FreeAmount = 1, SalesTags = ["tuin"] };
+            var dto = new CreateSalesDto { SaleName = "1+1", Description = "x", SaleType = SaleTypeDto.MultiBuy, BuyAmount = 1, FreeAmount = 1, SalesTags = ["garden"] };
 
             Assert.Null(Record.Exception(() => dto.Validate()));
         }
@@ -219,7 +219,7 @@ namespace StockFlow.UnitTests.Validations
         [InlineData(100, 1)]
         public void ValidateCreate_MultiBuyWithoutAmounts_ThrowsArgumentException(int buy, int free)
         {
-            var dto = new CreateSalesDto { SaleName = "x+y", Description = "x", SaleType = SaleTypeDto.MultiBuy, BuyAmount = buy, FreeAmount = free, SalesTags = ["tuin"] };
+            var dto = new CreateSalesDto { SaleName = "x+y", Description = "x", SaleType = SaleTypeDto.MultiBuy, BuyAmount = buy, FreeAmount = free, SalesTags = ["garden"] };
 
             Assert.Throws<ArgumentException>(() => dto.Validate());
         }
@@ -227,7 +227,7 @@ namespace StockFlow.UnitTests.Validations
         [Fact]
         public void ValidateCreate_MovingSale_ThrowsArgumentException()
         {
-            var dto = new CreateSalesDto { SaleName = "Verhuis", Description = "x", SaleType = SaleTypeDto.Moving, PercentageOff = 10, SalesTags = ["tuin"] };
+            var dto = new CreateSalesDto { SaleName = "Moving", Description = "x", SaleType = SaleTypeDto.Moving, PercentageOff = 10, SalesTags = ["garden"] };
 
             Assert.Throws<ArgumentException>(() => dto.Validate());
         }
@@ -235,7 +235,7 @@ namespace StockFlow.UnitTests.Validations
         [Fact]
         public void ValidateCreate_EndBeforeStart_ThrowsArgumentException()
         {
-            var dto = new CreateSalesDto { SaleName = "Zomer", Description = "x", PercentageOff = 10, SalesTags = ["tuin"], StartDate = new DateTime(2026, 7, 1), EndDate = new DateTime(2026, 6, 30) };
+            var dto = new CreateSalesDto { SaleName = "Summer", Description = "x", PercentageOff = 10, SalesTags = ["garden"], StartDate = new DateTime(2026, 7, 1), EndDate = new DateTime(2026, 6, 30) };
 
             Assert.Throws<ArgumentException>(() => dto.Validate());
         }
@@ -251,7 +251,7 @@ namespace StockFlow.UnitTests.Validations
         [Fact]
         public void ValidateUpdate_TurnIntoMovingSale_ThrowsArgumentException()
         {
-            var dto = new UpdateSalesDto { Id = Guid.NewGuid(), SaleName = "Zomer", Description = "x", SaleType = SaleTypeDto.Moving, PercentageOff = 10, SalesTags = ["tuin"] };
+            var dto = new UpdateSalesDto { Id = Guid.NewGuid(), SaleName = "Summer", Description = "x", SaleType = SaleTypeDto.Moving, PercentageOff = 10, SalesTags = ["garden"] };
 
             Assert.Throws<ArgumentException>(() => dto.Validate());
         }
@@ -261,7 +261,7 @@ namespace StockFlow.UnitTests.Validations
         [InlineData(100)]
         public void ValidateCreate_PercentageOutOfRange_ThrowsArgumentException(int percentage)
         {
-            var dto = new CreateSalesDto { SaleName = "Zomer", Description = "x", PercentageOff = percentage, SalesTags = ["tuin"] };
+            var dto = new CreateSalesDto { SaleName = "Summer", Description = "x", PercentageOff = percentage, SalesTags = ["garden"] };
 
             Assert.Throws<ArgumentException>(() => dto.Validate());
         }
@@ -271,7 +271,7 @@ namespace StockFlow.UnitTests.Validations
         [InlineData(99)]
         public void ValidateCreate_PercentageBoundaries_DoesNotThrow(int percentage)
         {
-            var dto = new CreateSalesDto { SaleName = "Zomer", Description = "x", PercentageOff = percentage, SalesTags = ["tuin"] };
+            var dto = new CreateSalesDto { SaleName = "Summer", Description = "x", PercentageOff = percentage, SalesTags = ["garden"] };
 
             Assert.Null(Record.Exception(() => dto.Validate()));
         }
@@ -279,7 +279,7 @@ namespace StockFlow.UnitTests.Validations
         [Fact]
         public void ValidateUpdate_NoTags_ThrowsArgumentException()
         {
-            var dto = new UpdateSalesDto { Id = Guid.NewGuid(), SaleName = "Zomer", Description = "x", PercentageOff = 10 };
+            var dto = new UpdateSalesDto { Id = Guid.NewGuid(), SaleName = "Summer", Description = "x", PercentageOff = 10 };
 
             Assert.Throws<ArgumentException>(() => dto.Validate());
         }
@@ -290,7 +290,7 @@ namespace StockFlow.UnitTests.Validations
         [Fact]
         public void ValidateShelf_HallwayTooLong_ThrowsArgumentException()
         {
-            var dto = new CreateShelfDto { ShelfName = "Verf", ShelfLocation = "001", ShelfHallway = new string('A', 51) };
+            var dto = new CreateShelfDto { ShelfName = "Paint", ShelfLocation = "001", ShelfHallway = new string('A', 51) };
 
             Assert.Throws<ArgumentException>(() => dto.Validate());
         }
@@ -298,13 +298,13 @@ namespace StockFlow.UnitTests.Validations
         [Fact]
         public void ValidateShelf_NoHallway_DoesNotThrow()
         {
-            Assert.Null(Record.Exception(() => new CreateShelfDto { ShelfName = "Verf", ShelfLocation = "001" }.Validate()));
+            Assert.Null(Record.Exception(() => new CreateShelfDto { ShelfName = "Paint", ShelfLocation = "001" }.Validate()));
         }
 
         [Fact]
         public void ValidateUpdateShelf_EmptyId_ThrowsArgumentException()
         {
-            Assert.Throws<ArgumentException>(() => new UpdateShelfDto { ShelfName = "Verf", ShelfLocation = "001" }.Validate());
+            Assert.Throws<ArgumentException>(() => new UpdateShelfDto { ShelfName = "Paint", ShelfLocation = "001" }.Validate());
         }
 
         [Fact]

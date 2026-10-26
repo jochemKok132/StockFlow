@@ -51,7 +51,7 @@ namespace StockFlow.CashRegister
             headerLayout.TabIndex = 0;
             lblTitle.Dock = DockStyle.Fill;
             lblTitle.Name = "lblTitle";
-            lblTitle.Text = "StockFlow Kassa";
+            lblTitle.Text = "StockFlow Cash Register";
             lblTitle.TextAlign = ContentAlignment.MiddleLeft;
             lblStatusInfo.AutoSize = true;
             lblStatusInfo.Dock = DockStyle.Fill;
@@ -62,7 +62,7 @@ namespace StockFlow.CashRegister
             btnLogout.Name = "btnLogout";
             btnLogout.Size = new Size(110, 36);
             btnLogout.TabIndex = 0;
-            btnLogout.Text = "Uitloggen";
+            btnLogout.Text = "Log out";
             contentPanel.Dock = DockStyle.Fill;
             contentPanel.Name = "contentPanel";
             contentPanel.TabIndex = 1;
@@ -73,7 +73,7 @@ namespace StockFlow.CashRegister
             MinimumSize = new Size(1024, 728);
             Name = "MainForm";
             StartPosition = FormStartPosition.CenterScreen;
-            Text = "StockFlow Kassa";
+            Text = "StockFlow Cash Register";
             WindowState = FormWindowState.Maximized;
             headerPanel.ResumeLayout(false);
             headerLayout.ResumeLayout(false);

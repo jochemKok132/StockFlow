@@ -20,8 +20,8 @@ namespace StockFlow.UnitTests.Services
             Id = Guid.NewGuid(),
             TicketNumber = number,
             Type = type,
-            Title = "Kassa start niet",
-            Description = "Foutmelding bij opstarten",
+            Title = "Cash register won't start",
+            Description = "Error on startup",
             CreatedById = Guid.NewGuid(),
             CreatedBy = TestData.Employee(),
         };
@@ -34,13 +34,13 @@ namespace StockFlow.UnitTests.Services
             _ticketRepository.Setup(r => r.GetNextTicketNumberAsync()).ReturnsAsync(1005);
             _ticketRepository.Setup(r => r.AddAsync(It.IsAny<Ticket>())).Callback<Ticket>(t => created = t);
 
-            var result = await _sut.CreateAsync(new CreateTicketRequest { Type = TicketTypeDto.Bug, Title = "  Knop werkt niet ", Description = "Opslaan doet niets" }, employeeId);
+            var result = await _sut.CreateAsync(new CreateTicketRequest { Type = TicketTypeDto.Bug, Title = "  Button does not work ", Description = "Save does nothing" }, employeeId);
 
             Assert.NotNull(created);
             Assert.Equal(1005, created.TicketNumber);
             Assert.Equal(TicketType.Bug, created.Type);
             Assert.Equal(TicketStatus.Open, created.Status);
-            Assert.Equal("Knop werkt niet", created.Title);
+            Assert.Equal("Button does not work", created.Title);
             Assert.Equal(employeeId, created.CreatedById);
             Assert.Equal(1005, result.TicketNumber);
         }
@@ -94,10 +94,10 @@ namespace StockFlow.UnitTests.Services
             var handlerId = Guid.NewGuid();
             _ticketRepository.Setup(r => r.GetByNumberAsync(1001)).ReturnsAsync(ticket);
 
-            var result = await _sut.HandleSupportRequestAsync(1001, new HandleTicketRequest { Status = TicketStatusDto.Done, Response = " Opnieuw opgestart " }, handlerId);
+            var result = await _sut.HandleSupportRequestAsync(1001, new HandleTicketRequest { Status = TicketStatusDto.Done, Response = " Restarted " }, handlerId);
 
             Assert.Equal(TicketStatus.Done, ticket.Status);
-            Assert.Equal("Opnieuw opgestart", ticket.Response);
+            Assert.Equal("Restarted", ticket.Response);
             Assert.Equal(handlerId, ticket.HandledById);
             Assert.NotNull(ticket.HandledAt);
             Assert.Equal(TicketStatusDto.Done, result.Status);
@@ -135,7 +135,7 @@ namespace StockFlow.UnitTests.Services
         public async Task HandleFeedbackAsync_EmptyAnswer_StoresNull()
         {
             var ticket = Ticket(TicketType.Feature);
-            ticket.Response = "oud";
+            ticket.Response = "original";
             _ticketRepository.Setup(r => r.GetByNumberAsync(1001)).ReturnsAsync(ticket);
 
             await _sut.HandleFeedbackAsync(1001, new HandleTicketRequest { Status = TicketStatusDto.Rejected, Response = "   " }, Guid.NewGuid());

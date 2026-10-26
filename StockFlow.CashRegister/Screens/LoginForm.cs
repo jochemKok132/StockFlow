@@ -16,8 +16,8 @@ namespace StockFlow.CashRegister.Screens
             _cashRegister = cashRegister;
             ApplyTheme();
 
-            Text = $"StockFlow Kassa - Inloggen ({AppVersion.Display(Program.Version)})";
-            lblSubtitle.Text = $"Log in om de kassa te openen   ·   {AppVersion.Display(Program.Version)}";
+            Text = $"StockFlow Cash Register - Log in ({AppVersion.Display(Program.Version)})";
+            lblSubtitle.Text = $"Log in to open the cash register   ·   {AppVersion.Display(Program.Version)}";
             Shown += async (_, _) => await CheckForUpdateAsync();
 
             KeyPreview = true;
@@ -59,7 +59,7 @@ namespace StockFlow.CashRegister.Screens
 
             if (string.IsNullOrWhiteSpace(username) || string.IsNullOrWhiteSpace(password))
             {
-                Theme.ShowMessage(lblError, "Gebruikersnaam en wachtwoord zijn verplicht.", true);
+                Theme.ShowMessage(lblError, "Username and password are required.", true);
                 return;
             }
 
@@ -82,11 +82,11 @@ namespace StockFlow.CashRegister.Screens
                     return;
                 }
 
-                Theme.ShowMessage(lblError, response.Message ?? "Ongeldige inloggegevens.", true);
+                Theme.ShowMessage(lblError, response.Message ?? "Invalid login details.", true);
             }
             catch (Exception ex)
             {
-                Theme.ShowMessage(lblError, $"Inloggen mislukt: {ex.Message}", true);
+                Theme.ShowMessage(lblError, $"Login failed: {ex.Message}", true);
             }
             finally
             {
@@ -106,7 +106,7 @@ namespace StockFlow.CashRegister.Screens
                     return;
 
                 Theme.ShowMessage(lblError,
-                    $"Nieuwe versie {AppVersion.Display(latest.Version)} beschikbaar. Download deze via Releases in de management app.");
+                    $"New version {AppVersion.Display(latest.Version)} available. Download it from Releases in the management app.");
             }
             catch (Exception)
             {
@@ -118,7 +118,7 @@ namespace StockFlow.CashRegister.Screens
             btnLogin.Enabled = !isLoading;
             txtUsername.Enabled = !isLoading;
             txtPassword.Enabled = !isLoading;
-            btnLogin.Text = isLoading ? "Bezig..." : "Inloggen";
+            btnLogin.Text = isLoading ? "Busy..." : "Log in";
 
             if (isLoading)
                 lblError.Visible = false;

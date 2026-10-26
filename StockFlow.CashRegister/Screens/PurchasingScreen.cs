@@ -9,7 +9,7 @@ namespace StockFlow.CashRegister
     public partial class PurchasingScreen : UserControl, IKeyScreen
     {
         private const string Pin = "PIN";
-        private const string Cash = "CONTANT";
+        private const string Cash = "CASH";
 
         private readonly MainForm _mainForm;
         private readonly ICashRegisterService _cashRegister;
@@ -94,10 +94,10 @@ namespace StockFlow.CashRegister
         {
             if (_customer is null) return null;
 
-            List<string> parts = [$"Klant: {_customer.FullName} ({_customer.CustomerId})"];
-            if (_discount > 0) parts.Add($"Korting: {Theme.Money(_discount)}");
-            if (_pointsUsed > 0) parts.Add($"Punten: {_pointsUsed} (-{Theme.Money(LoyaltyPoints.ToEuros(_pointsUsed))})");
-            if (PointsToEarn > 0) parts.Add($"Spaart: +{PointsToEarn} punten");
+            List<string> parts = [$"Customer: {_customer.FullName} ({_customer.CustomerId})"];
+            if (_discount > 0) parts.Add($"Discount: {Theme.Money(_discount)}");
+            if (_pointsUsed > 0) parts.Add($"Points: {_pointsUsed} (-{Theme.Money(LoyaltyPoints.ToEuros(_pointsUsed))})");
+            if (PointsToEarn > 0) parts.Add($"Earns: +{PointsToEarn} points");
             return string.Join("   ·   ", parts);
         }
 
@@ -160,12 +160,12 @@ namespace StockFlow.CashRegister
 
                 _mainForm.ScanView.Clear();
                 _mainForm.ShowScanScreen();
-                string receipt = string.IsNullOrWhiteSpace(result) ? "" : $" Bonnummer: {result}.";
-                if (PointsToEarn > 0) receipt += $" +{PointsToEarn} punten gespaard.";
+                string receipt = string.IsNullOrWhiteSpace(result) ? "" : $" Receipt id: {result}.";
+                if (PointsToEarn > 0) receipt += $" +{PointsToEarn} points earned.";
                 _mainForm.ScanView.ShowNotice(
                     change > 0 && _method == Cash
-                        ? $"Transactie afgerond.{receipt} Teruggeld: {Theme.Money(change)}"
-                        : $"Transactie afgerond.{receipt}");
+                        ? $"Transaction completed.{receipt} Change: {Theme.Money(change)}"
+                        : $"Transaction completed.{receipt}");
             }
             catch (Exception ex)
             {
@@ -193,9 +193,9 @@ namespace StockFlow.CashRegister
             bool paid = _total == 0 || (_method != "" && difference >= 0);
 
             lblTotalDue.Text = Theme.Money(_total);
-            lblTenderedCaption.Text = _method == "" ? "ONTVANGEN" : $"ONTVANGEN ({_method})";
+            lblTenderedCaption.Text = _method == "" ? "RECEIVED" : $"RECEIVED ({_method})";
             lblTendered.Text = Theme.Money(_tendered);
-            lblChangeCaption.Text = paid ? "TERUGGELD" : "NOG TE BETALEN";
+            lblChangeCaption.Text = paid ? "CHANGE" : "STILL TO PAY";
             lblChange.Text = Theme.Money(Math.Abs(difference));
             lblChange.ForeColor = paid ? Theme.AccentColor : Theme.DangerText;
 

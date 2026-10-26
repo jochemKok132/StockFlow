@@ -178,22 +178,22 @@
         detailsError = "";
         selectedMessages = null;
     }
-    private async Task OrderBy(StockLogsOrderBy kolom)
+    private async Task OrderBy(StockLogsOrderBy column)
     {
-        if (pagination.OrderBy == kolom)
+        if (pagination.OrderBy == column)
             pagination.OrderType = pagination.OrderType == OrderType.Ascending ? OrderType.Descending : OrderType.Ascending;
         else
         {
-            pagination.OrderBy = kolom;
+            pagination.OrderBy = column;
             pagination.OrderType = OrderType.Ascending;
         }
         pagination.PageNumber = 1;
         await LoadLogs();
     }
 
-    private RenderFragment SortingArrow(StockLogsOrderBy kolom) => builder =>
+    private RenderFragment SortingArrow(StockLogsOrderBy column) => builder =>
     {
-        if (pagination.OrderBy == kolom)
+        if (pagination.OrderBy == column)
         {
             builder.OpenElement(0, "span");
             builder.AddAttribute(1, "class", "sort-arrow");

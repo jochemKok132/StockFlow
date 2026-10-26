@@ -59,7 +59,7 @@ namespace StockFlow.UnitTests.Services
         public async Task CreateProductAsync_ValidProduct_AssignsBarcodeAddsMatchingSalesAndLogs()
         {
             var (brand, shelf) = SetupBrandAndShelf();
-            var sale = TestData.Sale(20, "gereedschap");
+            var sale = TestData.Sale(20, "tools");
             Product? created = null;
             _salesRepository.Setup(r => r.GetAllSalesForProductTags(It.IsAny<List<string>>())).ReturnsAsync(new[] { sale });
             _productRepository.Setup(r => r.GetNewBarcode()).ReturnsAsync(500000123);
@@ -129,7 +129,7 @@ namespace StockFlow.UnitTests.Services
             var (oldBrand, oldShelf) = SetupBrandAndShelf();
             var (newBrand, newShelf) = SetupBrandAndShelf();
             newBrand.BrandName = "Makita";
-            newShelf.ShelfName = "Tuin";
+            newShelf.ShelfName = "Garden";
             var product = TestData.Product(brand: oldBrand, shelf: oldShelf);
             _productRepository.Setup(r => r.GetByIdAsync(product.Id)).ReturnsAsync(product);
             _salesRepository.Setup(r => r.GetAllSalesForProductTags(It.IsAny<List<string>>())).ReturnsAsync(Array.Empty<Sales>());
@@ -143,7 +143,7 @@ namespace StockFlow.UnitTests.Services
 
             Assert.NotNull(log);
             Assert.Contains("BrandName: New: Makita. Old: Bosch", log.Messages);
-            Assert.Contains("ShelfName: New: Tuin. Old: Gereedschap", log.Messages);
+            Assert.Contains("ShelfName: New: Garden. Old: Tools", log.Messages);
             Assert.DoesNotContain(log.Messages, m => m.Contains(newBrand.Id.ToString()) || m.Contains(oldShelf.Id.ToString()));
         }
 
@@ -152,15 +152,15 @@ namespace StockFlow.UnitTests.Services
         {
             var (brand, shelf) = SetupBrandAndShelf();
             var product = TestData.Product(brand: brand, shelf: shelf);
-            var oldSale = TestData.Sale(10, "gereedschap");
-            var newSale = TestData.Sale(30, "tuin");
+            var oldSale = TestData.Sale(10, "tools");
+            var newSale = TestData.Sale(30, "garden");
             product.Sales.Add(oldSale);
             _productRepository.Setup(r => r.GetByIdAsync(product.Id)).ReturnsAsync(product);
             _salesRepository.Setup(r => r.GetAllSalesForProductTags(It.IsAny<List<string>>())).ReturnsAsync(new[] { newSale });
 
-            await _sut.UpdateProductAsync(TestData.UpdateProductDto(product, "tuin"), Guid.NewGuid());
+            await _sut.UpdateProductAsync(TestData.UpdateProductDto(product, "garden"), Guid.NewGuid());
 
-            Assert.Equal("Hamer XL", product.ProductName);
+            Assert.Equal("Hammer XL", product.ProductName);
             Assert.DoesNotContain(oldSale, product.Sales);
             Assert.Contains(newSale, product.Sales);
             _productRepository.Verify(r => r.UpdateAsync(product), Times.Once);
@@ -185,7 +185,7 @@ namespace StockFlow.UnitTests.Services
             var result = await _sut.GetProductDetailsAsync(product.Id);
 
             Assert.Equal("Bosch", result.Brand?.BrandName);
-            Assert.Equal("Gereedschap", result.Shelf?.ShelfName);
+            Assert.Equal("Tools", result.Shelf?.ShelfName);
         }
 
         [Fact]

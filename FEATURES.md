@@ -55,7 +55,7 @@ A short list of everything StockFlow can do right now, followed by the [to-do li
 - PIN or cash payment, confirmation shows the receipt id and points earned
 - Stock lowered on every sale (stock may go negative)
 - Keyboard shortcuts for everything (F1 – F12, Esc)
-- Dutch UI with the same colours as the management app
+- English UI with the same colours as the management app
 - API address editable in `appsettings.json` next to the exe
 - Back to the login screen when the session has expired
 
@@ -193,7 +193,7 @@ A short list of everything StockFlow can do right now, followed by the [to-do li
 
 ## Employees and permissions
 
-- [ ] Staff schedule (*rooster*) management: generated automatically 4 weeks ahead, can be changed, the manager has to confirm it
+- [ ] Staff schedule management: generated automatically 4 weeks ahead, can be changed, the manager has to confirm it
 
 
 

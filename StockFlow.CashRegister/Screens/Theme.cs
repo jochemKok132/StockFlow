@@ -24,9 +24,9 @@ namespace StockFlow.CashRegister.Screens
         public static readonly Color DangerText = Color.FromArgb(185, 28, 28);
 
         private const string Family = "Segoe UI";
-        private static readonly CultureInfo Dutch = new("nl-NL");
+        private static readonly CultureInfo Culture = new("en-IE");
 
-        public static string Money(decimal value) => value.ToString("C", Dutch);
+        public static string Money(decimal value) => value.ToString("C", Culture);
 
         private static Font Font(float size, FontStyle style = FontStyle.Regular) => new(Family, size, style);
 

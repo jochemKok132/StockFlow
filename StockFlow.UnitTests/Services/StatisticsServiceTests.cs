@@ -28,8 +28,8 @@ namespace StockFlow.UnitTests.Services
         [Fact]
         public async Task GetOverviewAsync_Purchases_AddsUpTotalsAndPercentages()
         {
-            var hammer = new Product { Id = Guid.NewGuid(), Barcode = 500000001, ProductName = "Hamer", Description = "x" };
-            var saw = new Product { Id = Guid.NewGuid(), Barcode = 500000002, ProductName = "Zaag", Description = "x" };
+            var hammer = new Product { Id = Guid.NewGuid(), Barcode = 500000001, ProductName = "Hammer", Description = "x" };
+            var saw = new Product { Id = Guid.NewGuid(), Barcode = 500000002, ProductName = "Saw", Description = "x" };
             var day = new DateTime(2026, 10, 15);
             _repository.Setup(r => r.GetPurchasesAsync(It.IsAny<DateTime>(), It.IsAny<DateTime>())).ReturnsAsync(
             [
@@ -58,7 +58,7 @@ namespace StockFlow.UnitTests.Services
             Assert.Equal(50.0, result.Days[0].CustomerCardPercentage);
             Assert.Equal(70m, result.Days[1].Revenue);
             Assert.Equal(0, result.Days[2].Purchases);
-            Assert.Equal("Zaag", result.TopProducts[0].ProductName);
+            Assert.Equal("Saw", result.TopProducts[0].ProductName);
             Assert.Equal(5, result.TopProducts[0].ItemsSold);
             Assert.Equal(4, result.TopProducts[1].ItemsSold);
         }

@@ -324,12 +324,12 @@ namespace StockFlow.UnitTests.Services
         {
             var employee = TestData.Employee();
             _employeeRepository.Setup(r => r.GetByIdAsync(employee.Id)).ReturnsAsync(employee);
-            var dto = new UpdateEmployeeDto { Id = employee.Id, FullName = "Nieuwe Naam", Role = EmployeeRoleDto.Cashier };
+            var dto = new UpdateEmployeeDto { Id = employee.Id, FullName = "New Name", Role = EmployeeRoleDto.Cashier };
 
             await _sut.UpdateEmployeeAsync(dto, Guid.NewGuid(), EmployeeRoleDto.Manager);
 
             Assert.Equal("hash", employee.HashedPassword);
-            Assert.Equal("Nieuwe Naam", employee.FullName);
+            Assert.Equal("New Name", employee.FullName);
             _password.Verify(p => p.Hash(It.IsAny<string>()), Times.Never);
         }
     }

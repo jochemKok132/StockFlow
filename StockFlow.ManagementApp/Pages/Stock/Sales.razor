@@ -310,22 +310,22 @@
         pagination.PageNumber = 1;
         await LoadProducts();
     }
-    private async Task OrderBy(SalesOrderBy kolom)
+    private async Task OrderBy(SalesOrderBy column)
     {
-        if (pagination.OrderBy == kolom)
+        if (pagination.OrderBy == column)
             pagination.OrderType = pagination.OrderType == OrderType.Ascending ? OrderType.Descending : OrderType.Ascending;
         else
         {
-            pagination.OrderBy = kolom;
+            pagination.OrderBy = column;
             pagination.OrderType = OrderType.Ascending;
         }
         pagination.PageNumber = 1;
         await LoadProducts();
     }
 
-    private RenderFragment SortingArrow(SalesOrderBy kolom) => builder =>
+    private RenderFragment SortingArrow(SalesOrderBy column) => builder =>
     {
-        if (pagination.OrderBy == kolom)
+        if (pagination.OrderBy == column)
         {
             builder.OpenElement(0, "span");
             builder.AddAttribute(1, "class", "sort-arrow");

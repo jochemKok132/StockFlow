@@ -360,11 +360,11 @@ namespace StockFlow.UnitTests.Infrastructure
         [Fact]
         public async Task GetAllProductsWithTagsAsync_SaleTags_ReturnsProductsHavingAllTags()
         {
-            var both = await AddProductAsync(500000030, "tuin", "gereedschap");
-            await AddProductAsync(500000031, "tuin");
+            var both = await AddProductAsync(500000030, "garden", "tools");
+            await AddProductAsync(500000031, "garden");
             var sut = new ProductRepository(Context);
 
-            var result = await sut.GetAllProductsWithTagsAsync(["tuin", "gereedschap"]);
+            var result = await sut.GetAllProductsWithTagsAsync(["garden", "tools"]);
 
             Assert.Equal(both.Id, Assert.Single(result).Id);
         }
@@ -388,13 +388,13 @@ namespace StockFlow.UnitTests.Infrastructure
         [Fact]
         public async Task GetAllSalesForProductTags_ProductTags_ReturnsSalesWhoseTagsAreAllPresent()
         {
-            var matching = TestData.Sale(10, "tuin");
-            var notMatching = TestData.Sale(20, "tuin", "verf");
+            var matching = TestData.Sale(10, "garden");
+            var notMatching = TestData.Sale(20, "garden", "paint");
             Context.Sales.AddRange(matching, notMatching);
             await Context.SaveChangesAsync();
             var sut = new SalesRepository(Context);
 
-            var result = await sut.GetAllSalesForProductTags(["tuin", "gereedschap"]);
+            var result = await sut.GetAllSalesForProductTags(["garden", "tools"]);
 
             Assert.Equal(matching.Id, Assert.Single(result).Id);
         }
@@ -428,7 +428,7 @@ namespace StockFlow.UnitTests.Infrastructure
         {
             var employee = await AddEmployeeAsync();
             var product = await AddProductAsync(500000060);
-            var sale = TestData.Sale(10, "tuin");
+            var sale = TestData.Sale(10, "garden");
             Context.Sales.Add(sale);
             var log = new CashRegisterLogs { Id = Guid.NewGuid(), ReceiptId = "9000000001", EmployeeId = employee.Id };
             log.ProductsSold.Add(new RegisterItemDetail { Id = Guid.NewGuid(), CashregisterLogId = log.Id, ProductId = product.Id, SalesId = sale.Id, Amount = 5, ReturnedAmount = 1, PriceAtTimeOfSale = 2m });

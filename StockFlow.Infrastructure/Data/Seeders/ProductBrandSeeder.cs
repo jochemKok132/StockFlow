@@ -14,7 +14,7 @@ namespace StockFlow.Infrastructure.Data.Seeders
                     new ProductBrand()
                     {
                         Id = new Guid("6b1d0d22-a35b-4656-b420-000000000001"),
-                        BrandName = "Flexa Verf"
+                        BrandName = "Flexa"
                     },
                     new ProductBrand()
                     {
@@ -34,7 +34,7 @@ namespace StockFlow.Infrastructure.Data.Seeders
                     new ProductBrand()
                     {
                         Id = new Guid("6b1d0d22-a35b-4656-b420-000000000005"),
-                        BrandName = "Levis Verf"
+                        BrandName = "Levis"
                     },
                     new ProductBrand()
                     {
@@ -89,7 +89,7 @@ namespace StockFlow.Infrastructure.Data.Seeders
                     new ProductBrand()
                     {
                         Id = new Guid("6b1d0d22-a35b-4656-b420-000000000010"),
-                        BrandName = "Praxis Bouwmaterialen"
+                        BrandName = "Praxis"
                     },
                     new ProductBrand()
                     {

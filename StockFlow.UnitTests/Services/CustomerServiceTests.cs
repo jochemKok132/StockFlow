@@ -232,7 +232,7 @@ namespace StockFlow.UnitTests.Services
         [Fact]
         public async Task LoginAsync_InvalidEmail_ThrowsArgumentException()
         {
-            var request = new CustomerLogin { Email = "geen-email", Password = "x" };
+            var request = new CustomerLogin { Email = "no-email", Password = "x" };
 
             await Assert.ThrowsAsync<ArgumentException>(() => _sut.LoginAsync(request));
         }
@@ -261,7 +261,7 @@ namespace StockFlow.UnitTests.Services
             var customer = TestData.Customer(hashedPassword: "");
             _customerRepository.Setup(r => r.GetCustomerByEmailAsync(customer.Email)).ReturnsAsync(customer);
 
-            await Assert.ThrowsAsync<AuthenticationException>(() => _sut.LoginAsync(new CustomerLogin { Email = customer.Email, Password = "Welkom123!" }));
+            await Assert.ThrowsAsync<AuthenticationException>(() => _sut.LoginAsync(new CustomerLogin { Email = customer.Email, Password = "Welcome123!" }));
             _password.Verify(p => p.Validate(It.IsAny<string>(), It.IsAny<string>()), Times.Never);
         }
 
@@ -272,11 +272,11 @@ namespace StockFlow.UnitTests.Services
             var token = new CustomerToken { JWT = "jwt" };
             CreateCustomerLogsDto? log = null;
             _customerRepository.Setup(r => r.GetCustomerByEmailAsync(customer.Email)).ReturnsAsync(customer);
-            _password.Setup(p => p.Validate(customer.HashedPassword, "Welkom123!")).Returns(true);
+            _password.Setup(p => p.Validate(customer.HashedPassword, "Welcome123!")).Returns(true);
             _authenticationService.Setup(a => a.GenerateToken(customer)).Returns(token);
             _customerLogsService.Setup(s => s.CreateCustomerLogsAsync(It.IsAny<CreateCustomerLogsDto>())).Callback<CreateCustomerLogsDto>(l => log = l);
 
-            var result = await _sut.LoginAsync(new CustomerLogin { Email = customer.Email, Password = "Welkom123!" });
+            var result = await _sut.LoginAsync(new CustomerLogin { Email = customer.Email, Password = "Welcome123!" });
 
             Assert.Same(token, result);
             Assert.NotNull(log);
@@ -288,7 +288,7 @@ namespace StockFlow.UnitTests.Services
         public async Task RegisterCustomerAsync_PasswordsDoNotMatch_ThrowsArgumentException()
         {
             var request = TestData.RegisterRequest();
-            request.ConfirmPassword = "Anders123!";
+            request.ConfirmPassword = "Other123!";
 
             await Assert.ThrowsAsync<ArgumentException>(() => _sut.RegisterCustomerAsync(request));
             _customerRepository.Verify(r => r.AddAsync(It.IsAny<Customer>()), Times.Never);
@@ -312,7 +312,7 @@ namespace StockFlow.UnitTests.Services
             _customerRepository.Setup(r => r.GetCustomerByEmailAsync(It.IsAny<string>())).ReturnsAsync((Customer?)null);
             _customerRepository.Setup(r => r.GetNewCustomerIdAsync()).ReturnsAsync("80000016");
             _customerRepository.Setup(r => r.AddAsync(It.IsAny<Customer>())).Callback<Customer>(c => created = c);
-            _password.Setup(p => p.Hash("Welkom123!")).Returns("hashed");
+            _password.Setup(p => p.Hash("Welcome123!")).Returns("hashed");
             _authenticationService.Setup(a => a.GenerateToken(It.IsAny<Customer>())).Returns(token);
             _customerLogsService.Setup(s => s.CreateCustomerLogsAsync(It.IsAny<CreateCustomerLogsDto>())).Callback<CreateCustomerLogsDto>(l => log = l);
 
@@ -335,7 +335,7 @@ namespace StockFlow.UnitTests.Services
         public async Task ChangePasswordAsync_CustomerNotFound_ThrowsKeyNotFoundException()
         {
             _customerRepository.Setup(r => r.GetByIdAsync(It.IsAny<Guid>())).ReturnsAsync((Customer?)null);
-            var request = new ChangePasswordRequest { CurrentPassword = "Oud12345!", NewPassword = "Nieuw123!", ConfirmPassword = "Nieuw123!" };
+            var request = new ChangePasswordRequest { CurrentPassword = "Old12345!", NewPassword = "NewPass1!", ConfirmPassword = "NewPass1!" };
 
             await Assert.ThrowsAsync<KeyNotFoundException>(() => _sut.ChangePasswordAsync(Guid.NewGuid(), request));
         }
@@ -345,8 +345,8 @@ namespace StockFlow.UnitTests.Services
         {
             var customer = TestData.Customer();
             _customerRepository.Setup(r => r.GetByIdAsync(customer.Id)).ReturnsAsync(customer);
-            _password.Setup(p => p.Validate(customer.HashedPassword, "Oud12345!")).Returns(false);
-            var request = new ChangePasswordRequest { CurrentPassword = "Oud12345!", NewPassword = "Nieuw123!", ConfirmPassword = "Nieuw123!" };
+            _password.Setup(p => p.Validate(customer.HashedPassword, "Old12345!")).Returns(false);
+            var request = new ChangePasswordRequest { CurrentPassword = "Old12345!", NewPassword = "NewPass1!", ConfirmPassword = "NewPass1!" };
 
             await Assert.ThrowsAsync<ArgumentException>(() => _sut.ChangePasswordAsync(customer.Id, request));
             _customerRepository.Verify(r => r.UpdateAsync(It.IsAny<Customer>()), Times.Never);
@@ -357,9 +357,9 @@ namespace StockFlow.UnitTests.Services
         {
             var customer = TestData.Customer();
             _customerRepository.Setup(r => r.GetByIdAsync(customer.Id)).ReturnsAsync(customer);
-            _password.Setup(p => p.Validate("hash", "Oud12345!")).Returns(true);
-            _password.Setup(p => p.Hash("Nieuw123!")).Returns("new-hash");
-            var request = new ChangePasswordRequest { CurrentPassword = "Oud12345!", NewPassword = "Nieuw123!", ConfirmPassword = "Nieuw123!" };
+            _password.Setup(p => p.Validate("hash", "Old12345!")).Returns(true);
+            _password.Setup(p => p.Hash("NewPass1!")).Returns("new-hash");
+            var request = new ChangePasswordRequest { CurrentPassword = "Old12345!", NewPassword = "NewPass1!", ConfirmPassword = "NewPass1!" };
 
             await _sut.ChangePasswordAsync(customer.Id, request);
 

@@ -31,7 +31,7 @@ namespace StockFlow.CashRegister
             _clockTimer = new System.Windows.Forms.Timer(components) { Interval = 1000 };
 
             ApplyTheme();
-            Text = $"StockFlow Kassa {AppVersion.Display(Program.Version)}";
+            Text = $"StockFlow Cash Register {AppVersion.Display(Program.Version)}";
 
             ScanView = new ScanScreen(this, cashRegister) { Dock = DockStyle.Fill };
             PurchasingView = new PurchasingScreen(this, cashRegister) { Dock = DockStyle.Fill };
@@ -65,7 +65,7 @@ namespace StockFlow.CashRegister
             _employeeName = user.Identity?.Name
                 ?? user.FindFirst("name")?.Value
                 ?? user.FindFirst("unique_name")?.Value
-                ?? "Kassier";
+                ?? "Cashier";
 
             UpdateStatus();
         }
@@ -80,8 +80,8 @@ namespace StockFlow.CashRegister
         {
             if (ScanView.HasItems)
             {
-                var answer = MessageBox.Show(this, "Er staat nog een bon open. Toch uitloggen?",
-                    "StockFlow Kassa", MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
+                var answer = MessageBox.Show(this, "A receipt is still open. Log out anyway?",
+                    "StockFlow Cash Register", MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
 
                 if (answer != DialogResult.Yes)
                     return;
@@ -101,7 +101,7 @@ namespace StockFlow.CashRegister
             LoggedOut = true;
             BeginInvoke(() =>
             {
-                MessageBox.Show(this, "Je sessie is verlopen. Log opnieuw in.", "StockFlow Kassa", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                MessageBox.Show(this, "Your session has expired. Please log in again.", "StockFlow Cash Register", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 Close();
             });
         }

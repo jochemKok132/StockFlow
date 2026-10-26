@@ -22,15 +22,15 @@ namespace StockFlow.UnitTests.Mappings
         [Fact]
         public void FindDifferences_ChangedValue_ReturnsNewAndOld()
         {
-            var result = new Item { Name = "Nieuw" }.FindDifferences(new Item { Name = "Oud" });
+            var result = new Item { Name = "Updated" }.FindDifferences(new Item { Name = "Original" });
 
-            Assert.Equal(["Name: New: Nieuw. Old: Oud"], result);
+            Assert.Equal(["Name: New: Updated. Old: Original"], result);
         }
 
         [Fact]
         public void FindDifferences_NothingChanged_ReturnsEmpty()
         {
-            var result = new Item { Name = "Zelfde", Amount = 2 }.FindDifferences(new Item { Name = "Zelfde", Amount = 2 });
+            var result = new Item { Name = "Same", Amount = 2 }.FindDifferences(new Item { Name = "Same", Amount = 2 });
 
             Assert.Empty(result);
         }
@@ -38,15 +38,15 @@ namespace StockFlow.UnitTests.Mappings
         [Fact]
         public void FindDifferences_NullValue_IsShownAsDash()
         {
-            var result = new Item { Name = null }.FindDifferences(new Item { Name = "Oud" });
+            var result = new Item { Name = null }.FindDifferences(new Item { Name = "Original" });
 
-            Assert.Equal(["Name: New: -. Old: Oud"], result);
+            Assert.Equal(["Name: New: -. Old: Original"], result);
         }
 
         [Fact]
         public void FindDifferences_PasswordChanged_IsNeverReported()
         {
-            var result = new Item { Password = "nieuw" }.FindDifferences(new Item { Password = "oud" });
+            var result = new Item { Password = "updated" }.FindDifferences(new Item { Password = "original" });
 
             Assert.Empty(result);
         }
@@ -62,9 +62,9 @@ namespace StockFlow.UnitTests.Mappings
         [Fact]
         public void FindDifferences_TagsChanged_ReportsAddedAndRemoved()
         {
-            var result = new Item { Tags = ["tuin", "verf"] }.FindDifferences(new Item { Tags = ["tuin", "hout"] });
+            var result = new Item { Tags = ["garden", "paint"] }.FindDifferences(new Item { Tags = ["garden", "wood"] });
 
-            Assert.Equal(["Tags: Added: [verf]. Removed: [hout]"], result);
+            Assert.Equal(["Tags: Added: [paint]. Removed: [wood]"], result);
         }
 
         [Fact]
@@ -86,7 +86,7 @@ namespace StockFlow.UnitTests.Mappings
         [Fact]
         public void WithoutNavigationChanges_NavigationMessage_IsRemoved()
         {
-            var result = new[] { "Shelf: New: -. Old: Gereedschap", "Stock: New: 2. Old: 1" }.WithoutNavigationChanges();
+            var result = new[] { "Shelf: New: -. Old: Tools", "Stock: New: 2. Old: 1" }.WithoutNavigationChanges();
 
             Assert.Equal(["Stock: New: 2. Old: 1"], result);
         }

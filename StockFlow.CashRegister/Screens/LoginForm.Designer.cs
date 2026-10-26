@@ -46,15 +46,15 @@ namespace StockFlow.CashRegister.Screens
             lblBrand.AutoSize = true;
             lblBrand.Location = new Point(24, 24);
             lblBrand.Name = "lblBrand";
-            lblBrand.Text = "StockFlow Kassa";
+            lblBrand.Text = "StockFlow Cash Register";
             lblSubtitle.AutoSize = true;
             lblSubtitle.Location = new Point(24, 58);
             lblSubtitle.Name = "lblSubtitle";
-            lblSubtitle.Text = "Log in om de kassa te openen";
+            lblSubtitle.Text = "Log in to open the cash register";
             lblUsername.AutoSize = true;
             lblUsername.Location = new Point(24, 102);
             lblUsername.Name = "lblUsername";
-            lblUsername.Text = "GEBRUIKERSNAAM";
+            lblUsername.Text = "USERNAME";
             txtUsername.Location = new Point(24, 124);
             txtUsername.Name = "txtUsername";
             txtUsername.Size = new Size(292, 27);
@@ -62,7 +62,7 @@ namespace StockFlow.CashRegister.Screens
             lblPassword.AutoSize = true;
             lblPassword.Location = new Point(24, 166);
             lblPassword.Name = "lblPassword";
-            lblPassword.Text = "WACHTWOORD";
+            lblPassword.Text = "PASSWORD";
             txtPassword.Location = new Point(24, 188);
             txtPassword.Name = "txtPassword";
             txtPassword.Size = new Size(292, 27);
@@ -76,7 +76,7 @@ namespace StockFlow.CashRegister.Screens
             btnLogin.Name = "btnLogin";
             btnLogin.Size = new Size(292, 44);
             btnLogin.TabIndex = 3;
-            btnLogin.Text = "Inloggen";
+            btnLogin.Text = "Log in";
             btnLogin.Click += btnLogin_Click;
             AcceptButton = btnLogin;
             AutoScaleDimensions = new SizeF(7F, 15F);
@@ -87,7 +87,7 @@ namespace StockFlow.CashRegister.Screens
             WindowState = FormWindowState.Maximized;
             Name = "LoginForm";
             StartPosition = FormStartPosition.CenterScreen;
-            Text = "StockFlow Kassa - Inloggen";
+            Text = "StockFlow Cash Register - Log in";
             card.ResumeLayout(false);
             card.PerformLayout();
             ResumeLayout(false);

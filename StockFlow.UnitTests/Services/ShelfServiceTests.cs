@@ -17,7 +17,7 @@ namespace StockFlow.UnitTests.Services
         [Fact]
         public async Task CreateShelfAsync_MissingLocation_ThrowsArgumentException()
         {
-            await Assert.ThrowsAsync<ArgumentException>(() => _sut.CreateShelfAsync(new CreateShelfDto { ShelfName = "Verf" }, Guid.NewGuid()));
+            await Assert.ThrowsAsync<ArgumentException>(() => _sut.CreateShelfAsync(new CreateShelfDto { ShelfName = "Paint" }, Guid.NewGuid()));
         }
 
         [Fact]
@@ -26,11 +26,11 @@ namespace StockFlow.UnitTests.Services
             Shelf? created = null;
             _shelfRepository.Setup(r => r.AddAsync(It.IsAny<Shelf>())).Callback<Shelf>(s => created = s);
 
-            await _sut.CreateShelfAsync(new CreateShelfDto { ShelfName = "Verf", ShelfLocation = "004", ShelfHallway = "B" }, Guid.NewGuid());
+            await _sut.CreateShelfAsync(new CreateShelfDto { ShelfName = "Paint", ShelfLocation = "004", ShelfHallway = "B" }, Guid.NewGuid());
 
-            Assert.Equal("Verf", created?.ShelfName);
+            Assert.Equal("Paint", created?.ShelfName);
             Assert.Equal("004", created?.ShelfLocation);
-            _stockLogsService.Verify(s => s.CreateStockLogsAsync(It.Is<CreateStockLogsDto>(l => l.StockLogType == StockLogTypeDto.Shelf && l.Identifier == "Verf")), Times.Once);
+            _stockLogsService.Verify(s => s.CreateStockLogsAsync(It.Is<CreateStockLogsDto>(l => l.StockLogType == StockLogTypeDto.Shelf && l.Identifier == "Paint")), Times.Once);
         }
 
         [Fact]
@@ -46,7 +46,7 @@ namespace StockFlow.UnitTests.Services
         [Fact]
         public async Task UpdateShelfAsync_ShelfNotFound_ThrowsKeyNotFoundException()
         {
-            var dto = new UpdateShelfDto { Id = Guid.NewGuid(), ShelfName = "Verf", ShelfLocation = "004" };
+            var dto = new UpdateShelfDto { Id = Guid.NewGuid(), ShelfName = "Paint", ShelfLocation = "004" };
             _shelfRepository.Setup(r => r.GetByIdAsync(dto.Id)).ReturnsAsync((Shelf?)null);
 
             await Assert.ThrowsAsync<KeyNotFoundException>(() => _sut.UpdateShelfAsync(dto, Guid.NewGuid()));
@@ -58,9 +58,9 @@ namespace StockFlow.UnitTests.Services
             var shelf = TestData.Shelf();
             _shelfRepository.Setup(r => r.GetByIdAsync(shelf.Id)).ReturnsAsync(shelf);
 
-            await _sut.UpdateShelfAsync(new UpdateShelfDto { Id = shelf.Id, ShelfName = "Verf", ShelfLocation = "009" }, Guid.NewGuid());
+            await _sut.UpdateShelfAsync(new UpdateShelfDto { Id = shelf.Id, ShelfName = "Paint", ShelfLocation = "009" }, Guid.NewGuid());
 
-            Assert.Equal("Verf", shelf.ShelfName);
+            Assert.Equal("Paint", shelf.ShelfName);
             Assert.Equal("009", shelf.ShelfLocation);
             _shelfRepository.Verify(r => r.UpdateAsync(shelf), Times.Once);
             _stockLogsService.Verify(s => s.CreateStockLogsAsync(It.Is<CreateStockLogsDto>(l => l.LogType == LogTypeDto.Update)), Times.Once);

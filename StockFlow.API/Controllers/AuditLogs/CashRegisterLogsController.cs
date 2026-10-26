@@ -34,7 +34,7 @@ namespace StockFlow.API.Controllers
             try
             {
                 CashRegisterLogsDto receipt = await cashRegisterLogsService.GetByReceiptIdAsync(receiptId);
-                return File(receiptPdfService.Create(receipt), "application/pdf", $"bon-{receipt.ReceiptId}.pdf");
+                return File(receiptPdfService.Create(receipt), "application/pdf", $"receipt-{receipt.ReceiptId}.pdf");
             }
             catch (ArgumentException exception)
             {

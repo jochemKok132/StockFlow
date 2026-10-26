@@ -15,7 +15,7 @@ namespace StockFlow.UnitTests.Services
             _sut = new SalesService(_salesRepository.Object, _productRepository.Object, _stockLogsService.Object);
         }
 
-        private static CreateSalesDto ValidCreate() => new() { SaleName = "Zomer", Description = "Zomerkorting", PercentageOff = 20, SalesTags = ["tuin"] };
+        private static CreateSalesDto ValidCreate() => new() { SaleName = "Summer", Description = "Summer discount", PercentageOff = 20, SalesTags = ["garden"] };
 
         [Fact]
         public async Task CreateSalesAsync_NoTags_ThrowsArgumentException()
@@ -56,7 +56,7 @@ namespace StockFlow.UnitTests.Services
         [Fact]
         public async Task UpdateSalesAsync_SaleNotFound_ThrowsKeyNotFoundException()
         {
-            var dto = new UpdateSalesDto { Id = Guid.NewGuid(), SaleName = "Zomer", Description = "x", PercentageOff = 10, SalesTags = ["tuin"] };
+            var dto = new UpdateSalesDto { Id = Guid.NewGuid(), SaleName = "Summer", Description = "x", PercentageOff = 10, SalesTags = ["garden"] };
             _salesRepository.Setup(r => r.GetByIdWithProductsAsync(dto.Id)).ReturnsAsync((Sales?)null);
 
             await Assert.ThrowsAsync<KeyNotFoundException>(() => _sut.UpdateSalesAsync(dto, Guid.NewGuid()));
@@ -65,13 +65,13 @@ namespace StockFlow.UnitTests.Services
         [Fact]
         public async Task UpdateSalesAsync_TagsChanged_ResyncsProducts()
         {
-            var sale = TestData.Sale(20, "tuin");
+            var sale = TestData.Sale(20, "garden");
             var oldProduct = TestData.Product();
             var newProduct = TestData.Product();
             sale.Products.Add(oldProduct);
             _salesRepository.Setup(r => r.GetByIdWithProductsAsync(sale.Id)).ReturnsAsync(sale);
             _productRepository.Setup(r => r.GetAllProductsWithTagsAsync(It.IsAny<List<string>>())).ReturnsAsync(new[] { newProduct });
-            var dto = new UpdateSalesDto { Id = sale.Id, SaleName = "Winter", Description = sale.Description, PercentageOff = 30, SalesTags = ["gereedschap"] };
+            var dto = new UpdateSalesDto { Id = sale.Id, SaleName = "Winter", Description = sale.Description, PercentageOff = 30, SalesTags = ["tools"] };
 
             await _sut.UpdateSalesAsync(dto, Guid.NewGuid());
 
