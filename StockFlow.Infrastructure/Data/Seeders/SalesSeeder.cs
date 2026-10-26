@@ -30,6 +30,50 @@ namespace StockFlow.Infrastructure.Data.Seeders
                         Description = "Discount for hardware products.",
                         PercentageOff = 5,
                         SalesTags = new List<string> { "hardware" }
+                    },
+                    new Sales
+                    {
+                        Id = new Guid("9c4f0d22-a35b-4656-b420-000000000003"),
+                        SaleName = "Sanitary 2+1",
+                        Description = "Buy two sanitary products, get the third one free.",
+                        SaleType = SaleType.MultiBuy,
+                        BuyAmount = 2,
+                        FreeAmount = 1,
+                        StartDate = DateTime.Today.AddDays(-10),
+                        EndDate = DateTime.Today.AddDays(20),
+                        SalesTags = new List<string> { "sanitary" }
+                    },
+                    new Sales
+                    {
+                        Id = new Guid("9c4f0d22-a35b-4656-b420-000000000004"),
+                        SaleName = "Electronics second half price",
+                        Description = "The second electronics product is half price.",
+                        SaleType = SaleType.SecondItemHalfPrice,
+                        StartDate = DateTime.Today.AddDays(-5),
+                        EndDate = DateTime.Today.AddDays(10),
+                        SalesTags = new List<string> { "electronics" }
+                    },
+                    new Sales
+                    {
+                        Id = new Guid("9c4f0d22-a35b-4656-b420-000000000005"),
+                        SaleName = "Wood bundle",
+                        Description = "Three wood products for 25 euro.",
+                        SaleType = SaleType.Bundle,
+                        BuyAmount = 3,
+                        BundlePrice = 25m,
+                        StartDate = DateTime.Today.AddDays(7),
+                        EndDate = DateTime.Today.AddDays(21),
+                        SalesTags = new List<string> { "wood" }
+                    },
+                    new Sales
+                    {
+                        Id = new Guid("9c4f0d22-a35b-4656-b420-000000000006"),
+                        SaleName = "Summer Paint Sale",
+                        Description = "15 % off all paint during the summer.",
+                        PercentageOff = 15,
+                        StartDate = DateTime.Today.AddDays(-90),
+                        EndDate = DateTime.Today.AddDays(-60),
+                        SalesTags = new List<string> { "paint" }
                     }
                 };
 

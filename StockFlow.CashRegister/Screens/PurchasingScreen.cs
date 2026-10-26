@@ -21,6 +21,7 @@ namespace StockFlow.CashRegister
         private int _pointsUsed;
         private decimal _tendered;
         private string _method = "";
+        private int? _customerOrderNumber;
         private bool _busy;
 
         public PurchasingScreen(MainForm parent, ICashRegisterService cashRegister)
@@ -76,8 +77,9 @@ namespace StockFlow.CashRegister
             btnComplete.Click += async (_, _) => await CompleteAsync();
         }
 
-        public void Begin(IReadOnlyList<RegisterItemDetailDto> lines, decimal total, decimal discount, int pointsUsed, CustomerDto? customer)
+        public void Begin(IReadOnlyList<RegisterItemDetailDto> lines, decimal total, decimal discount, int pointsUsed, CustomerDto? customer, int? customerOrderNumber = null)
         {
+            _customerOrderNumber = customerOrderNumber;
             _lines = [.. lines];
             _total = total;
             _discount = discount;
@@ -162,6 +164,7 @@ namespace StockFlow.CashRegister
                 _mainForm.ShowScanScreen();
                 string receipt = string.IsNullOrWhiteSpace(result) ? "" : $" Receipt id: {result}.";
                 if (PointsToEarn > 0) receipt += $" +{PointsToEarn} points earned.";
+                if (_customerOrderNumber is int orderNumber) receipt += $" Customer order {orderNumber} picked up.";
                 _mainForm.ScanView.ShowNotice(
                     change > 0 && _method == Cash
                         ? $"Transaction completed.{receipt} Change: {Theme.Money(change)}"
@@ -184,6 +187,7 @@ namespace StockFlow.CashRegister
             TotalOff = (double)_discount,
             CustomerId = _customer?.Id,
             PointsUsed = _pointsUsed,
+            CustomerOrderNumber = _customerOrderNumber,
             ProductsSold = [.. _lines]
         };
 

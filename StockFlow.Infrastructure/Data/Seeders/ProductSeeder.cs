@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using StockFlow.Domain.Entities.Stock;
+using StockFlow.Domain.Enums;
 
 namespace StockFlow.Infrastructure.Data.Seeders
 {
@@ -2004,6 +2005,82 @@ namespace StockFlow.Infrastructure.Data.Seeders
                         ShelfId = showerMatsShelf
                     },
                 };
+
+                Guid[] paintShelves = [flexaShelf, sigmaShelf, historShelf];
+                Guid[] electricShelves = [socketsShelf, plugsShelf, wiresShelf];
+                Guid[] woodShelves = [planksShelf, beamsShelf, impregnatedWoodShelf];
+                Guid[] sanitaryShelves = [showersShelf, waterTapShelf, showerMatsShelf];
+                Guid[] autoOrderShelves = [screwsShelf, nailsShelf];
+                DateTime today = DateTime.Today;
+                DateTime nowUtc = DateTime.UtcNow;
+
+                Dictionary<int, int> lowStock = new()
+                {
+                    [500000033] = 6,
+                    [500000041] = 3,
+                    [500000065] = 7,
+                    [500000124] = 2,
+                };
+                int[] plannedPrices = [500000001, 500000031, 500000121, 500000081];
+
+                foreach (var product in Products)
+                {
+                    int number = product.Barcode - 500000000;
+                    bool paint = paintShelves.Contains(product.ShelfId);
+                    bool wood = woodShelves.Contains(product.ShelfId);
+
+                    product.SupplierId = paint ? SupplierSeeder.PaintSupplierId
+                        : sanitaryShelves.Contains(product.ShelfId) ? SupplierSeeder.SanitarySupplierId
+                        : electricShelves.Contains(product.ShelfId) ? SupplierSeeder.ElectroSupplierId
+                        : wood ? SupplierSeeder.TimberSupplierId
+                        : Supplier.DefaultSupplierId;
+                    product.MinimumStock = wood ? 5 : 10;
+                    product.MaximumStock = wood ? 25 : 60;
+                    product.AutoOrder = autoOrderShelves.Contains(product.ShelfId);
+                    if (lowStock.TryGetValue(product.Barcode, out int stock))
+                        product.Stock = stock;
+
+                    decimal oldPrice = number % 2 == 0 ? product.Price + 1.00m : Math.Max(0.50m, product.Price - 0.50m);
+                    product.Prices.Add(new ProductPrice { ProductId = product.Id, Price = oldPrice, ValidFrom = today.AddDays(-120), CreatedAt = nowUtc.AddDays(-120), CreatedById = SeedIds.Manager });
+                    product.Prices.Add(new ProductPrice { ProductId = product.Id, Price = product.Price, ValidFrom = today.AddDays(-30), CreatedAt = nowUtc.AddDays(-30), CreatedById = SeedIds.Manager });
+                    if (plannedPrices.Contains(product.Barcode))
+                        product.Prices.Add(new ProductPrice { ProductId = product.Id, Price = Math.Max(0.50m, product.Price - 1.00m), ValidFrom = today.AddDays(7), CreatedAt = nowUtc.AddDays(-1), CreatedById = SeedIds.Manager });
+
+                    if (paint)
+                    {
+                        product.CanExpire = true;
+                        int firstAmount = Math.Max(1, product.Stock / 3);
+                        int firstExpiry = product.Barcode == 500000021 ? 5 : product.Barcode == 500000012 ? 12 : 40 + number * 3;
+                        product.Batches.Add(new StockBatch { ProductId = product.Id, Amount = firstAmount, ExpiryDate = today.AddDays(firstExpiry), CreatedAt = nowUtc.AddDays(-20) });
+                        if (product.Stock > firstAmount)
+                            product.Batches.Add(new StockBatch { ProductId = product.Id, Amount = product.Stock - firstAmount, ExpiryDate = today.AddDays(150 + number * 2), CreatedAt = nowUtc.AddDays(-10) });
+                    }
+                }
+
+                Product Find(int barcode) => Products.First(p => p.Barcode == barcode);
+
+                Find(500000148).Status = ProductStatus.Disabled;
+                Find(500000149).Status = ProductStatus.Draft;
+                Find(500000150).Status = ProductStatus.Draft;
+                Find(500000149).AutoOrder = false;
+
+                Find(500000146).Orderable = false;
+                Find(500000090).Orderable = false;
+
+                var recalled = Find(500000064);
+                recalled.Recalled = true;
+                recalled.RecallReason = "Water can get in when the cover is closed (safety notice from the supplier).";
+                recalled.RecalledAt = nowUtc.AddDays(-5);
+                recalled.Stock = 0;
+
+                var blocked = Find(500000094);
+                blocked.OrderBlocked = true;
+                blocked.OrderBlockReason = "TimberTrade can't deliver this size until next month.";
+                blocked.OrderBlockedUntil = today.AddDays(21);
+
+                var discontinued = Find(500000137);
+                discontinued.OrderBlocked = true;
+                discontinued.OrderBlockReason = "Discontinued by the brand, sell the remaining stock.";
 
                 context.Set<Product>().AddRange(Products);
                 context.SaveChanges();

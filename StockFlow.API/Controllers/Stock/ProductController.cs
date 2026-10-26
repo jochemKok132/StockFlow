@@ -9,7 +9,7 @@ namespace StockFlow.API.Controllers
 {
     [ApiController]
     [Route("[controller]")]
-    public class ProductController(IProductService productService) : ControllerBase
+    public class ProductController(IProductService productService, IProductControlService productControlService) : ControllerBase
     {
         [Authorize]
         [HttpGet("GetAll")]
@@ -62,6 +62,37 @@ namespace StockFlow.API.Controllers
                 return NotFound(ApiResponse<int>.Fail(exception.Message));
             }
         }
+
+        [Authorize(Roles = Permissions.ManageStock)]
+        [HttpPost("Price")]
+        public Task<IActionResult> SchedulePriceAsync(SchedulePriceRequest request) =>
+            this.RunAsEmployeeAsync(userId => productControlService.SchedulePriceAsync(request, userId),
+                _ => request.ValidFrom.Date <= DateTime.Today ? "Price changed." : $"New price planned from {request.ValidFrom:dd-MM-yyyy}.");
+
+        [Authorize(Roles = Permissions.ManageStock)]
+        [HttpDelete("{productId:guid}/Price/{priceId:guid}")]
+        public Task<IActionResult> CancelPriceAsync(Guid productId, Guid priceId) =>
+            this.RunAsEmployeeAsync(userId => productControlService.CancelScheduledPriceAsync(productId, priceId, userId), _ => "Planned price cancelled.");
+
+        [Authorize(Roles = Permissions.ManageStock)]
+        [HttpPost("Recall")]
+        public Task<IActionResult> RecallAsync(RecallRequest request) =>
+            this.RunAsEmployeeAsync(userId => productControlService.RecallAsync(request, userId), p => $"{p.ProductName} is recalled.");
+
+        [Authorize(Roles = Permissions.ManageStock)]
+        [HttpDelete("{productId:guid}/Recall")]
+        public Task<IActionResult> UndoRecallAsync(Guid productId) =>
+            this.RunAsEmployeeAsync(userId => productControlService.UndoRecallAsync(productId, userId), p => $"The recall of {p.ProductName} is lifted.");
+
+        [Authorize(Roles = Permissions.ManageStock)]
+        [HttpPost("OrderBlock")]
+        public Task<IActionResult> BlockOrdersAsync(OrderBlockRequest request) =>
+            this.RunAsEmployeeAsync(userId => productControlService.BlockOrdersAsync(request, userId), p => $"{p.ProductName} is blocked for ordering.");
+
+        [Authorize(Roles = Permissions.ManageStock)]
+        [HttpDelete("{productId:guid}/OrderBlock")]
+        public Task<IActionResult> UnblockOrdersAsync(Guid productId) =>
+            this.RunAsEmployeeAsync(userId => productControlService.UnblockOrdersAsync(productId, userId), p => $"{p.ProductName} can be ordered again.");
 
         [Authorize(Roles = Permissions.ManageStock)]
         [HttpPost("Create")]

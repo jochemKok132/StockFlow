@@ -20,6 +20,9 @@ namespace StockFlow.Application.Mappings.Enums
                 LogTypeDto.Returned => LogType.Returned,
                 LogTypeDto.WrittenOff => LogType.WrittenOff,
                 LogTypeDto.Restored => LogType.Restored,
+                LogTypeDto.Counted => LogType.Counted,
+                LogTypeDto.Received => LogType.Received,
+                LogTypeDto.Recalled => LogType.Recalled,
                 _ => throw new ArgumentOutOfRangeException(nameof(logType))
             };
         }
@@ -36,6 +39,9 @@ namespace StockFlow.Application.Mappings.Enums
                 LogType.Returned => LogTypeDto.Returned,
                 LogType.WrittenOff => LogTypeDto.WrittenOff,
                 LogType.Restored => LogTypeDto.Restored,
+                LogType.Counted => LogTypeDto.Counted,
+                LogType.Received => LogTypeDto.Received,
+                LogType.Recalled => LogTypeDto.Recalled,
                 _ => throw new ArgumentOutOfRangeException(nameof(logType))
             };
         }

@@ -49,10 +49,20 @@
             SalesTags = tags.Length == 0 ? ["garden"] : tags,
         };
 
-        public static Product Product(int stock = 10, decimal price = 10m, ProductBrand? brand = null, Shelf? shelf = null)
+        public static Supplier Supplier(bool softDeleted = false, DayOfWeek orderDay = DayOfWeek.Monday) => new()
+        {
+            Id = Guid.NewGuid(),
+            SupplierName = "Wholesale",
+            OrderDay = orderDay,
+            LeadTimeDays = 2,
+            SoftDeleted = softDeleted,
+        };
+
+        public static Product Product(int stock = 10, decimal price = 10m, ProductBrand? brand = null, Shelf? shelf = null, Supplier? supplier = null)
         {
             brand ??= Brand();
             shelf ??= Shelf();
+            supplier ??= Supplier();
             return new Product
             {
                 Id = Guid.NewGuid(),
@@ -67,6 +77,8 @@
                 Brand = brand,
                 ShelfId = shelf.Id,
                 Shelf = shelf,
+                SupplierId = supplier.Id,
+                Supplier = supplier,
             };
         }
 
@@ -80,6 +92,7 @@
             SalesTags = ["tools"],
             BrandId = brandId,
             ShelfId = shelfId,
+            SupplierId = StockFlow.Domain.Entities.Stock.Supplier.DefaultSupplierId,
         };
 
         public static UpdateProductDto UpdateProductDto(Product product, params string[] tags) => new()
@@ -93,6 +106,13 @@
             SalesTags = tags,
             BrandId = product.BrandId,
             ShelfId = product.ShelfId,
+            SupplierId = product.SupplierId,
+            Status = (ProductStatusDto)(int)product.Status,
+            MinimumStock = product.MinimumStock,
+            MaximumStock = product.MaximumStock,
+            Orderable = product.Orderable,
+            AutoOrder = product.AutoOrder,
+            CanExpire = product.CanExpire,
         };
 
         public static RegisterRequest RegisterRequest() => new()

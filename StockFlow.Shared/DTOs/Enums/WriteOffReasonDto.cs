@@ -7,5 +7,6 @@
         Stolen,
         Lost,
         Other,
+        Recalled,
     }
 }

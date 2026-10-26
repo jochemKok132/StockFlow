@@ -1,4 +1,6 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿using StockFlow.Application.Services.Ordering;
+using StockFlow.Application.Interfaces.Ordering;
+using Microsoft.Extensions.DependencyInjection;
 using StockFlow.Application.Interfaces;
 using StockFlow.Application.Interfaces.CashRegister;
 using StockFlow.Application.Interfaces.ManagementApp;
@@ -43,6 +45,13 @@ namespace StockFlow.Application
             services.AddScoped<IRegisterDataService, RegisterDataService>();
             services.AddScoped<ITicketService, TicketService>();
             services.AddScoped<IDeletedItemsService, DeletedItemsService>();
+            services.AddScoped<ISupplierService, SupplierService>();
+            services.AddScoped<IProductControlService, ProductControlService>();
+            services.AddScoped<IStockAllocator, StockAllocator>();
+            services.AddScoped<IPurchaseOrderService, PurchaseOrderService>();
+            services.AddScoped<ICustomerOrderService, CustomerOrderService>();
+            services.AddScoped<IStockCountService, StockCountService>();
+            services.AddScoped<IStockAutomationService, StockAutomationService>();
 
             return services;
         }

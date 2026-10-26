@@ -1,4 +1,5 @@
 ﻿using StockFlow.Domain.Entities.IEntities;
+using StockFlow.Domain.Enums;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -27,5 +28,21 @@ namespace StockFlow.Domain.Entities.Stock
         public Guid ShelfId { get; set; }
         public Shelf? Shelf { get; set; }
         public ICollection<Sales> Sales { get; set; } = [];
+        public ProductStatus Status { get; set; } = ProductStatus.Active;
+        public int MinimumStock { get; set; }
+        public int MaximumStock { get; set; }
+        public bool Orderable { get; set; } = true;
+        public bool AutoOrder { get; set; }
+        public bool CanExpire { get; set; }
+        public bool Recalled { get; set; }
+        public string? RecallReason { get; set; }
+        public DateTime? RecalledAt { get; set; }
+        public bool OrderBlocked { get; set; }
+        public string? OrderBlockReason { get; set; }
+        public DateTime? OrderBlockedUntil { get; set; }
+        public Guid SupplierId { get; set; }
+        public Supplier? Supplier { get; set; }
+        public ICollection<ProductPrice> Prices { get; set; } = [];
+        public ICollection<StockBatch> Batches { get; set; } = [];
     }
 }

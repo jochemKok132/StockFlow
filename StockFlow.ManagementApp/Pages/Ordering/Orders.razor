@@ -1,0 +1,452 @@
+﻿@page "/orders"
+@attribute [Authorize(Roles = Permissions.ViewOrders)]
+@inject IPurchaseOrderService OrderService
+@inject ILookupService LookupService
+@inject AuthenticationStateProvider AuthStateProvider
+@inject ConfirmService Confirm
+
+<div class="tasks-header">
+    <div>
+        <h2>Orders</h2>
+        <p class="page-note">Products are collected on one open order per supplier. On the supplier's order day the order is sent automatically; when the delivery arrives, receive it here to add the stock.</p>
+    </div>
+</div>
+
+@if (canManage)
+{
+    <div class="card">
+        <h3 class="section-title">Order a product</h3>
+        <div class="inline-form">
+            <div class="field">
+                <label>Barcode</label>
+                <input type="text" inputmode="numeric" maxlength="@IdentifierFormats.ProductBarcodeLength" @bind="barcodeInput" @bind:event="oninput" placeholder="e.g. 500000001" />
+            </div>
+            <div class="field">
+                <label>Amount</label>
+                <input type="number" min="1" max="@FieldLimits.MaxOrderAmount" @bind="amountInput" />
+            </div>
+            <button class="btn-save" disabled="@(busy || viewOnly)" title="@(viewOnly ? AccessRules.ViewOnlyMessage : null)" @onclick="AddLineAsync"><i class="bi bi-cart-plus"></i> Add to order</button>
+        </div>
+        @if (!string.IsNullOrEmpty(addMessage))
+        {
+            <div class="@(addFailed ? "alert-danger" : "notice-ok")">@addMessage</div>
+        }
+    </div>
+}
+
+<div class="card">
+    <div class="filters-bar">
+        <div class="filters">
+            <div class="filter-group">
+                <label>Status</label>
+                <select @bind="statusFilter" @bind:after="LoadOrdersAsync">
+                    <option value="">All</option>
+                    @foreach (var status in Enum.GetValues<PurchaseOrderStatusDto>())
+                    {
+                        <option value="@status">@status</option>
+                    }
+                </select>
+            </div>
+            @if (supplierOptions.Count > 0)
+            {
+                <div class="filter-group">
+                    <label>Supplier</label>
+                    <select @bind="supplierFilter" @bind:after="LoadOrdersAsync">
+                        <option value="">All suppliers</option>
+                        @foreach (var supplier in supplierOptions)
+                        {
+                            <option value="@supplier.Value">@supplier.Label</option>
+                        }
+                    </select>
+                </div>
+            }
+        </div>
+    </div>
+
+    <table class="tasks-table">
+        <thead>
+            <tr>
+                <th>Order</th>
+                <th>Supplier</th>
+                <th>Status</th>
+                <th>Order day</th>
+                <th>Expected delivery</th>
+                <th>Items</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (loading)
+            {
+                <tr><td class="loading">Loading...</td></tr>
+            }
+            else if (!string.IsNullOrEmpty(error))
+            {
+                <tr><td class="alert-danger">@error</td></tr>
+            }
+            else if (orders.Count == 0)
+            {
+                <tr><td class="empty-state">No orders found.</td></tr>
+            }
+            else
+            {
+                @foreach (var order in orders)
+                {
+                    <tr class="clickable-row" @onclick="() => Open(order)">
+                        <td class="id-cell">@order.OrderNumber</td>
+                        <td><strong>@order.SupplierName</strong></td>
+                        <td><span class="status-badge @StatusClass(order.Status)">@order.Status</span></td>
+                        <td>@order.OrderDate.ToString("ddd dd-MM-yyyy")</td>
+                        <td>@(order.Status is PurchaseOrderStatusDto.Received or PurchaseOrderStatusDto.Cancelled ? "-" : order.ExpectedDelivery.ToString("dd-MM-yyyy"))</td>
+                        <td>@order.TotalItems (@order.Lines.Count line(s))</td>
+                        <td class="actions-cell">
+                            @if (order.Status == PurchaseOrderStatusDto.Sent && canReceive)
+                            {
+                                <button class="btn-save" @onclick="() => Open(order)" @onclick:stopPropagation="true"><i class="bi bi-box-arrow-in-down"></i> Receive</button>
+                            }
+                        </td>
+                    </tr>
+                }
+            }
+        </tbody>
+    </table>
+</div>
+
+<div class="card">
+    <h3 class="section-title">Below minimum stock</h3>
+    <p class="page-note">Products whose stock (minus what is reserved for customer orders, plus what is already on order) is below their minimum. Products with automatic ordering are added to the order by themselves.</p>
+    <table class="tasks-table">
+        <thead>
+            <tr>
+                <th>Barcode</th>
+                <th>Product</th>
+                <th>Supplier</th>
+                <th>Stock</th>
+                <th>Reserved</th>
+                <th>On order</th>
+                <th>Min / max</th>
+                <th>Suggested</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (suggestions is null)
+            {
+                <tr><td class="loading">Loading...</td></tr>
+            }
+            else if (suggestions.Count == 0)
+            {
+                <tr><td class="empty-state">Every product is above its minimum stock.</td></tr>
+            }
+            else
+            {
+                @foreach (var suggestion in suggestions)
+                {
+                    <tr>
+                        <td class="id-cell">@suggestion.Barcode</td>
+                        <td>
+                            <strong>@suggestion.ProductName</strong>
+                            @if (suggestion.AutoOrder)
+                            {
+                                <span class="status-badge status-running">Auto</span>
+                            }
+                        </td>
+                        <td>@suggestion.SupplierName</td>
+                        <td>@suggestion.Stock</td>
+                        <td>@suggestion.ReservedStock</td>
+                        <td>@suggestion.OnOrder</td>
+                        <td>@suggestion.MinimumStock / @(suggestion.MaximumStock > 0 ? suggestion.MaximumStock.ToString() : "-")</td>
+                        <td><strong>@suggestion.SuggestedAmount</strong></td>
+                        <td class="actions-cell">
+                            @if (canManage)
+                            {
+                                <button class="btn-edit" disabled="@(busy || viewOnly)" @onclick="() => OrderSuggestionAsync(suggestion)"><i class="bi bi-cart-plus"></i> Order</button>
+                            }
+                        </td>
+                    </tr>
+                }
+            }
+        </tbody>
+    </table>
+</div>
+
+@if (selected is not null)
+{
+    <ModalOverlay OnClose="Close" CssClass="wide">
+        <div class="panel-header">
+            <div>
+                <span class="panel-label">Order @selected.OrderNumber · <span class="status-badge @StatusClass(selected.Status)">@selected.Status</span></span>
+                <h3>@selected.SupplierName</h3>
+                <p class="page-note">
+                    Order day @selected.OrderDate.ToString("ddd dd-MM-yyyy")
+                    @if (selected.SentAt is { } sent)
+                    {
+                        <span> · sent @sent.ToLocalTime().ToString("dd-MM-yyyy HH:mm")</span>
+                    }
+                    @if (selected.ReceivedAt is { } receivedAt)
+                    {
+                        <span> · received @receivedAt.ToLocalTime().ToString("dd-MM-yyyy HH:mm") by @(selected.ReceivedByName ?? "-")</span>
+                    }
+                    else if (selected.Status is PurchaseOrderStatusDto.Open or PurchaseOrderStatusDto.Sent)
+                    {
+                        <span> · expected @selected.ExpectedDelivery.ToString("dd-MM-yyyy")</span>
+                    }
+                </p>
+            </div>
+            <button class="btn-icon" title="Close" @onclick="Close"><i class="bi bi-x-lg"></i></button>
+        </div>
+
+        @if (!string.IsNullOrEmpty(panelMessage))
+        {
+            <div class="@(panelFailed ? "alert-danger" : "notice-ok")">@panelMessage</div>
+        }
+
+        @if (selected.Lines.Count == 0)
+        {
+            <div class="empty-state">This order has no products yet.</div>
+        }
+        else
+        {
+            <table class="tasks-table lines-table">
+                <thead>
+                    <tr>
+                        <th>Barcode</th>
+                        <th>Product</th>
+                        <th>Source</th>
+                        <th>Ordered</th>
+                        @if (Receiving || selected.Status == PurchaseOrderStatusDto.Received)
+                        {
+                            <th>Received</th>
+                        }
+                        @if (Receiving)
+                        {
+                            <th>Expiry date</th>
+                        }
+                        @if (Editable)
+                        {
+                            <th></th>
+                        }
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var line in selected.Lines)
+                    {
+                        <tr>
+                            <td class="id-cell">@line.Barcode</td>
+                            <td>@line.ProductName</td>
+                            <td>
+                                @(line.Source switch
+                                {
+                                    OrderLineSourceDto.Automatic => "Automatic",
+                                    OrderLineSourceDto.CustomerOrder => $"Customer order {line.CustomerOrderNumber}",
+                                    _ => "Manual",
+                                })
+                            </td>
+                            <td>
+                                @if (Editable && line.Source != OrderLineSourceDto.CustomerOrder)
+                                {
+                                    <input type="number" min="1" max="@FieldLimits.MaxOrderAmount" value="@line.Amount" @onchange="e => ChangeAmountAsync(line, e)" />
+                                }
+                                else
+                                {
+                                    @line.Amount
+                                }
+                            </td>
+                            @if (Receiving)
+                            {
+                                <td><input type="number" min="0" max="@FieldLimits.MaxOrderAmount" @bind="received[line.Id].ReceivedAmount" /></td>
+                                <td>
+                                    @if (line.CanExpire)
+                                    {
+                                        <input type="date" min="@DateTime.Today.AddDays(1).ToString("yyyy-MM-dd")" @bind="received[line.Id].ExpiryDate" />
+                                    }
+                                    else
+                                    {
+                                        <span>-</span>
+                                    }
+                                </td>
+                            }
+                            else if (selected.Status == PurchaseOrderStatusDto.Received)
+                            {
+                                <td class="@(line.ReceivedAmount < line.Amount ? "difference-minus" : "")">@line.ReceivedAmount</td>
+                            }
+                            @if (Editable)
+                            {
+                                <td class="actions-cell">
+                                    @if (line.Source != OrderLineSourceDto.CustomerOrder)
+                                    {
+                                        <button class="btn-icon" title="Remove from the order" disabled="@busy" @onclick="() => RemoveLineAsync(line)"><i class="bi bi-trash"></i></button>
+                                    }
+                                </td>
+                            }
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+
+        <div class="form-actions">
+            @if (Editable)
+            {
+                <button class="btn-delete" disabled="@busy" @onclick="CancelOrderAsync"><i class="bi bi-x-circle"></i> Cancel order</button>
+            }
+            @if (Receiving)
+            {
+                <button class="btn-save" disabled="@busy" @onclick="ReceiveAsync"><i class="bi bi-box-arrow-in-down"></i> Receive delivery</button>
+            }
+            <button class="btn-cancel" @onclick="Close">Close</button>
+        </div>
+    </ModalOverlay>
+}
+
+@code {
+    private List<PurchaseOrderDto> orders = [];
+    private List<ReorderSuggestionDto>? suggestions;
+    private List<SelectOption> supplierOptions = [];
+    private PurchaseOrderDto? selected;
+    private Dictionary<Guid, ReceiveOrderLine> received = [];
+    private bool loading;
+    private bool busy;
+    private bool canManage;
+    private bool canReceive;
+    private bool viewOnly;
+    private string error = "";
+    private string statusFilter = "";
+    private string supplierFilter = "";
+    private string barcodeInput = "";
+    private int amountInput = 1;
+    private string addMessage = "";
+    private bool addFailed;
+    private string panelMessage = "";
+    private bool panelFailed;
+
+    private bool Editable => selected?.Status == PurchaseOrderStatusDto.Open && canManage && !viewOnly;
+    private bool Receiving => selected?.Status == PurchaseOrderStatusDto.Sent && canReceive && !viewOnly;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        canManage = authState.User.CanOpen(Permissions.ManageOrders);
+        canReceive = authState.User.CanOpen(Permissions.ReceiveOrders);
+        viewOnly = authState.User.IsInRole(AccessRules.ViewOnlyRole);
+        if (authState.User.Allows(Permissions.ViewSuppliers))
+            supplierOptions = (await LookupService.GetSupplierOptionsAsync()).Item1;
+        await Task.WhenAll(LoadOrdersAsync(), LoadSuggestionsAsync());
+    }
+
+    private async Task LoadOrdersAsync()
+    {
+        loading = true;
+        var status = Enum.TryParse<PurchaseOrderStatusDto>(statusFilter, out var value) ? value : (PurchaseOrderStatusDto?)null;
+        var supplier = Guid.TryParse(supplierFilter, out var id) ? id : (Guid?)null;
+        var result = await OrderService.GetOrdersAsync(status, supplier);
+        orders = result.Value ?? [];
+        error = result.Succeeded ? "" : result.Message;
+        loading = false;
+    }
+
+    private async Task LoadSuggestionsAsync()
+    {
+        var result = await OrderService.GetSuggestionsAsync();
+        suggestions = result.Value ?? [];
+    }
+
+    private static string StatusClass(PurchaseOrderStatusDto status) => status switch
+    {
+        PurchaseOrderStatusDto.Open => "status-running",
+        PurchaseOrderStatusDto.Sent => "status-update",
+        PurchaseOrderStatusDto.Received => "status-ok",
+        _ => "status-ended",
+    };
+
+    private async Task AddLineAsync()
+    {
+        if (!int.TryParse(barcodeInput.Trim(), out int barcode) || !IdentifierFormats.IsProductBarcode(barcodeInput.Trim()))
+        {
+            addFailed = true;
+            addMessage = $"A product barcode must be {IdentifierFormats.ProductBarcodeLength} digits.";
+            return;
+        }
+        busy = true;
+        var result = await OrderService.AddLineAsync(new AddOrderLineRequest { Barcode = barcode, Amount = amountInput });
+        busy = false;
+        addFailed = !result.Succeeded;
+        addMessage = result.Message;
+        if (result.Succeeded)
+        {
+            barcodeInput = "";
+            amountInput = 1;
+            await Task.WhenAll(LoadOrdersAsync(), LoadSuggestionsAsync());
+        }
+    }
+
+    private async Task OrderSuggestionAsync(ReorderSuggestionDto suggestion)
+    {
+        busy = true;
+        var result = await OrderService.AddLineAsync(new AddOrderLineRequest { Barcode = suggestion.Barcode, Amount = suggestion.SuggestedAmount });
+        busy = false;
+        addFailed = !result.Succeeded;
+        addMessage = result.Message;
+        await Task.WhenAll(LoadOrdersAsync(), LoadSuggestionsAsync());
+    }
+
+    private void Open(PurchaseOrderDto order)
+    {
+        selected = order;
+        panelMessage = "";
+        received = order.Lines.ToDictionary(l => l.Id, l => new ReceiveOrderLine { LineId = l.Id, ReceivedAmount = l.Amount });
+    }
+
+    private void Close()
+    {
+        selected = null;
+    }
+
+    private async Task ApplyAsync(Task<ApiResult<PurchaseOrderDto>> call)
+    {
+        busy = true;
+        var result = await call;
+        busy = false;
+        panelFailed = !result.Succeeded;
+        panelMessage = result.Message;
+        if (result.Succeeded && result.Value is not null)
+            Open(result.Value);
+        panelMessage = result.Message;
+        await Task.WhenAll(LoadOrdersAsync(), LoadSuggestionsAsync());
+    }
+
+    private async Task ChangeAmountAsync(PurchaseOrderLineDto line, ChangeEventArgs e)
+    {
+        if (selected is null || !int.TryParse(e.Value?.ToString(), out int amount) || amount == line.Amount) return;
+        await ApplyAsync(OrderService.UpdateLineAsync(selected.OrderNumber, new UpdateOrderLineRequest { LineId = line.Id, Amount = amount }));
+    }
+
+    private async Task RemoveLineAsync(PurchaseOrderLineDto line)
+    {
+        if (selected is null) return;
+        if (!await Confirm.AskAsync("Remove product", $"Remove {line.ProductName} from order {selected.OrderNumber}?", "Remove", danger: true)) return;
+        await ApplyAsync(OrderService.UpdateLineAsync(selected.OrderNumber, new UpdateOrderLineRequest { LineId = line.Id, Amount = 0 }));
+    }
+
+    private async Task CancelOrderAsync()
+    {
+        if (selected is null) return;
+        if (!await Confirm.AskAsync("Cancel order", $"Cancel order {selected.OrderNumber} for {selected.SupplierName}?", "Cancel order", danger: true,
+                details: [$"{selected.TotalItems} item(s) won't be ordered."]))
+            return;
+        await ApplyAsync(OrderService.CancelAsync(selected.OrderNumber));
+    }
+
+    private async Task ReceiveAsync()
+    {
+        if (selected is null) return;
+        var lines = received.Values.ToList();
+        var details = selected.Lines
+            .Where(l => received[l.Id].ReceivedAmount != l.Amount)
+            .Select(l => $"{l.ProductName}: {received[l.Id].ReceivedAmount} of {l.Amount} received")
+            .ToList();
+        details.Insert(0, $"{lines.Sum(l => l.ReceivedAmount)} item(s) are added to the stock.");
+        if (!await Confirm.AskAsync("Receive delivery", $"Receive order {selected.OrderNumber} from {selected.SupplierName}?", "Receive", details: details)) return;
+        await ApplyAsync(OrderService.ReceiveAsync(selected.OrderNumber, new ReceiveOrderRequest { Lines = lines }));
+    }
+}

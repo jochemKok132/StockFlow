@@ -7,6 +7,16 @@ namespace StockFlow.Shared.DTOs.Pagination
         public string? ProductName { get; set; }
         public int Barcode { get; set; }
         public string? Location { get; set; }
+        public Guid? BrandId { get; set; }
+        public bool? OnSale { get; set; }
+        public Guid? SaleId { get; set; }
+        public ProductStatusDto? Status { get; set; }
+        public Guid? SupplierId { get; set; }
+        public bool? BelowMinimum { get; set; }
+    }
+    public class SupplierPaginationDto : Pagination<SupplierOrderBy>
+    {
+        public string? SupplierName { get; set; }
     }
     public class ProductBrandPaginationDto : Pagination<ProductBrandOrderBy>
     {

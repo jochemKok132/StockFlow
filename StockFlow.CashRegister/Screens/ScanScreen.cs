@@ -1,4 +1,5 @@
-﻿using StockFlow.Shared.Common;
+﻿using StockFlow.Shared.DTOs.Ordering;
+using StockFlow.Shared.Common;
 using StockFlow.Shared.DTOs.AuditLogs.CashRegister;
 using StockFlow.Shared.DTOs.CashRegister;
 using StockFlow.Shared.DTOs.Customer;
@@ -20,6 +21,7 @@ namespace StockFlow.CashRegister
         private CustomerDto? _parkedCustomer;
         private CustomerDto? _customer;
         private CashRegisterLogsDto? _receipt;
+        private CustomerOrderDto? _customerOrder;
         private bool _usePoints;
         private bool _busy;
         private string _scanCaption = "";
@@ -37,6 +39,7 @@ namespace StockFlow.CashRegister
         private decimal RefundTotal => _lines.Sum(RefundFor);
         public bool HasItems => _lines.Count > 0;
         public CustomerDto? Customer => _customer;
+        public int? CustomerOrderNumber => _customerOrder?.OrderNumber;
 
         public ScanScreen(MainForm parent, ICashRegisterService cashRegister)
         {
@@ -96,7 +99,7 @@ namespace StockFlow.CashRegister
             btnAdd.Click += async (_, _) => await HandleInputAsync();
             btnRemoveCustomer.Click += (_, _) =>
             {
-                if (IsReturning) CancelSale();
+                if (IsReturning || _customerOrder is not null) CancelSale();
                 else SetCustomer(null);
             };
             btnUsePoints.Click += (_, _) => TogglePoints();
@@ -119,6 +122,7 @@ namespace StockFlow.CashRegister
         public void Clear()
         {
             _receipt = null;
+            _customerOrder = null;
             _lines.Clear();
             SetCustomer(null);
             RefreshView();
@@ -170,13 +174,69 @@ namespace StockFlow.CashRegister
             }
             else if (IdentifierFormats.IsReceiptId(input))
                 await LoadReceiptAsync(input);
+            else if (IdentifierFormats.IsCustomerOrderNumber(input))
+                await LoadCustomerOrderAsync(input);
             else
             {
                 ShowError($"Enter a barcode of {IdentifierFormats.ProductBarcodeLength} digits, " +
                           $"a customer id of {IdentifierFormats.CustomerIdLength} digits " +
-                          $"(starting with {IdentifierFormats.CustomerIdPrefix}) or a receipt id of " +
+                          $"(starting with {IdentifierFormats.CustomerIdPrefix}), a customer order number of " +
+                          $"{IdentifierFormats.CustomerOrderNumberLength} digits (starting with {IdentifierFormats.CustomerOrderNumberPrefix}) or a receipt id of " +
                           $"{IdentifierFormats.ReceiptIdLength} digits (starting with {IdentifierFormats.ReceiptIdPrefix}).");
                 txtBarcode.SelectAll();
+            }
+        }
+
+        private async Task LoadCustomerOrderAsync(string orderNumber)
+        {
+            if (IsReturning)
+            {
+                ShowError("A customer order can't be picked up during a return.");
+                txtBarcode.SelectAll();
+                return;
+            }
+
+            if (HasItems || _customerOrder is not null)
+            {
+                ShowError("Finish or cancel the current receipt before you pick up a customer order.");
+                txtBarcode.SelectAll();
+                return;
+            }
+
+            SetBusy(true);
+            try
+            {
+                var (order, error) = await _cashRegister.GetCustomerOrderAsync(orderNumber);
+                if (order is null)
+                {
+                    ShowError(error.StartsWith("Error:") ? error["Error:".Length..].Trim() : error);
+                    txtBarcode.SelectAll();
+                    return;
+                }
+
+                var (customer, customerError) = await _cashRegister.GetCustomerAsync(order.CustomerNumber);
+                if (customer is null)
+                {
+                    ShowError(customerError.StartsWith("Error:") ? customerError["Error:".Length..].Trim() : customerError);
+                    txtBarcode.SelectAll();
+                    return;
+                }
+
+                foreach (var orderLine in order.Lines.Where(l => l.Product is not null))
+                    _lines.Add(new RegisterItemDetailDto { Product = orderLine.Product!, Amount = orderLine.Amount });
+
+                _customerOrder = order;
+                SetCustomer(customer);
+                txtBarcode.Clear();
+                ShowNotice($"Customer order {order.OrderNumber} of {customer.FullName}: {order.Lines.Sum(l => l.Amount)} item(s). Hand over the products and press Checkout [F10].");
+            }
+            catch (Exception ex)
+            {
+                ShowError(ex.Message);
+            }
+            finally
+            {
+                SetBusy(false);
             }
         }
 
@@ -399,7 +459,7 @@ namespace StockFlow.CashRegister
                 return;
             }
 
-            btnRemoveCustomer.Text = "Remove customer [F3]";
+            btnRemoveCustomer.Text = _customerOrder is not null ? "Stop pickup [F3]" : "Remove customer [F3]";
             btnUsePoints.Visible = true;
 
             if (_customer is null)
@@ -412,7 +472,8 @@ namespace StockFlow.CashRegister
             string movingSale = _customer.MovingSale is { } sale
                 ? $"   ·   moving sale {sale.PercentageOff}% until {_customer.MovingSaleUntil:dd-MM-yyyy}"
                 : "";
-            lblCustomer.Text = (points > 0
+            string pickup = _customerOrder is not null ? $"Customer order {_customerOrder.OrderNumber}   ·   " : "";
+            lblCustomer.Text = pickup + (points > 0
                 ? $"Customer: {_customer.FullName}   ·   {_customer.CustomerId}   ·   {points} of {_customer.SavedPoints} points used (-{Theme.Money(LoyaltyPoints.ToEuros(points))})"
                 : $"Customer: {_customer.FullName}   ·   {_customer.CustomerId}   ·   {_customer.SavedPoints} points ({Theme.Money(LoyaltyPoints.ToEuros(_customer.SavedPoints))})") + movingSale;
 
@@ -541,6 +602,11 @@ namespace StockFlow.CashRegister
         private void ParkSale()
         {
             if (!HasItems || _parked is not null || IsReturning) return;
+            if (_customerOrder is not null)
+            {
+                ShowError("A customer order pickup can't be parked. Finish or cancel it first.");
+                return;
+            }
 
             _parked = [.. _lines];
             _parkedCustomer = _customer;

@@ -16,7 +16,7 @@ A short list of everything StockFlow can do right now, followed by the [to-do li
 - The admin and Tester accounts are hidden from everyone except the admin
 - Passwords stored as BCrypt hashes only, never in a log
 - SQLite database that migrates and seeds itself on startup
-- Seed data: 24 employees (including a Tester and a Support account), 15 customers, 150 products, 25 brands, 15 shelves, 2 sales plus the moving sale
+- Seed data: 24 employees (including a Tester and a Support account), 15 customers, 150 products with price history, expiry batches and every status, 25 brands with contact information, 15 shelves, 5 suppliers, 6 sales of every type plus the moving sale, 81 receipts, 4 supplier orders, 4 customer orders, 2 stock counts and 4 tickets
 - Soft delete for products, brands, sales and shelves
 - Users never see a GUID: forms, error messages and logs always use an identifier (barcode, brand name, shelf name, receipt id, employee id)
 - Maximum length on every text field, checked in the apps and again in the API
@@ -26,6 +26,7 @@ A short list of everything StockFlow can do right now, followed by the [to-do li
 - Product barcodes: 9 digits, next free number on create
 - Customer ids: 8 digits starting with 8
 - Receipt ids: 10 digits starting with 9, unique, given to every purchase
+- Customer order numbers: 7 digits starting with 7, scanned at the cash register to pick up the order
 - Employee ids: 6 digits, next free number on create
 - The cash register recognises what was scanned by the number of digits
 
@@ -46,7 +47,9 @@ A short list of everything StockFlow can do right now, followed by the [to-do li
 ## Cash register
 
 - Employee login with version shown and a check for a newer release
-- Scan products, customers and receipts in one input field (max 10 characters)
+- Scan products, customers, customer orders and receipts in one input field (max 10 characters)
+- Hand over a customer order: scan its number, the customer and products are loaded, pay as usual
+- Recalled, draft and disabled products can't be sold
 - Sales only apply when a customer is attached
 - Find a customer by postal code and house number (F9), with a choice when more people live at that address
 - Sale prices for every sale type and the moving sale, the cheapest sale per line wins
@@ -129,9 +132,30 @@ A short list of everything StockFlow can do right now, followed by the [to-do li
 - No transitions, flat surfaces with 1 px borders
 - StockFlow logo (stencil S) in the sidebar, on the login page, as the browser tab icon, and as the cash register's exe and window icon
 
+## Products, ordering and stock counts
+
+- Product status: active, draft or disabled; only active products can be sold or ordered
+- Minimum and maximum stock per product, with the products below their minimum and a suggested amount on the orders page
+- Non-orderable products, never ordered but still for sale
+- Order automatically when the free stock drops below the minimum (up to the maximum)
+- Recall a product with a reason, optionally writing off all its stock; it can't be sold or ordered and is taken off open orders
+- Order blocks (*blokkades*) with a reason and an optional end date
+- Products that can expire, with expiry batches per delivery; sales and write-offs use the first expiring batch
+- Forced stock count of a shelf's expirable products one week before the first one expires
+- Inventory filters: brand, on sale (yes / no), a specific sale, status, supplier and below minimum; sort on price
+- Sales graph of the last 30 days per product
+- Price history, plan a new price for a future date, the latest started price is used automatically
+- More brand information: logo, description, website, country, contact email and customer service phone
+- Suppliers with contact details, a fixed order day and a lead time
+- Orders page: one open order per supplier, sent automatically on the order day, change or cancel it, receive the delivery
+- Customer orders: products reserved from stock, the rest ordered from the supplier, ready for pickup when everything is in, picked up and paid at the cash register
+- Manual customer orders made by an employee
+- Stock counts (*tellingen*) per shelf with counted and expired amounts and the differences
+- Stock automation every 15 minutes: planned prices, forced counts, automatic orders and sending orders on the order day
+
 ## Tests and CI
 
-- 517 xUnit + Moq unit tests: services, validations, mappings, shared rules, repositories (in-memory SQLite), controllers and the GitHub release service
+- 642 xUnit + Moq unit tests: services, validations, mappings, shared rules, repositories (in-memory SQLite), controllers and the GitHub release service
 - Build with 0 warnings
 - CI builds and tests every push and pull request to `master`
 
@@ -161,27 +185,9 @@ A short list of everything StockFlow can do right now, followed by the [to-do li
 
 ## Products
 
-- [ ] Minimum and maximum stock per product
-- [ ] Non-orderable products
-- [ ] Recall products
-- [ ] Disable products / save them as a draft
-- [ ] Product blocks (*blokkades*)
-- [ ] Products that can expire: 1 week before the first one expires, a stock count is forced for that shelf's expirable products
-- [ ] Filters: brand, on sale (yes/no), a specific sale
-- [ ] Sales graph per product
-- [ ] Pricing overhaul: price history, set a new price for a future date, the latest active price is used automatically
 - [ ] Button in the product details that opens that product on the public site
-- [ ] More brand information
-
-
-## Ordering and stock counts
-
-- [ ] Order page
-- [ ] Per product: order automatically when stock drops below the minimum
-- [ ] A fixed order day for automatic and manual orders
-- [ ] Customer orders
-- [ ] Manual customer orders
-- [ ] Stock counts (*tellingen*)
+- [ ] Product details: a button for each section (price history, sold, recall, order block, write off) that opens it, instead of showing everything at once
+- [ ] Online customer orders through the public site (paid on the public site)
 
 ## Services
 

@@ -17,6 +17,14 @@
         public const int WriteOffNote = 200;
         public const int MaxWriteOffAmount = 999;
         public const int MaxImageBytes = 5 * 1024 * 1024;
+        public const int Url = 200;
+        public const int Phone = 30;
+        public const int Country = 60;
+        public const int Reason = 200;
+        public const int OrderNote = 500;
+        public const int MaxStockLevel = 99_999;
+        public const int MaxOrderAmount = 9_999;
+        public const int MaxLeadTimeDays = 60;
         public const string TooLongMessage = "{0} can be at most {1} characters.";
     }
 }

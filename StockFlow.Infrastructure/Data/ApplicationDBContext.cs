@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using StockFlow.Domain.Entities.Ordering;
+using Microsoft.EntityFrameworkCore;
 using StockFlow.Domain.Entities.People;
 using StockFlow.Domain.Entities.Stock;
 using StockFlow.Domain.Entities.AuditLogs;
@@ -22,10 +23,21 @@ namespace StockFlow.Infrastructure.Data
         public DbSet<EmployeeLogs> EmployeeLogs { get; set; }
         public DbSet<RegisterItemDetail> RegisterItemDetails { get; set; }
         public DbSet<Ticket> Tickets { get; set; }
+        public DbSet<Supplier> Suppliers { get; set; }
+        public DbSet<ProductPrice> ProductPrices { get; set; }
+        public DbSet<StockBatch> StockBatches { get; set; }
+        public DbSet<PurchaseOrder> PurchaseOrders { get; set; }
+        public DbSet<PurchaseOrderLine> PurchaseOrderLines { get; set; }
+        public DbSet<CustomerOrder> CustomerOrders { get; set; }
+        public DbSet<CustomerOrderLine> CustomerOrderLines { get; set; }
+        public DbSet<StockCount> StockCounts { get; set; }
+        public DbSet<StockCountLine> StockCountLines { get; set; }
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
             base.OnModelCreating(builder);
+
+            ConfigureOrdering(builder);
 
             builder.Entity<ProductBrand>()
                    .HasMany(x => x.Products)
@@ -113,6 +125,126 @@ namespace StockFlow.Infrastructure.Data
                    .OnDelete(DeleteBehavior.Restrict);
         }
 
+        private static void ConfigureOrdering(ModelBuilder builder)
+        {
+            builder.Entity<Supplier>()
+                   .HasMany(s => s.Products)
+                   .WithOne(p => p.Supplier)
+                   .HasForeignKey(p => p.SupplierId)
+                   .OnDelete(DeleteBehavior.Restrict);
+
+            builder.Entity<Product>()
+                   .HasMany(p => p.Prices)
+                   .WithOne(p => p.Product)
+                   .HasForeignKey(p => p.ProductId)
+                   .OnDelete(DeleteBehavior.Cascade);
+
+            builder.Entity<ProductPrice>()
+                   .HasOne(p => p.CreatedBy)
+                   .WithMany()
+                   .HasForeignKey(p => p.CreatedById)
+                   .OnDelete(DeleteBehavior.SetNull);
+
+            builder.Entity<ProductPrice>()
+                   .HasIndex(p => new { p.ProductId, p.ValidFrom });
+
+            builder.Entity<Product>()
+                   .HasMany(p => p.Batches)
+                   .WithOne(b => b.Product)
+                   .HasForeignKey(b => b.ProductId)
+                   .OnDelete(DeleteBehavior.Cascade);
+
+            builder.Entity<PurchaseOrder>()
+                   .HasIndex(o => o.OrderNumber)
+                   .IsUnique();
+
+            builder.Entity<PurchaseOrder>()
+                   .HasOne(o => o.Supplier)
+                   .WithMany()
+                   .HasForeignKey(o => o.SupplierId)
+                   .OnDelete(DeleteBehavior.Restrict);
+
+            builder.Entity<PurchaseOrder>()
+                   .HasOne(o => o.ReceivedBy)
+                   .WithMany()
+                   .HasForeignKey(o => o.ReceivedById)
+                   .OnDelete(DeleteBehavior.SetNull);
+
+            builder.Entity<PurchaseOrder>()
+                   .HasMany(o => o.Lines)
+                   .WithOne(l => l.PurchaseOrder)
+                   .HasForeignKey(l => l.PurchaseOrderId)
+                   .OnDelete(DeleteBehavior.Cascade);
+
+            builder.Entity<PurchaseOrderLine>()
+                   .HasOne(l => l.Product)
+                   .WithMany()
+                   .HasForeignKey(l => l.ProductId)
+                   .OnDelete(DeleteBehavior.Restrict);
+
+            builder.Entity<CustomerOrder>()
+                   .HasIndex(o => o.OrderNumber)
+                   .IsUnique();
+
+            builder.Entity<CustomerOrder>()
+                   .HasOne(o => o.Customer)
+                   .WithMany()
+                   .HasForeignKey(o => o.CustomerId)
+                   .OnDelete(DeleteBehavior.Restrict);
+
+            builder.Entity<CustomerOrder>()
+                   .HasOne(o => o.CreatedBy)
+                   .WithMany()
+                   .HasForeignKey(o => o.CreatedById)
+                   .OnDelete(DeleteBehavior.SetNull);
+
+            builder.Entity<CustomerOrder>()
+                   .HasMany(o => o.Lines)
+                   .WithOne(l => l.CustomerOrder)
+                   .HasForeignKey(l => l.CustomerOrderId)
+                   .OnDelete(DeleteBehavior.Cascade);
+
+            builder.Entity<CustomerOrderLine>()
+                   .HasOne(l => l.Product)
+                   .WithMany()
+                   .HasForeignKey(l => l.ProductId)
+                   .OnDelete(DeleteBehavior.Restrict);
+
+            builder.Entity<StockCount>()
+                   .HasIndex(c => c.CountNumber)
+                   .IsUnique();
+
+            builder.Entity<StockCount>()
+                   .HasOne(c => c.Shelf)
+                   .WithMany()
+                   .HasForeignKey(c => c.ShelfId)
+                   .OnDelete(DeleteBehavior.Restrict);
+
+            builder.Entity<StockCount>()
+                   .HasOne(c => c.CreatedBy)
+                   .WithMany()
+                   .HasForeignKey(c => c.CreatedById)
+                   .OnDelete(DeleteBehavior.SetNull);
+
+            builder.Entity<StockCount>()
+                   .HasOne(c => c.CompletedBy)
+                   .WithMany()
+                   .HasForeignKey(c => c.CompletedById)
+                   .OnDelete(DeleteBehavior.SetNull);
+
+            builder.Entity<StockCount>()
+                   .HasMany(c => c.Lines)
+                   .WithOne(l => l.StockCount)
+                   .HasForeignKey(l => l.StockCountId)
+                   .OnDelete(DeleteBehavior.Cascade);
+
+            builder.Entity<StockCountLine>()
+                   .HasOne(l => l.Product)
+                   .WithMany()
+                   .HasForeignKey(l => l.ProductId)
+                   .OnDelete(DeleteBehavior.Restrict);
+        }
+
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
             optionsBuilder.UseSeeding((context, _) =>
@@ -120,9 +252,15 @@ namespace StockFlow.Infrastructure.Data
                 context.UseEmployeeSeeder();
                 context.UseCustomerSeeder();
                 context.UseShelfSeeder();
+                context.UseSupplierSeeder();
                 context.UseProductBrandSeeder();
                 context.UseProductSeeder();
                 context.UseSalesSeeder();
+                context.UseCashRegisterLogSeeder();
+                context.UseCustomerOrderSeeder();
+                context.UsePurchaseOrderSeeder();
+                context.UseStockCountSeeder();
+                context.UseTicketSeeder();
             });
 
             base.OnConfiguring(optionsBuilder);

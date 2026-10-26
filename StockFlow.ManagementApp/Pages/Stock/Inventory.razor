@@ -29,6 +29,60 @@
                 <label>Location</label>
                 <input type="text" maxlength="@FieldLimits.ShelfLocation" @bind="pagination.Location" @bind:event="oninput" @bind:after="ResetAndLoad" placeholder="e.g. 002-1025" />
             </div>
+            <div class="filter-group">
+                <label>Brand</label>
+                <select @bind="brandFilter" @bind:after="ApplyFilters">
+                    <option value="">All brands</option>
+                    @foreach (var brand in brandOptions)
+                    {
+                        <option value="@brand.Value">@brand.Label</option>
+                    }
+                </select>
+            </div>
+            <div class="filter-group">
+                <label>On sale</label>
+                <select @bind="onSaleFilter" @bind:after="ApplyFilters">
+                    <option value="">All</option>
+                    <option value="true">Yes</option>
+                    <option value="false">No</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label>Sale</label>
+                <select @bind="saleFilter" @bind:after="ApplyFilters">
+                    <option value="">All sales</option>
+                    @foreach (var sale in saleOptions)
+                    {
+                        <option value="@sale.Value">@sale.Label (@sale.Detail)</option>
+                    }
+                </select>
+            </div>
+            <div class="filter-group">
+                <label>Status</label>
+                <select @bind="statusFilter" @bind:after="ApplyFilters">
+                    <option value="">All</option>
+                    @foreach (var status in Enum.GetValues<ProductStatusDto>())
+                    {
+                        <option value="@status">@status</option>
+                    }
+                </select>
+            </div>
+            <div class="filter-group">
+                <label>Supplier</label>
+                <select @bind="supplierFilter" @bind:after="ApplyFilters">
+                    <option value="">All suppliers</option>
+                    @foreach (var supplier in supplierOptions)
+                    {
+                        <option value="@supplier.Value">@supplier.Label</option>
+                    }
+                </select>
+            </div>
+            <div class="filter-group filter-check">
+                <label>
+                    <input type="checkbox" @bind="belowMinimum" @bind:after="ApplyFilters" />
+                    Below minimum
+                </label>
+            </div>
         </div>
     </div>
 
@@ -41,7 +95,9 @@
                     Product name @SortingArrow(ProductOrderBy.ProductName)
                 </th>
                 <th>Location</th>
-                <th>Price</th>
+                <th @onclick="() => OrderBy(ProductOrderBy.Price)" class="sortable">
+                    Price @SortingArrow(ProductOrderBy.Price)
+                </th>
                 <th @onclick="() => OrderBy(ProductOrderBy.Sales)" class="sortable">
                     Sales @SortingArrow(ProductOrderBy.Sales)
                 </th>
@@ -80,7 +136,10 @@
                 {
                     <tr class="clickable-row" @onclick="() => OpenDetails(product)">
                         <td><strong>@product.Barcode</strong></td>
-                        <td>@product.ProductName</td>
+                        <td>
+                            @product.ProductName
+                            <ProductFlags Status="product.Status" Recalled="product.Recalled" OrderBlocked="product.OrderBlocked" Orderable="product.Orderable" CanExpire="product.CanExpire" />
+                        </td>
                         <td>@product.Location</td>
                         <td>@product.Price</td>
                         <td>@if (product.Sale)
@@ -89,7 +148,16 @@
                             }
                         </td>
                         <td>@product.BrandName</td>
-                        <td>@product.Stock</td>
+                        <td>
+                            @if (product.MinimumStock > 0 && product.Stock < product.MinimumStock)
+                            {
+                                <span class="stock-low" title="Below the minimum stock of @product.MinimumStock"><i class="bi bi-exclamation-triangle-fill"></i> @product.Stock</span>
+                            }
+                            else
+                            {
+                                @product.Stock
+                            }
+                        </td>
                         @if (canManage)
                         {
                             <td class="actions-cell">
@@ -129,6 +197,7 @@
        Loading="detailsLoading"
        Error="@detailsError"
        OnWrittenOff="_ => LoadProducts()"
+       OnProductChanged="ProductChanged"
        OnClose="CloseDetails"/>
 
 <EditItem Show="showChanges"
@@ -163,8 +232,19 @@
 
     private bool isCreateMode;
 
+    private List<SelectOption> brandOptions = [];
+    private List<SelectOption> saleOptions = [];
+    private List<SelectOption> supplierOptions = [];
+    private string brandFilter = "";
+    private string onSaleFilter = "";
+    private string saleFilter = "";
+    private string statusFilter = "";
+    private string supplierFilter = "";
+    private bool belowMinimum;
+
     private bool canManage;
     private bool viewOnly;
+    private AuthenticationState? authState;
     private ProductPaginationDto pagination = new ProductPaginationDto
     {
         OrderBy = ProductOrderBy.CreatedAt,
@@ -176,10 +256,40 @@
 
     protected override async Task OnInitializedAsync()
     {
-        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        authState = await AuthStateProvider.GetAuthenticationStateAsync();
         viewOnly = authState.User.IsInRole(AccessRules.ViewOnlyRole);
         canManage = authState.User.CanOpen(Permissions.ManageStock);
 
+        await Task.WhenAll(LoadProducts(), LoadFilterOptionsAsync());
+    }
+
+    private async Task LoadFilterOptionsAsync()
+    {
+        var brands = LookupService.GetBrandOptionsAsync();
+        var sales = LookupService.GetSaleOptionsAsync();
+        var suppliers = authState is not null && authState.User.Allows(Permissions.ViewSuppliers)
+            ? LookupService.GetSupplierOptionsAsync()
+            : Task.FromResult((new List<SelectOption>(), ""));
+        await Task.WhenAll(brands, sales, suppliers);
+        brandOptions = brands.Result.Item1;
+        saleOptions = sales.Result.Item1;
+        supplierOptions = suppliers.Result.Item1;
+    }
+
+    private async Task ApplyFilters()
+    {
+        pagination.BrandId = Guid.TryParse(brandFilter, out var brandId) ? brandId : null;
+        pagination.SaleId = Guid.TryParse(saleFilter, out var saleId) ? saleId : null;
+        pagination.SupplierId = Guid.TryParse(supplierFilter, out var supplierId) ? supplierId : null;
+        pagination.OnSale = bool.TryParse(onSaleFilter, out var onSale) ? onSale : null;
+        pagination.Status = Enum.TryParse<ProductStatusDto>(statusFilter, out var status) ? status : null;
+        pagination.BelowMinimum = belowMinimum ? true : null;
+        await ResetAndLoad();
+    }
+
+    private async Task ProductChanged(ProductDto product)
+    {
+        selectedProduct = product;
         await LoadProducts();
     }
     private async Task OpenDetails(ProductBulkViewDto dto)
@@ -233,6 +343,13 @@
             SalesTags = product.SalesTags,
             ShelfId = product.ShelfId,
             Stock = product.Stock,
+            Status = product.Status,
+            SupplierId = product.SupplierId,
+            MinimumStock = product.MinimumStock,
+            MaximumStock = product.MaximumStock,
+            Orderable = product.Orderable,
+            AutoOrder = product.AutoOrder,
+            CanExpire = product.CanExpire,
         };
 
         changesLoading = false;
@@ -258,20 +375,23 @@
         var brandsTask = LookupService.GetBrandOptionsAsync();
         var shelvesTask = LookupService.GetShelfOptionsAsync();
         var tagsTask = LookupService.GetSalesTagOptionsAsync();
-        await Task.WhenAll(brandsTask, shelvesTask, tagsTask);
+        var suppliersTask = LookupService.GetSupplierOptionsAsync();
+        await Task.WhenAll(brandsTask, shelvesTask, tagsTask, suppliersTask);
 
         var (brands, brandError) = brandsTask.Result;
         var (shelves, shelfError) = shelvesTask.Result;
         var (tags, tagError) = tagsTask.Result;
+        var (suppliers, supplierError) = suppliersTask.Result;
 
         lookups = new()
         {
             [nameof(CreateProductDto.BrandId)] = brands,
             [nameof(CreateProductDto.ShelfId)] = shelves,
             [nameof(CreateProductDto.SalesTags)] = tags,
+            [nameof(CreateProductDto.SupplierId)] = suppliers,
         };
 
-        var error = new[] { brandError, shelfError, tagError }.FirstOrDefault(e => !string.IsNullOrEmpty(e));
+        var error = new[] { brandError, shelfError, tagError, supplierError }.FirstOrDefault(e => !string.IsNullOrEmpty(e));
         if (error is not null)
             changesError = error.StartsWith("Error:") ? error["Error:".Length..].Trim() : error;
     }

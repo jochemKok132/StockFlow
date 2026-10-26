@@ -1,0 +1,254 @@
+﻿@page "/customerorders"
+@attribute [Authorize(Roles = Permissions.ViewCustomerOrders)]
+@inject ICustomerOrderService CustomerOrderService
+@inject AuthenticationStateProvider AuthStateProvider
+@inject ConfirmService Confirm
+
+<div class="tasks-header">
+    <div>
+        <h2>Customer orders</h2>
+        <p class="page-note">Products a customer orders are reserved from the stock. What isn't in stock is added to the next order of the supplier. When everything is reserved the order is ready; the customer picks it up and pays at the cash register by scanning the order number (@IdentifierFormats.CustomerOrderNumberLength digits, starts with @IdentifierFormats.CustomerOrderNumberPrefix).</p>
+    </div>
+    @if (canManage)
+    {
+        <button class="btn-save" @onclick="OpenCreate"><i class="bi bi-plus-lg"></i> New customer order</button>
+    }
+</div>
+
+<div class="card">
+    <div class="filters-bar">
+        <div class="filters">
+            <div class="filter-group">
+                <label>Status</label>
+                <select @bind="statusFilter" @bind:after="LoadAsync">
+                    <option value="">All</option>
+                    @foreach (var status in Enum.GetValues<CustomerOrderStatusDto>())
+                    {
+                        <option value="@status">@StatusText(status)</option>
+                    }
+                </select>
+            </div>
+        </div>
+    </div>
+
+    @if (!string.IsNullOrEmpty(message))
+    {
+        <div class="@(failed ? "alert-danger" : "notice-ok")">@message</div>
+    }
+
+    <table class="tasks-table">
+        <thead>
+            <tr>
+                <th>Order</th>
+                <th>Customer</th>
+                <th>Status</th>
+                <th>Products</th>
+                <th>Created</th>
+                <th>Note</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (loading)
+            {
+                <tr><td class="loading">Loading...</td></tr>
+            }
+            else if (!string.IsNullOrEmpty(error))
+            {
+                <tr><td class="alert-danger">@error</td></tr>
+            }
+            else if (orders.Count == 0)
+            {
+                <tr><td class="empty-state">No customer orders found.</td></tr>
+            }
+            else
+            {
+                @foreach (var order in orders)
+                {
+                    <tr>
+                        <td class="id-cell"><strong>@order.OrderNumber</strong></td>
+                        <td>@order.CustomerName <div class="page-note">@order.CustomerNumber</div></td>
+                        <td>
+                            <span class="status-badge @StatusClass(order.Status)">@StatusText(order.Status)</span>
+                            @if (order.ReceiptId is not null)
+                            {
+                                <div class="page-note">Receipt @order.ReceiptId</div>
+                            }
+                        </td>
+                        <td>
+                            @foreach (var line in order.Lines)
+                            {
+                                <div>
+                                    @line.Amount × @line.ProductName
+                                    @if (order.Status == CustomerOrderStatusDto.Waiting)
+                                    {
+                                        <span class="page-note">(@line.ReservedAmount reserved)</span>
+                                    }
+                                </div>
+                            }
+                        </td>
+                        <td>@order.CreatedAt.ToLocalTime().ToString("dd-MM-yyyy HH:mm") <div class="page-note">by @(order.CreatedByName ?? "-")</div></td>
+                        <td>@order.Note</td>
+                        <td class="actions-cell">
+                            @if (canManage && order.Status is CustomerOrderStatusDto.Waiting or CustomerOrderStatusDto.ReadyForPickup)
+                            {
+                                <button class="btn-delete" disabled="@(busy || viewOnly)" title="@(viewOnly ? AccessRules.ViewOnlyMessage : null)" @onclick="() => CancelAsync(order)"><i class="bi bi-x-circle"></i> Cancel</button>
+                            }
+                        </td>
+                    </tr>
+                }
+            }
+        </tbody>
+    </table>
+</div>
+
+@if (creating)
+{
+    <ModalOverlay OnClose="CloseCreate" CssClass="wide">
+        <div class="panel-header">
+            <div>
+                <span class="panel-label">New</span>
+                <h3>Customer order</h3>
+            </div>
+            <button class="btn-icon" title="Close" @onclick="CloseCreate"><i class="bi bi-x-lg"></i></button>
+        </div>
+
+        @if (!string.IsNullOrEmpty(formError))
+        {
+            <div class="alert-danger">@formError</div>
+        }
+
+        <div class="field-row">
+            <div class="field">
+                <label>Customer id</label>
+                <input type="text" inputmode="numeric" maxlength="@IdentifierFormats.CustomerIdLength" @bind="request.CustomerId" @bind:event="oninput" placeholder="e.g. 80000001" />
+            </div>
+            <div class="field field-grow">
+                <label>Note</label>
+                <input type="text" maxlength="@FieldLimits.OrderNote" @bind="request.Note" @bind:event="oninput" placeholder="e.g. customer calls before pickup" />
+            </div>
+        </div>
+
+        <table class="tasks-table lines-table">
+            <thead>
+                <tr><th>Barcode</th><th>Amount</th><th></th></tr>
+            </thead>
+            <tbody>
+                @foreach (var line in request.Lines)
+                {
+                    <tr>
+                        <td><input type="number" min="0" @bind="line.Barcode" placeholder="500000001" /></td>
+                        <td><input type="number" min="1" max="@FieldLimits.MaxOrderAmount" @bind="line.Amount" /></td>
+                        <td class="actions-cell">
+                            <button class="btn-icon" title="Remove line" disabled="@(request.Lines.Count == 1)" @onclick="() => request.Lines.Remove(line)"><i class="bi bi-trash"></i></button>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+        <button class="btn-edit" disabled="@(request.Lines.Count >= MaxLines)" @onclick="() => request.Lines.Add(new CustomerOrderLineRequest())"><i class="bi bi-plus-lg"></i> Add product</button>
+
+        <div class="form-actions">
+            <button class="btn-cancel" @onclick="CloseCreate">Cancel</button>
+            <button class="btn-save" disabled="@(busy || viewOnly)" title="@(viewOnly ? AccessRules.ViewOnlyMessage : null)" @onclick="CreateAsync"><i class="bi bi-check-lg"></i> Create order</button>
+        </div>
+    </ModalOverlay>
+}
+
+@code {
+    private const int MaxLines = 50;
+    private List<CustomerOrderDto> orders = [];
+    private bool loading;
+    private bool busy;
+    private bool canManage;
+    private bool viewOnly;
+    private bool failed;
+    private bool creating;
+    private string error = "";
+    private string message = "";
+    private string formError = "";
+    private string statusFilter = "";
+    private CreateCustomerOrderRequest request = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        canManage = authState.User.CanOpen(Permissions.ManageCustomerOrders);
+        viewOnly = authState.User.IsInRole(AccessRules.ViewOnlyRole);
+        await LoadAsync();
+    }
+
+    private async Task LoadAsync()
+    {
+        loading = true;
+        var status = Enum.TryParse<CustomerOrderStatusDto>(statusFilter, out var value) ? value : (CustomerOrderStatusDto?)null;
+        var result = await CustomerOrderService.GetOrdersAsync(status);
+        orders = result.Value ?? [];
+        error = result.Succeeded ? "" : result.Message;
+        loading = false;
+    }
+
+    private static string StatusText(CustomerOrderStatusDto status) => status switch
+    {
+        CustomerOrderStatusDto.Waiting => "Waiting for stock",
+        CustomerOrderStatusDto.ReadyForPickup => "Ready for pickup",
+        CustomerOrderStatusDto.PickedUp => "Picked up",
+        _ => "Cancelled",
+    };
+
+    private static string StatusClass(CustomerOrderStatusDto status) => status switch
+    {
+        CustomerOrderStatusDto.Waiting => "status-update",
+        CustomerOrderStatusDto.ReadyForPickup => "status-running",
+        CustomerOrderStatusDto.PickedUp => "status-ok",
+        _ => "status-ended",
+    };
+
+    private void OpenCreate()
+    {
+        request = new CreateCustomerOrderRequest { Lines = [new CustomerOrderLineRequest()] };
+        formError = "";
+        creating = true;
+    }
+
+    private void CloseCreate() => creating = false;
+
+    private async Task CreateAsync()
+    {
+        var lines = request.Lines.Where(l => l.Barcode > 0).ToList();
+        if (lines.Count == 0)
+        {
+            formError = "Add at least one product.";
+            return;
+        }
+        if (!await Confirm.AskAsync("Create customer order", $"Create an order for customer {request.CustomerId}?", "Create",
+                details: lines.Select(l => $"{l.Amount} × {l.Barcode}").ToList()))
+            return;
+
+        busy = true;
+        var result = await CustomerOrderService.CreateAsync(new CreateCustomerOrderRequest { CustomerId = request.CustomerId.Trim(), Note = request.Note, Lines = lines });
+        busy = false;
+        if (!result.Succeeded)
+        {
+            formError = result.Message;
+            return;
+        }
+        creating = false;
+        failed = false;
+        message = result.Message;
+        await LoadAsync();
+    }
+
+    private async Task CancelAsync(CustomerOrderDto order)
+    {
+        if (!await Confirm.AskAsync("Cancel customer order", $"Cancel order {order.OrderNumber} of {order.CustomerName}?", "Cancel order", danger: true,
+                details: ["Reserved products go back to the free stock.", "Products still on an open supplier order for it are removed from that order."]))
+            return;
+        busy = true;
+        var result = await CustomerOrderService.CancelAsync(order.OrderNumber);
+        busy = false;
+        failed = !result.Succeeded;
+        message = result.Message;
+        await LoadAsync();
+    }
+}

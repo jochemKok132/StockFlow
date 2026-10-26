@@ -129,7 +129,7 @@ namespace StockFlow.CashRegister
 
         public void ShowPurchasingScreen()
         {
-            PurchasingView.Begin(ScanView.Lines, ScanView.CurrentTotal, ScanView.CurrentDiscount, ScanView.PointsToUse, ScanView.Customer);
+            PurchasingView.Begin(ScanView.Lines, ScanView.CurrentTotal, ScanView.CurrentDiscount, ScanView.PointsToUse, ScanView.Customer, ScanView.CustomerOrderNumber);
             SetScreen(PurchasingView);
         }
     }

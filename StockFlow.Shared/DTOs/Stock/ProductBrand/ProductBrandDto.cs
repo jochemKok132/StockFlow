@@ -14,6 +14,13 @@ namespace StockFlow.Shared.DTOs.Stock.ProductBrand
         public DateTime SoftDeletedAt { get; set; }
 
         public required string BrandName { get; set; }
+        public string? Description { get; set; }
+        public string? Website { get; set; }
+        public string? Country { get; set; }
+        public string? ContactEmail { get; set; }
+        public string? CustomerServicePhone { get; set; }
+        public byte[]? Logo { get; set; }
+        public int ProductCount { get; set; }
         public IEnumerable<ProductDto> Products { get; set; } = [];
     }
 }

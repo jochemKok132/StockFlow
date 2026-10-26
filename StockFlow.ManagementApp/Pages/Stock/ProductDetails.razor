@@ -9,6 +9,10 @@
             <div>
                 <span class="panel-label">Product details</span>
                 <h3>@(product?.ProductName ?? "Product")</h3>
+                @if (product is not null)
+                {
+                    <ProductFlags Status="product.Status" Recalled="product.Recalled" OrderBlocked="product.OrderBlockActive" Orderable="product.Orderable" CanExpire="product.CanExpire" ShowExpiry="true" />
+                }
             </div>
             <button class="btn-icon" title="Close" @onclick="OnClose">
                 <i class="bi bi-x-lg"></i>
@@ -48,6 +52,15 @@
                 }
             </div>
 
+            @if (product.Recalled)
+            {
+                <div class="alert-danger"><strong>Recalled</strong> @(product.RecalledAt is { } recalledAt ? $"on {recalledAt.ToLocalTime():dd-MM-yyyy}" : ""): @product.RecallReason. It can't be sold or ordered.</div>
+            }
+            @if (product.OrderBlockActive)
+            {
+                <div class="alert-warning"><strong>Blocked for ordering</strong>@(product.OrderBlockedUntil is { } until ? $" until {until:dd-MM-yyyy}" : ""): @product.OrderBlockReason</div>
+            }
+
             <dl class="details">
                 <dt>Barcode</dt>
                 <dd>
@@ -57,7 +70,47 @@
                 <dt>Location</dt>
                 <dd>@(product.Shelf?.ShelfLocation)-@product.Location</dd>
                 <dt>Stock</dt>
-                <dd>@product.Stock</dd>
+                <dd>
+                    @product.Stock
+                    @if (product.ReservedStock > 0)
+                    {
+                        <span class="muted"> · @product.ReservedStock reserved for customer orders</span>
+                    }
+                    @if (product.OnOrder > 0)
+                    {
+                        <span class="muted"> · @product.OnOrder on order</span>
+                    }
+                </dd>
+                <dt>Min / max</dt>
+                <dd>
+                    @(product.MinimumStock > 0 ? product.MinimumStock.ToString() : "-") / @(product.MaximumStock > 0 ? product.MaximumStock.ToString() : "-")
+                    @if (Reorder.IsBelowMinimum(product.Stock, product.ReservedStock, product.MinimumStock))
+                    {
+                        <span class="stock-low"> <i class="bi bi-exclamation-triangle-fill"></i> below minimum</span>
+                    }
+                </dd>
+                <dt>Ordering</dt>
+                <dd>
+                    @(product.SupplierName ?? "-")
+                    <span class="muted"> · @(product.Orderable ? (product.AutoOrder ? "orders automatically" : "orders manually") : "not orderable")</span>
+                </dd>
+                @if (product.CanExpire)
+                {
+                    <dt>Expiry</dt>
+                    <dd>
+                        @if (product.Batches.Any())
+                        {
+                            @foreach (var batch in product.Batches)
+                            {
+                                <div class="@(ExpiryRules.NeedsCount(batch.ExpiryDate, DateTime.Today) ? "stock-low" : "")">@batch.Amount × until @batch.ExpiryDate.ToString("dd-MM-yyyy")</div>
+                            }
+                        }
+                        else
+                        {
+                            <span class="muted">No expiry dates known yet. They are added when an order is received or the shelf is counted.</span>
+                        }
+                    </dd>
+                }
                 <dt>Brand</dt>
                 <dd>@(product.Brand?.BrandName ?? "-")</dd>
                 <dt>Tags</dt>
@@ -84,6 +137,132 @@
                     <span class="panel-label">Description</span>
                     <p>@product.Description</p>
                 </div>
+            }
+
+            @if (canSeeSales)
+            {
+                <div class="panel-section">
+                    <h4>Sold in the last @SalesDays days</h4>
+                    @if (sales is null)
+                    {
+                        <div class="loading">@(salesError == "" ? "Loading sales..." : salesError)</div>
+                    }
+                    else
+                    {
+                        <div class="mini-chart" role="img" aria-label="Units sold per day">
+                            @foreach (var day in sales.Days)
+                            {
+                                <div class="mini-bar @(day.ItemsSold == 0 ? "is-empty" : "")" style="height: @SalesBarHeight(day.ItemsSold)" title="@day.Date.ToString("ddd dd-MM"): @day.ItemsSold sold, &euro;@day.Revenue.ToString("0.00")"></div>
+                            }
+                        </div>
+                        <div class="mini-chart-legend">
+                            <span>@sales.From.ToString("dd-MM")</span>
+                            <span><strong>@sales.Days.Sum(d => d.ItemsSold)</strong> sold · &euro;@sales.Revenue.ToString("0.00") · @sales.ItemsReturned returned</span>
+                            <span>@sales.To.ToString("dd-MM")</span>
+                        </div>
+                    }
+                </div>
+            }
+
+            <div class="panel-section">
+                <h4>Price history</h4>
+                @if (product.Prices.Any())
+                {
+                    <table class="tasks-table">
+                        <thead>
+                            <tr><th>Price</th><th>From</th><th>Set by</th><th></th></tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var price in product.Prices)
+                            {
+                                <tr>
+                                    <td><strong>&euro;@price.Price.ToString("0.00")</strong></td>
+                                    <td>@price.ValidFrom.ToString("dd-MM-yyyy")</td>
+                                    <td>@(price.CreatedByName ?? "-")</td>
+                                    <td>
+                                        @if (price.IsCurrent)
+                                        {
+                                            <span class="status-badge status-ok">Current</span>
+                                        }
+                                        else if (price.IsFuture)
+                                        {
+                                            <span class="status-badge status-running">Planned</span>
+                                            @if (canManage)
+                                            {
+                                                <button class="btn-icon" title="Cancel this planned price" disabled="@(busy || viewOnly)" @onclick="() => CancelPriceAsync(price)"><i class="bi bi-x-lg"></i></button>
+                                            }
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                }
+                else
+                {
+                    <span class="muted">No price changes yet.</span>
+                }
+                @if (canManage)
+                {
+                    <div class="inline-form">
+                        <div class="field">
+                            <label>New price</label>
+                            <input type="number" min="0" step="0.01" @bind="newPrice.Price" />
+                        </div>
+                        <div class="field">
+                            <label>From</label>
+                            <input type="date" min="@DateTime.Today.ToString("yyyy-MM-dd")" @bind="newPrice.ValidFrom" />
+                        </div>
+                        <button class="btn-save" disabled="@(busy || viewOnly)" title="@(viewOnly ? AccessRules.ViewOnlyMessage : null)" @onclick="SchedulePriceAsync"><i class="bi bi-calendar-plus"></i> @(newPrice.ValidFrom.Date <= DateTime.Today ? "Change price" : "Plan price")</button>
+                    </div>
+                }
+            </div>
+
+            @if (canManage)
+            {
+                <div class="panel-section">
+                    <h4>Recall</h4>
+                    @if (product.Recalled)
+                    {
+                        <button class="btn-edit" disabled="@(busy || viewOnly)" @onclick="UndoRecallAsync"><i class="bi bi-arrow-counterclockwise"></i> Lift recall</button>
+                    }
+                    else
+                    {
+                        <div class="field">
+                            <label>Reason</label>
+                            <input type="text" maxlength="@FieldLimits.Reason" @bind="recall.Reason" @bind:event="oninput" placeholder="e.g. safety issue reported by the supplier" />
+                        </div>
+                        <label class="check-label"><input type="checkbox" @bind="recall.WriteOffStock" /> Write off all @product.Stock in stock</label>
+                        <button class="btn-delete" disabled="@(busy || viewOnly)" title="@(viewOnly ? AccessRules.ViewOnlyMessage : null)" @onclick="RecallAsync"><i class="bi bi-exclamation-octagon"></i> Recall product</button>
+                    }
+                </div>
+
+                <div class="panel-section">
+                    <h4>Order block</h4>
+                    @if (product.OrderBlocked)
+                    {
+                        <button class="btn-edit" disabled="@(busy || viewOnly)" @onclick="UnblockAsync"><i class="bi bi-cart-check"></i> Remove order block</button>
+                    }
+                    else
+                    {
+                        <div class="inline-form">
+                            <div class="field field-grow">
+                                <label>Reason</label>
+                                <input type="text" maxlength="@FieldLimits.Reason" @bind="block.Reason" @bind:event="oninput" placeholder="e.g. supplier can't deliver" />
+                            </div>
+                            <div class="field">
+                                <label>Until (optional)</label>
+                                <input type="date" min="@DateTime.Today.ToString("yyyy-MM-dd")" @bind="block.Until" />
+                            </div>
+                        </div>
+                        <button class="btn-edit" disabled="@(busy || viewOnly)" title="@(viewOnly ? AccessRules.ViewOnlyMessage : null)" @onclick="BlockAsync"><i class="bi bi-cart-x"></i> Block ordering</button>
+                    }
+                </div>
+            }
+
+            @if (!string.IsNullOrEmpty(actionMessage))
+            {
+                <div class="@(actionFailed ? "alert-danger" : "write-off-done")">@actionMessage</div>
             }
 
             @if (canWriteOff)
@@ -131,6 +310,19 @@
 
     [Parameter] public EventCallback OnClose { get; set; }
     [Parameter] public EventCallback<int> OnWrittenOff { get; set; }
+    [Parameter] public EventCallback<ProductDto> OnProductChanged { get; set; }
+
+    private const int SalesDays = 30;
+    private bool canManage;
+    private bool canSeeSales;
+    private bool busy;
+    private bool actionFailed;
+    private string actionMessage = "";
+    private ProductSalesDto? sales;
+    private string salesError = "";
+    private SchedulePriceRequest newPrice = new() { ValidFrom = DateTime.Today.AddDays(1) };
+    private RecallRequest recall = new();
+    private OrderBlockRequest block = new();
 
     private bool canWriteOff;
     private bool viewOnly;
@@ -144,6 +336,8 @@
     {
         var authState = await AuthStateProvider.GetAuthenticationStateAsync();
         canWriteOff = authState.User.CanOpen(Permissions.WriteOffStock);
+        canManage = authState.User.CanOpen(Permissions.ManageStock);
+        canSeeSales = authState.User.Allows(Permissions.ProductSales);
         viewOnly = authState.User.IsInRole(AccessRules.ViewOnlyRole);
     }
 
@@ -155,6 +349,100 @@
         writeOff = new WriteOffRequest();
         writeOffMessage = "";
         writeOffFailed = false;
+        actionMessage = "";
+        sales = null;
+        salesError = "";
+        newPrice = new SchedulePriceRequest { Price = product?.Price ?? 0, ValidFrom = DateTime.Today.AddDays(1) };
+        recall = new RecallRequest();
+        block = new OrderBlockRequest();
+        if (product is not null && canSeeSales)
+            _ = LoadSalesAsync(product.Id);
+    }
+
+    private async Task LoadSalesAsync(Guid productId)
+    {
+        var result = await ProductService.GetSalesAsync(productId, DateTime.Today.AddDays(-(SalesDays - 1)), DateTime.Today);
+        if (product?.Id != productId) return;
+        sales = result.Value;
+        salesError = result.Succeeded ? "" : result.Message;
+        StateHasChanged();
+    }
+
+    private string SalesBarHeight(int sold)
+    {
+        int max = sales?.Days.Max(d => d.ItemsSold) ?? 0;
+        if (sold <= 0 || max <= 0) return "2px";
+        return $"{Math.Max(4, Math.Round(sold * 100.0 / max)).ToString(System.Globalization.CultureInfo.InvariantCulture)}%";
+    }
+
+    private async Task RunAsync(Func<Task<ApiResult<ProductDto>>> action)
+    {
+        if (product is null || busy || viewOnly) return;
+        busy = true;
+        var result = await action();
+        busy = false;
+        actionFailed = !result.Succeeded;
+        actionMessage = result.Message;
+        if (result.Succeeded && result.Value is not null)
+        {
+            var changed = result.Value;
+            shownProductId = changed.Id;
+            await OnProductChanged.InvokeAsync(changed);
+        }
+    }
+
+    private async Task SchedulePriceAsync()
+    {
+        if (product is null) return;
+        newPrice.ProductId = product.Id;
+        bool now = newPrice.ValidFrom.Date <= DateTime.Today;
+        if (!await Confirm.AskAsync(now ? "Change price" : "Plan price", now
+                ? $"Change the price of {product.ProductName} to €{newPrice.Price:0.00} now?"
+                : $"Change the price of {product.ProductName} to €{newPrice.Price:0.00} on {newPrice.ValidFrom:dd-MM-yyyy}?", now ? "Change" : "Plan",
+                details: [$"Current price: €{product.Price:0.00}"]))
+            return;
+        await RunAsync(() => ProductService.SchedulePriceAsync(newPrice));
+    }
+
+    private async Task CancelPriceAsync(ProductPriceDto price)
+    {
+        if (product is null) return;
+        if (!await Confirm.AskAsync("Cancel planned price", $"Cancel the price of €{price.Price:0.00} from {price.ValidFrom:dd-MM-yyyy}?", "Cancel price", danger: true)) return;
+        await RunAsync(() => ProductService.CancelPriceAsync(product.Id, price.Id));
+    }
+
+    private async Task RecallAsync()
+    {
+        if (product is null) return;
+        recall.ProductId = product.Id;
+        List<string> details = ["It can't be sold at the register or ordered anymore.", "Open supplier orders lose this product."];
+        if (recall.WriteOffStock && product.Stock > 0) details.Add($"{product.Stock} in stock is written off.");
+        if (!await Confirm.AskAsync("Recall product", $"Recall {product.ProductName} ({product.Barcode})?", "Recall", danger: true, details: details)) return;
+        await RunAsync(() => ProductService.RecallAsync(recall));
+    }
+
+    private async Task UndoRecallAsync()
+    {
+        if (product is null) return;
+        if (!await Confirm.AskAsync("Lift recall", $"Lift the recall of {product.ProductName}?", "Lift recall", details: ["It can be sold and ordered again."])) return;
+        await RunAsync(() => ProductService.UndoRecallAsync(product.Id));
+    }
+
+    private async Task BlockAsync()
+    {
+        if (product is null) return;
+        block.ProductId = product.Id;
+        if (!await Confirm.AskAsync("Block ordering", $"Block {product.ProductName} for ordering?", "Block",
+                details: [block.Until is { } until ? $"Until {until:dd-MM-yyyy}" : "Until you remove the block", "It can still be sold."]))
+            return;
+        await RunAsync(() => ProductService.BlockOrdersAsync(block));
+    }
+
+    private async Task UnblockAsync()
+    {
+        if (product is null) return;
+        if (!await Confirm.AskAsync("Remove order block", $"Allow ordering {product.ProductName} again?", "Remove block")) return;
+        await RunAsync(() => ProductService.UnblockOrdersAsync(product.Id));
     }
 
     private async Task WriteOffAsync()

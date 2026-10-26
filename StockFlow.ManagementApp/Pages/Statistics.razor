@@ -23,6 +23,7 @@
         </div>
     </div>
     <div class="stats-presets">
+        <button class="btn-edit" @onclick="() => SetRange(1)">Last day</button>
         <button class="btn-edit" @onclick="() => SetRange(7)">Last 7 days</button>
         <button class="btn-edit" @onclick="() => SetRange(30)">Last 30 days</button>
         <button class="btn-edit" @onclick="ThisMonth">This month</button>
@@ -161,7 +162,7 @@ else if (stats is not null)
     private static readonly CultureInfo Culture = CultureInfo.GetCultureInfo("en-IE");
 
     private DateTime to = DateTime.Today;
-    private DateTime from = DateTime.Today.AddDays(-29);
+    private DateTime from = DateTime.Today.AddDays(-7);
     private StatisticsDto? stats;
     private bool loading = true;
     private string error = "";

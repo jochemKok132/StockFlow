@@ -1,0 +1,38 @@
+﻿@if (Status != ProductStatusDto.Active || Recalled || OrderBlocked || !Orderable || (ShowExpiry && CanExpire))
+{
+    <span class="product-flags">
+        @if (Recalled)
+        {
+            <span class="status-badge status-danger" title="Recalled: can't be sold or ordered"><i class="bi bi-exclamation-octagon-fill"></i> Recalled</span>
+        }
+        @if (Status == ProductStatusDto.Draft)
+        {
+            <span class="status-badge status-ended" title="Draft: not for sale yet"><i class="bi bi-pencil-square"></i> Draft</span>
+        }
+        else if (Status == ProductStatusDto.Disabled)
+        {
+            <span class="status-badge status-ended" title="Disabled: not for sale"><i class="bi bi-slash-circle"></i> Disabled</span>
+        }
+        @if (OrderBlocked)
+        {
+            <span class="status-badge status-update" title="Blocked for ordering"><i class="bi bi-cart-x"></i> Order block</span>
+        }
+        @if (!Orderable)
+        {
+            <span class="status-badge status-ended" title="This product is never ordered"><i class="bi bi-cart-dash"></i> Not orderable</span>
+        }
+        @if (ShowExpiry && CanExpire)
+        {
+            <span class="status-badge status-running" title="Has expiry dates"><i class="bi bi-hourglass-split"></i> Expires</span>
+        }
+    </span>
+}
+
+@code {
+    [Parameter] public ProductStatusDto Status { get; set; }
+    [Parameter] public bool Recalled { get; set; }
+    [Parameter] public bool OrderBlocked { get; set; }
+    [Parameter] public bool Orderable { get; set; } = true;
+    [Parameter] public bool CanExpire { get; set; }
+    [Parameter] public bool ShowExpiry { get; set; }
+}

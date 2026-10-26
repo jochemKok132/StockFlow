@@ -33,6 +33,8 @@
                 <th @onclick="() => OrderBy(ProductBrandOrderBy.ProductAmount)" class="sortable">
                     Product amount @SortingArrow(ProductBrandOrderBy.ProductAmount)
                 </th>
+                <th>Country</th>
+                <th>Contact</th>
                 @if (canManage)
                 {
                     <th>Management</th>
@@ -61,8 +63,33 @@
                 @foreach (var product in productBrands)
                 {
                     <tr>
-                        <td><strong>@product.BrandName</strong></td>
+                        <td>
+                            @if (product.Logo is { Length: > 0 } logo)
+                            {
+                                <img class="brand-logo" src="data:@(ImageFormats.DetectContentType(logo) ?? "image/png");base64,@Convert.ToBase64String(logo)" alt="" />
+                            }
+                            <strong>@product.BrandName</strong>
+                            @if (!string.IsNullOrWhiteSpace(product.Description))
+                            {
+                                <div class="page-note">@product.Description</div>
+                            }
+                        </td>
                         <td>@product.Products.Count()</td>
+                        <td>@(product.Country ?? "-")</td>
+                        <td>
+                            @if (!string.IsNullOrWhiteSpace(product.Website))
+                            {
+                                <a href="@WebsiteUrl(product.Website)" target="_blank" rel="noopener" @onclick:stopPropagation="true">@product.Website</a>
+                            }
+                            @if (!string.IsNullOrWhiteSpace(product.ContactEmail))
+                            {
+                                <div><a href="mailto:@product.ContactEmail">@product.ContactEmail</a></div>
+                            }
+                            @if (!string.IsNullOrWhiteSpace(product.CustomerServicePhone))
+                            {
+                                <div>@product.CustomerServicePhone</div>
+                            }
+                        </td>
                         @if (canManage)
                         {
                             <td class="actions-cell">
@@ -162,6 +189,12 @@
         {
             Id = product.Id,
             BrandName = product.BrandName,
+            Description = product.Description,
+            Website = product.Website,
+            Country = product.Country,
+            ContactEmail = product.ContactEmail,
+            CustomerServicePhone = product.CustomerServicePhone,
+            Logo = product.Logo,
         };
 
         detailsLoading = false;
@@ -289,4 +322,6 @@
 
         loading = false;
     }
+    private static string WebsiteUrl(string website) =>
+        website.StartsWith("http", StringComparison.OrdinalIgnoreCase) ? website : $"https://{website}";
 }

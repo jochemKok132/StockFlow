@@ -1,0 +1,244 @@
+﻿@page "/suppliers"
+@attribute [Authorize(Roles = Permissions.ViewSuppliers)]
+@inject ISupplierService SupplierService
+@inject AuthenticationStateProvider AuthStateProvider
+@inject ConfirmService Confirm
+
+<div class="tasks-header">
+    <div>
+        <h2>Suppliers</h2>
+        <p class="page-note">Every product is ordered from one supplier. Orders for a supplier are sent on its fixed order day, manual and automatic orders alike.</p>
+    </div>
+    @if (canManage)
+    {
+        <button class="btn-save" @onclick="OpenCreate"><i class="bi bi-plus-lg"></i> New supplier</button>
+    }
+</div>
+
+<div class="card">
+    <div class="filters-bar">
+        <div class="filters">
+            <div class="filter-group">
+                <label>Supplier name</label>
+                <input type="text" maxlength="@FieldLimits.Name" @bind="pagination.SupplierName" @bind:event="oninput" @bind:after="ResetAndLoad" placeholder="e.g. Wholesale" />
+            </div>
+        </div>
+    </div>
+
+    @if (!string.IsNullOrEmpty(message))
+    {
+        <div class="alert-danger">@message</div>
+    }
+
+    <table class="tasks-table">
+        <thead>
+            <tr>
+                <th @onclick="() => OrderBy(SupplierOrderBy.SupplierName)" class="sortable">Supplier @SortingArrow(SupplierOrderBy.SupplierName)</th>
+                <th>Contact</th>
+                <th @onclick="() => OrderBy(SupplierOrderBy.OrderDay)" class="sortable">Order day @SortingArrow(SupplierOrderBy.OrderDay)</th>
+                <th>Next order</th>
+                <th>Lead time</th>
+                <th>Products</th>
+                @if (canManage)
+                {
+                    <th>Management</th>
+                }
+            </tr>
+        </thead>
+        <tbody>
+            @if (loading)
+            {
+                <tr><td class="loading">Loading...</td></tr>
+            }
+            else if (!string.IsNullOrEmpty(error))
+            {
+                <tr><td class="alert-danger">@error</td></tr>
+            }
+            else if (suppliers.Count == 0)
+            {
+                <tr><td class="empty-state">No suppliers fitting the criteria found.</td></tr>
+            }
+            else
+            {
+                @foreach (var supplier in suppliers)
+                {
+                    <tr>
+                        <td><strong>@supplier.SupplierName</strong></td>
+                        <td>
+                            @(supplier.ContactName ?? "-")
+                            @if (!string.IsNullOrWhiteSpace(supplier.Email))
+                            {
+                                <div><a href="mailto:@supplier.Email">@supplier.Email</a></div>
+                            }
+                            @if (!string.IsNullOrWhiteSpace(supplier.Phone))
+                            {
+                                <div>@supplier.Phone</div>
+                            }
+                        </td>
+                        <td>@supplier.OrderDay</td>
+                        <td>@supplier.NextOrderDate.ToString("ddd dd-MM-yyyy")</td>
+                        <td>@supplier.LeadTimeDays day(s)</td>
+                        <td>@supplier.ProductCount</td>
+                        @if (canManage)
+                        {
+                            <td class="actions-cell">
+                                <div class="table-actions">
+                                    <button class="btn-edit" @onclick="() => OpenUpdate(supplier)"><i class="bi bi-pencil"></i> Edit</button>
+                                    <button class="btn-delete" disabled="@viewOnly" title="@(viewOnly ? AccessRules.ViewOnlyMessage : null)" @onclick="() => DeleteAsync(supplier)"><i class="bi bi-trash"></i> Delete</button>
+                                </div>
+                            </td>
+                        }
+                    </tr>
+                }
+            }
+        </tbody>
+    </table>
+
+    <div class="pagination">
+        <button @onclick="PrevPage" disabled="@(pagination.PageNumber <= 1)">&#8592; Previous</button>
+        <span>Page <strong>@pagination.PageNumber</strong></span>
+        <button @onclick="NextPage" disabled="@(suppliers.Count < pagination.PageSize)">Next &#8594;</button>
+    </div>
+</div>
+
+<EditItem Show="showForm"
+          ViewOnly="viewOnly"
+          EditMode="true"
+          ReadMode="false"
+          item="formItem"
+          Loading="false"
+          Error="@formError"
+          OnClose="CloseForm"
+          OnSave="SaveAsync" />
+
+@code {
+    private List<SupplierDto> suppliers = [];
+    private bool loading;
+    private bool canManage;
+    private bool viewOnly;
+    private string error = "";
+    private string message = "";
+    private bool showForm;
+    private object? formItem;
+    private string formError = "";
+    private SupplierPaginationDto pagination = new()
+    {
+        PageNumber = 1,
+        PageSize = 25,
+        OrderBy = SupplierOrderBy.SupplierName,
+        OrderType = OrderType.Ascending,
+    };
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        canManage = authState.User.CanOpen(Permissions.ManageSuppliers);
+        viewOnly = authState.User.IsInRole(AccessRules.ViewOnlyRole);
+        await LoadAsync();
+    }
+
+    private async Task LoadAsync()
+    {
+        loading = true;
+        (suppliers, error) = await SupplierService.GetPaginatedSuppliersAsync(pagination);
+        if (error.StartsWith("Error:")) error = error["Error:".Length..].Trim();
+        loading = false;
+    }
+
+    private async Task ResetAndLoad()
+    {
+        pagination.PageNumber = 1;
+        await LoadAsync();
+    }
+
+    private async Task NextPage()
+    {
+        pagination.PageNumber++;
+        await LoadAsync();
+    }
+
+    private async Task PrevPage()
+    {
+        if (pagination.PageNumber > 1) pagination.PageNumber--;
+        await LoadAsync();
+    }
+
+    private async Task OrderBy(SupplierOrderBy column)
+    {
+        if (pagination.OrderBy == column)
+            pagination.OrderType = pagination.OrderType == OrderType.Ascending ? OrderType.Descending : OrderType.Ascending;
+        else
+        {
+            pagination.OrderBy = column;
+            pagination.OrderType = OrderType.Ascending;
+        }
+        await ResetAndLoad();
+    }
+
+    private RenderFragment SortingArrow(SupplierOrderBy column) => builder =>
+    {
+        builder.OpenElement(0, "span");
+        builder.AddAttribute(1, "class", pagination.OrderBy == column ? "sort-arrow" : "sort-arrow-inactive");
+        builder.AddContent(2, pagination.OrderBy == column ? (pagination.OrderType == OrderType.Ascending ? "▲" : "▼") : "⇅");
+        builder.CloseElement();
+    };
+
+    private void OpenCreate()
+    {
+        formError = "";
+        formItem = new CreateSupplierDto();
+        showForm = true;
+    }
+
+    private void OpenUpdate(SupplierDto supplier)
+    {
+        formError = "";
+        formItem = new UpdateSupplierDto
+        {
+            Id = supplier.Id,
+            SupplierName = supplier.SupplierName,
+            ContactName = supplier.ContactName,
+            Email = supplier.Email,
+            Phone = supplier.Phone,
+            Website = supplier.Website,
+            OrderDay = supplier.OrderDay,
+            LeadTimeDays = supplier.LeadTimeDays,
+        };
+        showForm = true;
+    }
+
+    private void CloseForm()
+    {
+        showForm = false;
+        formItem = null;
+    }
+
+    private async Task SaveAsync(object? item)
+    {
+        var result = item switch
+        {
+            UpdateSupplierDto update => await SupplierService.UpdateSupplierAsync(update),
+            CreateSupplierDto create => await SupplierService.CreateSupplierAsync(create),
+            _ => null,
+        };
+        if (result is null) return;
+        if (!result.Succeeded)
+        {
+            formError = result.Message;
+            return;
+        }
+        CloseForm();
+        await LoadAsync();
+    }
+
+    private async Task DeleteAsync(SupplierDto supplier)
+    {
+        if (!canManage || viewOnly) return;
+        if (!await Confirm.AskAsync("Delete supplier", $"Delete {supplier.SupplierName}?", "Delete", danger: true,
+                details: ["A supplier that still supplies products can't be deleted."]))
+            return;
+        var result = await SupplierService.SoftDeleteSupplierAsync(supplier.Id);
+        message = result.Succeeded ? "" : result.Message;
+        await LoadAsync();
+    }
+}

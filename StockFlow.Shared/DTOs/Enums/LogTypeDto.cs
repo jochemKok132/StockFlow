@@ -14,5 +14,8 @@ namespace StockFlow.Shared.DTOs.Enums
         Returned,
         WrittenOff,
         Restored,
+        Counted,
+        Received,
+        Recalled,
     }
 }

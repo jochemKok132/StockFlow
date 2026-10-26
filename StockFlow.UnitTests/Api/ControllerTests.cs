@@ -1,4 +1,5 @@
-﻿using System.Security.Claims;
+﻿using StockFlow.Application.Interfaces.Ordering;
+using System.Security.Claims;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using StockFlow.API.Controllers;
@@ -29,10 +30,11 @@ namespace StockFlow.UnitTests.Api
         private readonly Mock<IRegisterDataService> _registerDataService = new();
         private readonly Mock<IProductService> _productService = new();
         private readonly Mock<ICashRegisterLogsService> _cashRegisterLogsService = new();
+        private readonly Mock<ICustomerOrderService> _customerOrderService = new();
         private readonly Guid _userId = Guid.NewGuid();
 
         private CashRegisterController CreateSut(bool loggedIn = true) =>
-            new CashRegisterController(_registerDataService.Object, _productService.Object, _cashRegisterLogsService.Object)
+            new CashRegisterController(_registerDataService.Object, _productService.Object, _cashRegisterLogsService.Object, _customerOrderService.Object)
                 .WithUser(loggedIn ? _userId : null);
 
         [Fact]
@@ -121,11 +123,51 @@ namespace StockFlow.UnitTests.Api
         [Fact]
         public async Task GetProductAsync_Barcode_ReturnsProduct()
         {
-            _productService.Setup(s => s.GetProductByBarcodeAsync(500000001)).ReturnsAsync(new ProductDto { ProductName = "Hammer" });
+            _productService.Setup(s => s.GetSellableProductByBarcodeAsync(500000001)).ReturnsAsync(new ProductDto { ProductName = "Hammer" });
 
             var result = await CreateSut().GetProductAsync("500000001");
 
             Assert.Equal("Hammer", result.Body<ProductDto>().Value?.ProductName);
+        }
+
+        [Fact]
+        public async Task GetProductAsync_RecalledProduct_Returns400()
+        {
+            _productService.Setup(s => s.GetSellableProductByBarcodeAsync(500000001)).ThrowsAsync(new ArgumentException("Hammer is recalled and can't be sold."));
+
+            var result = await CreateSut().GetProductAsync("500000001");
+
+            Assert.Equal(StatusCodes.Status400BadRequest, result.Status());
+            Assert.Equal("Hammer is recalled and can't be sold.", result.Body<ProductDto>().Message);
+        }
+
+        [Fact]
+        public async Task GetCustomerOrderAsync_NotAnOrderNumber_Returns400()
+        {
+            var result = await CreateSut().GetCustomerOrderAsync("12345");
+
+            Assert.Equal(StatusCodes.Status400BadRequest, result.Status());
+            _customerOrderService.Verify(s => s.GetForPickupAsync(It.IsAny<int>()), Times.Never);
+        }
+
+        [Fact]
+        public async Task GetCustomerOrderAsync_NotReady_Returns400()
+        {
+            _customerOrderService.Setup(s => s.GetForPickupAsync(7000001)).ThrowsAsync(new ArgumentException("not ready"));
+
+            var result = await CreateSut().GetCustomerOrderAsync("7000001");
+
+            Assert.Equal(StatusCodes.Status400BadRequest, result.Status());
+        }
+
+        [Fact]
+        public async Task GetCustomerOrderAsync_Ready_ReturnsOrder()
+        {
+            _customerOrderService.Setup(s => s.GetForPickupAsync(7000001)).ReturnsAsync(new StockFlow.Shared.DTOs.Ordering.CustomerOrderDto { OrderNumber = 7000001 });
+
+            var result = await CreateSut().GetCustomerOrderAsync("7000001");
+
+            Assert.Equal(7000001, result.Body<StockFlow.Shared.DTOs.Ordering.CustomerOrderDto>().Value?.OrderNumber);
         }
 
         [Fact]

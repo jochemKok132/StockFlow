@@ -1,4 +1,5 @@
-﻿using StockFlow.Application.Interfaces;
+﻿using StockFlow.Shared.DTOs.Stock.Product;
+using StockFlow.Application.Interfaces;
 using StockFlow.Application.Interfaces.Repositories;
 using StockFlow.Shared.Common;
 using StockFlow.Shared.DTOs.Statistics;
@@ -83,6 +84,51 @@ namespace StockFlow.Application.Services
                 Days = days,
                 TopProducts = topProducts,
             };
+        }
+
+        public async Task<ProductSalesDto> GetProductSalesAsync(Guid productId, DateTime? from, DateTime? to)
+        {
+            if (productId == Guid.Empty)
+                throw new ArgumentException("Product is required.");
+            var (firstDay, lastDay) = Period(from, to);
+            DateTime fromUtc = DateTime.SpecifyKind(firstDay, DateTimeKind.Local).ToUniversalTime();
+            DateTime toUtc = DateTime.SpecifyKind(lastDay.AddDays(1), DateTimeKind.Local).ToUniversalTime();
+            var lines = await statisticsRepository.GetProductLinesAsync(productId, fromUtc, toUtc);
+            var byDay = lines
+                .GroupBy(l => DateTime.SpecifyKind(l.CreatedAt, DateTimeKind.Utc).ToLocalTime().Date)
+                .ToDictionary(g => g.Key, g => g.ToList());
+            var days = new List<ProductSalesDayDto>();
+            for (DateTime day = firstDay; day <= lastDay; day = day.AddDays(1))
+            {
+                var dayLines = byDay.GetValueOrDefault(day) ?? [];
+                days.Add(new ProductSalesDayDto
+                {
+                    Date = day,
+                    ItemsSold = dayLines.Sum(l => l.Amount - l.ReturnedAmount),
+                    Revenue = dayLines.Sum(l => SalePricing.Total(l.Price, l.Amount - l.ReturnedAmount)),
+                });
+            }
+            return new ProductSalesDto
+            {
+                ProductId = productId,
+                From = firstDay,
+                To = lastDay,
+                ItemsSold = lines.Sum(l => l.Amount),
+                ItemsReturned = lines.Sum(l => l.ReturnedAmount),
+                Revenue = days.Sum(d => d.Revenue),
+                Days = days,
+            };
+        }
+
+        private static (DateTime First, DateTime Last) Period(DateTime? from, DateTime? to)
+        {
+            DateTime lastDay = (to ?? DateTime.Today).Date;
+            DateTime firstDay = (from ?? lastDay.AddDays(-(DefaultDays - 1))).Date;
+            if (lastDay < firstDay)
+                throw new ArgumentException("The end date can't be before the start date.");
+            if ((lastDay - firstDay).TotalDays >= MaxDays)
+                throw new ArgumentException($"Choose a period of at most {MaxDays} days.");
+            return (firstDay, lastDay);
         }
 
         private static double Percentage(int part, int total) =>

@@ -1,4 +1,5 @@
-﻿using StockFlow.Application.Services.CashRegister;
+﻿using StockFlow.Application.Interfaces.Ordering;
+using StockFlow.Application.Services.CashRegister;
 using StockFlow.UnitTests.Helpers;
 
 namespace StockFlow.UnitTests.Services
@@ -13,12 +14,13 @@ namespace StockFlow.UnitTests.Services
         private readonly Mock<ICustomerLogsService> _customerLogsService = new();
         private readonly Mock<ICashRegisterLogsRepository> _cashRegisterLogsRepository = new();
         private readonly Mock<ISalesRepository> _salesRepository = new();
+        private readonly Mock<ICustomerOrderService> _customerOrderService = new();
         private readonly RegisterDataService _sut;
         private readonly Guid _employeeId = Guid.NewGuid();
 
         public RegisterDataServiceTests()
         {
-            _sut = new RegisterDataService(_productService.Object, _cashRegisterLogsService.Object, _customerRepository.Object, _customerLogsService.Object, _cashRegisterLogsRepository.Object, _salesRepository.Object);
+            _sut = new RegisterDataService(_productService.Object, _cashRegisterLogsService.Object, _customerRepository.Object, _customerLogsService.Object, _cashRegisterLogsRepository.Object, _salesRepository.Object, _customerOrderService.Object);
             _cashRegisterLogsService.Setup(s => s.CreateCashRegisterLogsAsync(It.IsAny<CreateCashRegisterLogsDto>())).ReturnsAsync(ReceiptId);
         }
 
@@ -88,6 +90,40 @@ namespace StockFlow.UnitTests.Services
             TotalPrice = (double)(lines.Sum(l => l.PriceAtTimeOfSale * l.Amount) - LoyaltyPoints.ToEuros(pointsUsed)),
             ProductsSold = lines,
         };
+
+        [Fact]
+        public async Task FinalizePurchase_UnsellableProduct_StopsBeforeChangingStock()
+        {
+            _productService.Setup(p => p.EnsureSellableAsync(It.IsAny<IEnumerable<Guid>>())).ThrowsAsync(new ArgumentException("Hammer is recalled and can't be sold."));
+
+            await Assert.ThrowsAsync<ArgumentException>(() => _sut.FinalizePurchase(Purchase(null, 0, Line(Guid.NewGuid(), 10m, 1)), _employeeId));
+
+            _productService.Verify(p => p.UpdateProductStockAsync(It.IsAny<Guid>(), It.IsAny<int>(), It.IsAny<Guid>(), It.IsAny<LogTypeDto>()), Times.Never);
+        }
+
+        [Fact]
+        public async Task FinalizePurchase_CustomerOrder_ValidatesAndMarksItPickedUp()
+        {
+            var purchase = Purchase(null, 0, Line(Guid.NewGuid(), 10m, 1));
+            purchase.CustomerOrderNumber = 7000001;
+
+            await _sut.FinalizePurchase(purchase, _employeeId);
+
+            _customerOrderService.Verify(s => s.ValidatePickupAsync(purchase), Times.Once);
+            _customerOrderService.Verify(s => s.MarkPickedUpAsync(7000001, ReceiptId), Times.Once);
+        }
+
+        [Fact]
+        public async Task FinalizePurchase_InvalidPickup_DoesNotSell()
+        {
+            var purchase = Purchase(null, 0, Line(Guid.NewGuid(), 10m, 1));
+            purchase.CustomerOrderNumber = 7000001;
+            _customerOrderService.Setup(s => s.ValidatePickupAsync(purchase)).ThrowsAsync(new ArgumentException("not ready"));
+
+            await Assert.ThrowsAsync<ArgumentException>(() => _sut.FinalizePurchase(purchase, _employeeId));
+
+            _cashRegisterLogsService.Verify(s => s.CreateCashRegisterLogsAsync(It.IsAny<CreateCashRegisterLogsDto>()), Times.Never);
+        }
 
         [Fact]
         public async Task FinalizePurchase_NullPurchase_ThrowsArgumentException()

@@ -109,7 +109,7 @@ namespace StockFlow.CashRegister
             lblScan.Dock = DockStyle.Fill;
             lblScan.Margin = new Padding(0);
             lblScan.Name = "lblScan";
-            lblScan.Text = "SCAN / INPUT  (PRODUCT: 9 DIGITS, CUSTOMER: 8 DIGITS, RECEIPT: 10 DIGITS)";
+            lblScan.Text = "SCAN / INPUT  (PRODUCT: 9 DIGITS, CUSTOMER: 8, CUSTOMER ORDER: 7, RECEIPT: 10)";
             lblScan.TextAlign = ContentAlignment.MiddleLeft;
             txtBarcode.Anchor = AnchorStyles.Left | AnchorStyles.Right;
             txtBarcode.Margin = new Padding(0, 0, 8, 0);

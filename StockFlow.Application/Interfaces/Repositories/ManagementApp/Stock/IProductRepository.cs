@@ -17,5 +17,13 @@ namespace StockFlow.Application.Interfaces.Repositories.ManagementApp.Stock
         Task<IEnumerable<Product>> GetAllProductsAsync(ProductPaginationDto pagination);
         Task<IEnumerable<Product>> GetAllProductsWithTagsAsync(List<string> tags);
         Task<int> GetNewBarcode();
+        Task<Dictionary<Guid, int>> GetReservedStockAsync(IEnumerable<Guid> productIds);
+        Task<Dictionary<Guid, int>> GetOnOrderAsync(IEnumerable<Guid> productIds);
+        Task<List<Product>> GetProductsWithPricesAsync();
+        Task<List<Product>> GetMinimumStockProductsAsync(bool autoOrderOnly);
+        Task<List<Product>> GetProductsOnShelfAsync(Guid shelfId, bool expirableOnly);
+        Task<List<Product>> GetByIdsAsync(IEnumerable<Guid> productIds);
+        Task<List<StockBatch>> GetBatchesToCountAsync(DateTime expiryLimit);
+        Task<int> CountProductsForSupplierAsync(Guid supplierId);
     }
 }

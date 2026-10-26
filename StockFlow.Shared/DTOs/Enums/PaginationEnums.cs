@@ -20,7 +20,8 @@ namespace StockFlow.Shared.DTOs.Enums
         Stock,
         Shelf,
         Brand,
-        Sales
+        Sales,
+        Price,
     }
 
     public enum ProductBrandOrderBy

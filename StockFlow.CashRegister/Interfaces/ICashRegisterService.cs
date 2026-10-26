@@ -1,3 +1,4 @@
+using StockFlow.Shared.DTOs.Ordering;
 using StockFlow.Shared.DTOs.AuditLogs.CashRegister;
 using StockFlow.Shared.DTOs.AuditLogs.Stock;
 using StockFlow.Shared.DTOs.CashRegister;
@@ -17,6 +18,7 @@ namespace StockFlow.CashRegister.Interfaces
         Task<(CashRegisterLogsDto?, string error)> GetReceiptAsync(string receiptId);
         Task<(ReturnResult?, string error)> ProcessReturnAsync(ReturnRequest request);
         Task<ReleaseDto?> GetLatestReleaseAsync();
+        Task<(CustomerOrderDto?, string error)> GetCustomerOrderAsync(string orderNumber);
     }
 }
 

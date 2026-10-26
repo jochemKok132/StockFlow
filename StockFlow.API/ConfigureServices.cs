@@ -19,6 +19,8 @@ namespace StockFlow.API
             services.RegisterValidationResponses();
             services.RegisterReleaseServices(configuration);
             services.RegisterReceiptServices(configuration);
+            if (configuration.GetValue("StockAutomation:Enabled", true))
+                services.AddHostedService<StockAutomationWorker>();
 
             return services;
         }

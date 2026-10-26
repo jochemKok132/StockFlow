@@ -7,7 +7,7 @@ using StockFlow.ManagementApp.Interfaces.Stock;
 
 namespace StockFlow.ManagementApp.Services
 {
-    public class LookupService(IProductBrandService brandService, IShelfService shelfService, ISalesService salesService) : ILookupService
+    public class LookupService(IProductBrandService brandService, IShelfService shelfService, ISalesService salesService, ISupplierService supplierService) : ILookupService
     {
         private const int PageSize = 100;
         private const int MaxPages = 50;
@@ -67,6 +67,33 @@ namespace StockFlow.ManagementApp.Services
                 .ToList();
 
             return (options, error);
+        }
+
+        public async Task<(List<SelectOption>, string error)> GetSupplierOptionsAsync()
+        {
+            var (suppliers, error) = await LoadAllAsync(page => supplierService.GetPaginatedSuppliersAsync(new SupplierPaginationDto
+            {
+                PageNumber = page,
+                PageSize = PageSize,
+                OrderBy = SupplierOrderBy.SupplierName,
+                OrderType = OrderType.Ascending,
+            }));
+            return (suppliers.Select(s => new SelectOption(s.Id.ToString(), s.SupplierName, $"Order day {s.OrderDay}")).ToList(), error);
+        }
+
+        public async Task<(List<SelectOption>, string error)> GetSaleOptionsAsync()
+        {
+            var (sales, error) = await LoadAllAsync(page => salesService.GetPaginatedSalesAsync(new SalesPaginationDto
+            {
+                PageNumber = page,
+                PageSize = PageSize,
+                OrderBy = SalesOrderBy.SaleName,
+                OrderType = OrderType.Ascending,
+            }));
+            return (sales
+                .Where(s => s.SaleType != SaleTypeDto.Moving)
+                .Select(s => new SelectOption(s.Id.ToString(), s.SaleName, SalePricing.Describe(s)))
+                .ToList(), error);
         }
 
         private static async Task<(List<T>, string error)> LoadAllAsync<T>(Func<int, Task<(List<T>, string error)>> loadPage)

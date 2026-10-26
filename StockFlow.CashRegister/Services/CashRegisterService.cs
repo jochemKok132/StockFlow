@@ -1,4 +1,5 @@
-﻿using StockFlow.Shared.DTOs.AuditLogs.CashRegister;
+﻿using StockFlow.Shared.DTOs.Ordering;
+using StockFlow.Shared.DTOs.AuditLogs.CashRegister;
 using StockFlow.Shared.DTOs.AuditLogs.Customer;
 using StockFlow.Shared.DTOs.CashRegister;
 using StockFlow.Shared.DTOs.Customer;
@@ -52,6 +53,19 @@ namespace StockFlow.CashRegister.Services
 
             if (response.Value is null)
                 return (null, "Error: Customer not found.");
+
+            return (response.Value, "");
+        }
+
+        public async Task<(CustomerOrderDto?, string error)> GetCustomerOrderAsync(string orderNumber)
+        {
+            var response = await httpService.GetAsync<CustomerOrderDto>($"CashRegister/CustomerOrder/{orderNumber}");
+
+            if (!response.Succeeded)
+                return (null, $"Error: {response.Message}");
+
+            if (response.Value is null)
+                return (null, "Error: Customer order not found.");
 
             return (response.Value, "");
         }

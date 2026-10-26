@@ -27,6 +27,17 @@ namespace StockFlow.Shared.Common
         public const string ViewFeedback = "Admin,Tester";
         public const string RestoreDeleted = "Support,Admin";
         public const string ViewDeleted = "Support,Admin,Tester";
+        public const string ViewOrders = "Admin,Manager,ShiftLeader,ServiceDesk,Cashier,FloorWorker,Tester";
+        public const string ManageOrders = "ShiftLeader,Manager,Admin";
+        public const string ReceiveOrders = WriteOffStock;
+        public const string ViewSuppliers = "ShiftLeader,Manager,Admin,Tester";
+        public const string ManageSuppliers = "Manager,Admin";
+        public const string ViewCustomerOrders = "Cashier,ServiceDesk,ShiftLeader,Manager,Admin,Tester";
+        public const string ManageCustomerOrders = "ServiceDesk,ShiftLeader,Manager,Admin";
+        public const string ViewStockCounts = "Admin,Manager,ShiftLeader,ServiceDesk,Cashier,FloorWorker,Tester";
+        public const string CountStock = WriteOffStock;
+        public const string PlanStockCounts = "ShiftLeader,Manager,Admin";
+        public const string ProductSales = Statistics;
 
         public static bool Allows(this ClaimsPrincipal user, string roles) =>
             roles.Split(',').Any(user.IsInRole);

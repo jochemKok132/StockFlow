@@ -1,0 +1,358 @@
+﻿@page "/stockcounts"
+@attribute [Authorize(Roles = Permissions.ViewStockCounts)]
+@inject IStockCountService StockCountService
+@inject ILookupService LookupService
+@inject AuthenticationStateProvider AuthStateProvider
+@inject ConfirmService Confirm
+
+<div class="tasks-header">
+    <div>
+        <h2>Stock counts</h2>
+        <p class="page-note">Count a shelf and enter what is really there. One week before a product on a shelf expires, a stock count of that shelf's expirable products is created automatically and has to be done.</p>
+    </div>
+</div>
+
+@if (ForcedOpen > 0)
+{
+    <div class="alert-warning"><i class="bi bi-exclamation-triangle-fill"></i> @ForcedOpen forced expiry count(s) waiting. Count those shelves and take out what has expired.</div>
+}
+
+@if (canPlan)
+{
+    <div class="card">
+        <h3 class="section-title">Plan a stock count</h3>
+        <div class="inline-form">
+            <div class="field">
+                <label>Shelf</label>
+                <select @bind="shelfInput">
+                    <option value="">Choose a shelf</option>
+                    @foreach (var shelf in shelfOptions)
+                    {
+                        <option value="@shelf.Value">@shelf.Label (@shelf.Detail)</option>
+                    }
+                </select>
+            </div>
+            <div class="field field-grow">
+                <label>Note</label>
+                <input type="text" maxlength="@FieldLimits.OrderNote" @bind="noteInput" @bind:event="oninput" placeholder="optional" />
+            </div>
+            <label class="check-inline"><input type="checkbox" @bind="expirableOnly" /> Only products that can expire</label>
+            <button class="btn-save" disabled="@(busy || viewOnly)" title="@(viewOnly ? AccessRules.ViewOnlyMessage : null)" @onclick="CreateAsync"><i class="bi bi-clipboard-plus"></i> Create count</button>
+        </div>
+    </div>
+}
+
+<div class="card">
+    <div class="filters-bar">
+        <div class="filters">
+            <div class="filter-group">
+                <label>Status</label>
+                <select @bind="statusFilter" @bind:after="LoadAsync">
+                    <option value="">All</option>
+                    @foreach (var status in Enum.GetValues<StockCountStatusDto>())
+                    {
+                        <option value="@status">@status</option>
+                    }
+                </select>
+            </div>
+        </div>
+    </div>
+
+    @if (!string.IsNullOrEmpty(message))
+    {
+        <div class="@(failed ? "alert-danger" : "notice-ok")">@message</div>
+    }
+
+    <table class="tasks-table">
+        <thead>
+            <tr>
+                <th>Count</th>
+                <th>Type</th>
+                <th>Shelf</th>
+                <th>Status</th>
+                <th>Due</th>
+                <th>Products</th>
+                <th>Created</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (loading)
+            {
+                <tr><td class="loading">Loading...</td></tr>
+            }
+            else if (!string.IsNullOrEmpty(error))
+            {
+                <tr><td class="alert-danger">@error</td></tr>
+            }
+            else if (counts.Count == 0)
+            {
+                <tr><td class="empty-state">No stock counts found.</td></tr>
+            }
+            else
+            {
+                @foreach (var count in counts)
+                {
+                    <tr class="clickable-row" @onclick="() => Open(count)">
+                        <td class="id-cell">@count.CountNumber</td>
+                        <td>
+                            @if (count.Type == StockCountTypeDto.Expiry)
+                            {
+                                <span class="status-badge status-danger"><i class="bi bi-hourglass-split"></i> Expiry (forced)</span>
+                            }
+                            else
+                            {
+                                <span class="status-badge status-ended">Manual</span>
+                            }
+                        </td>
+                        <td><strong>@count.ShelfName</strong> <div class="page-note">Location @count.ShelfLocation</div></td>
+                        <td><span class="status-badge @StatusClass(count.Status)">@count.Status</span></td>
+                        <td class="@(count.Status == StockCountStatusDto.Open && count.DueDate is { } due && due.Date < DateTime.Today ? "due-late" : "")">@(count.DueDate?.ToString("dd-MM-yyyy") ?? "-")</td>
+                        <td>@count.Lines.Count</td>
+                        <td>@count.CreatedAt.ToLocalTime().ToString("dd-MM-yyyy") <div class="page-note">@(count.CreatedByName ?? "Automatic")</div></td>
+                        <td class="actions-cell">
+                            @if (count.Status == StockCountStatusDto.Open && canCount)
+                            {
+                                <button class="btn-save" @onclick="() => Open(count)" @onclick:stopPropagation="true"><i class="bi bi-clipboard-check"></i> Count</button>
+                            }
+                        </td>
+                    </tr>
+                }
+            }
+        </tbody>
+    </table>
+</div>
+
+@if (selected is not null)
+{
+    <ModalOverlay OnClose="Close" CssClass="wide">
+        <div class="panel-header">
+            <div>
+                <span class="panel-label">Stock count @selected.CountNumber · <span class="status-badge @StatusClass(selected.Status)">@selected.Status</span></span>
+                <h3>@selected.ShelfName (location @selected.ShelfLocation)</h3>
+                @if (!string.IsNullOrWhiteSpace(selected.Note))
+                {
+                    <p class="page-note">@selected.Note</p>
+                }
+                @if (selected.CompletedAt is { } completedAt)
+                {
+                    <p class="page-note">Completed @completedAt.ToLocalTime().ToString("dd-MM-yyyy HH:mm") by @(selected.CompletedByName ?? "-")</p>
+                }
+            </div>
+            <button class="btn-icon" title="Close" @onclick="Close"><i class="bi bi-x-lg"></i></button>
+        </div>
+
+        @if (!string.IsNullOrEmpty(panelMessage))
+        {
+            <div class="alert-danger">@panelMessage</div>
+        }
+
+        <table class="tasks-table lines-table">
+            <thead>
+                <tr>
+                    <th>Location</th>
+                    <th>Product</th>
+                    <th>@(Counting ? "In system" : "Was")</th>
+                    <th>Counted</th>
+                    <th>Expired</th>
+                    <th>First expiry date</th>
+                    <th>Difference</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var line in selected.Lines)
+                {
+                    var entry = entries.GetValueOrDefault(line.Id);
+                    int? counted = Counting ? entry?.CountedStock : line.CountedStock;
+                    int expired = Counting ? entry?.ExpiredAmount ?? 0 : line.ExpiredAmount;
+                    int? difference = counted is int c ? c + expired - line.ExpectedStock : null;
+                    <tr>
+                        <td class="id-cell">@line.Location</td>
+                        <td>
+                            @line.ProductName <div class="page-note">@line.Barcode</div>
+                            @if (line.CanExpire && line.FirstExpiryDate is { } first && Counting)
+                            {
+                                <div class="@(ExpiryRules.NeedsCount(first, DateTime.Today) ? "stock-low" : "page-note")">Known first expiry @first.ToString("dd-MM-yyyy")</div>
+                            }
+                        </td>
+                        <td>@line.ExpectedStock</td>
+                        @if (Counting && entry is not null)
+                        {
+                            <td><input type="number" min="0" max="@FieldLimits.MaxStockLevel" @bind="entry.CountedStock" /></td>
+                            <td>
+                                @if (line.CanExpire)
+                                {
+                                    <input type="number" min="0" max="@FieldLimits.MaxStockLevel" @bind="entry.ExpiredAmount" />
+                                }
+                                else
+                                {
+                                    <span>-</span>
+                                }
+                            </td>
+                            <td>
+                                @if (line.CanExpire)
+                                {
+                                    <input type="date" min="@DateTime.Today.AddDays(1).ToString("yyyy-MM-dd")" @bind="entry.NextExpiryDate" />
+                                }
+                                else
+                                {
+                                    <span>-</span>
+                                }
+                            </td>
+                        }
+                        else
+                        {
+                            <td>@(line.CountedStock?.ToString() ?? "-")</td>
+                            <td>@(line.CanExpire ? line.ExpiredAmount.ToString() : "-")</td>
+                            <td>@(line.NextExpiryDate?.ToString("dd-MM-yyyy") ?? "-")</td>
+                        }
+                        <td class="@(difference > 0 ? "difference-plus" : difference < 0 ? "difference-minus" : "")">@(difference is int d ? (d > 0 ? $"+{d}" : d.ToString()) : "")</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+
+        <div class="form-actions">
+            @if (selected.Status == StockCountStatusDto.Open && selected.Type == StockCountTypeDto.Manual && canPlan && !viewOnly)
+            {
+                <button class="btn-delete" disabled="@busy" @onclick="CancelAsync"><i class="bi bi-x-circle"></i> Cancel count</button>
+            }
+            @if (Counting)
+            {
+                <button class="btn-save" disabled="@busy" @onclick="CompleteAsync"><i class="bi bi-check-lg"></i> Complete count</button>
+            }
+            <button class="btn-cancel" @onclick="Close">Close</button>
+        </div>
+    </ModalOverlay>
+}
+
+@code {
+    private List<StockCountDto> counts = [];
+    private List<SelectOption> shelfOptions = [];
+    private StockCountDto? selected;
+    private Dictionary<Guid, StockCountEntry> entries = [];
+    private bool loading;
+    private bool busy;
+    private bool canPlan;
+    private bool canCount;
+    private bool viewOnly;
+    private bool failed;
+    private bool expirableOnly;
+    private string error = "";
+    private string message = "";
+    private string panelMessage = "";
+    private string statusFilter = "";
+    private string shelfInput = "";
+    private string? noteInput;
+
+    private int ForcedOpen => counts.Count(c => c.Type == StockCountTypeDto.Expiry && c.Status == StockCountStatusDto.Open);
+    private bool Counting => selected?.Status == StockCountStatusDto.Open && canCount && !viewOnly;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        canPlan = authState.User.CanOpen(Permissions.PlanStockCounts);
+        canCount = authState.User.CanOpen(Permissions.CountStock);
+        viewOnly = authState.User.IsInRole(AccessRules.ViewOnlyRole);
+        if (canPlan)
+            shelfOptions = (await LookupService.GetShelfOptionsAsync()).Item1;
+        await LoadAsync();
+    }
+
+    private async Task LoadAsync()
+    {
+        loading = true;
+        var status = Enum.TryParse<StockCountStatusDto>(statusFilter, out var value) ? value : (StockCountStatusDto?)null;
+        var result = await StockCountService.GetCountsAsync(status);
+        counts = result.Value ?? [];
+        error = result.Succeeded ? "" : result.Message;
+        loading = false;
+    }
+
+    private static string StatusClass(StockCountStatusDto status) => status switch
+    {
+        StockCountStatusDto.Open => "status-update",
+        StockCountStatusDto.Completed => "status-ok",
+        _ => "status-ended",
+    };
+
+    private async Task CreateAsync()
+    {
+        if (!Guid.TryParse(shelfInput, out var shelfId))
+        {
+            failed = true;
+            message = "Choose a shelf to count.";
+            return;
+        }
+        busy = true;
+        var result = await StockCountService.CreateAsync(new CreateStockCountRequest { ShelfId = shelfId, Note = noteInput, ExpirableOnly = expirableOnly });
+        busy = false;
+        failed = !result.Succeeded;
+        message = result.Message;
+        if (result.Succeeded)
+        {
+            shelfInput = "";
+            noteInput = null;
+            await LoadAsync();
+        }
+    }
+
+    private void Open(StockCountDto count)
+    {
+        selected = count;
+        panelMessage = "";
+        entries = count.Lines.ToDictionary(l => l.Id, l => new StockCountEntry
+        {
+            LineId = l.Id,
+            CountedStock = Math.Max(0, l.ExpectedStock),
+            NextExpiryDate = l.FirstExpiryDate is { } first && first.Date > DateTime.Today ? first : null,
+        });
+    }
+
+    private void Close() => selected = null;
+
+    private async Task CompleteAsync()
+    {
+        if (selected is null) return;
+        var details = selected.Lines
+            .Select(l => (Line: l, Entry: entries[l.Id]))
+            .Where(x => x.Entry.CountedStock != x.Line.ExpectedStock || x.Entry.ExpiredAmount > 0)
+            .Select(x => x.Entry.ExpiredAmount > 0
+                ? $"{x.Line.ProductName}: {x.Line.ExpectedStock} → {x.Entry.CountedStock} ({x.Entry.ExpiredAmount} expired written off)"
+                : $"{x.Line.ProductName}: {x.Line.ExpectedStock} → {x.Entry.CountedStock}")
+            .ToList();
+        if (details.Count == 0) details.Add("No differences: the stock stays the same.");
+        if (!await Confirm.AskAsync("Complete stock count", $"Save stock count {selected.CountNumber} for {selected.ShelfName}?", "Complete", details: details)) return;
+
+        busy = true;
+        var result = await StockCountService.CompleteAsync(selected.CountNumber, new CompleteStockCountRequest { Lines = entries.Values.ToList() });
+        busy = false;
+        if (!result.Succeeded)
+        {
+            panelMessage = result.Message;
+            return;
+        }
+        selected = result.Value;
+        failed = false;
+        message = result.Message;
+        await LoadAsync();
+    }
+
+    private async Task CancelAsync()
+    {
+        if (selected is null) return;
+        if (!await Confirm.AskAsync("Cancel stock count", $"Cancel stock count {selected.CountNumber}?", "Cancel count", danger: true)) return;
+        busy = true;
+        var result = await StockCountService.CancelAsync(selected.CountNumber);
+        busy = false;
+        if (!result.Succeeded)
+        {
+            panelMessage = result.Message;
+            return;
+        }
+        selected = null;
+        message = result.Message;
+        failed = false;
+        await LoadAsync();
+    }
+}

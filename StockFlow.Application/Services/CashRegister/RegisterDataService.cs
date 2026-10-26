@@ -1,4 +1,5 @@
-﻿using StockFlow.Shared.Common;
+﻿using StockFlow.Application.Interfaces.Ordering;
+using StockFlow.Shared.Common;
 using StockFlow.Shared.DTOs.AuditLogs.CashRegister;
 using StockFlow.Shared.DTOs.AuditLogs.Customer;
 using StockFlow.Shared.DTOs.CashRegister;
@@ -24,7 +25,7 @@ using StockFlow.Shared.DTOs.Customer;
 
 namespace StockFlow.Application.Services.CashRegister
 {
-    public class RegisterDataService(IProductService productService, ICashRegisterLogsService cashRegisterLogsService, ICustomerRepository customerRepository, ICustomerLogsService customerLogsService, ICashRegisterLogsRepository cashRegisterLogsRepository, ISalesRepository salesRepository) : IRegisterDataService
+    public class RegisterDataService(IProductService productService, ICashRegisterLogsService cashRegisterLogsService, ICustomerRepository customerRepository, ICustomerLogsService customerLogsService, ICashRegisterLogsRepository cashRegisterLogsRepository, ISalesRepository salesRepository, ICustomerOrderService customerOrderService) : IRegisterDataService
     {
         public async Task<CustomerDto> GetCustomerAsync(string customerId)
         {
@@ -75,6 +76,8 @@ namespace StockFlow.Application.Services.CashRegister
             }
 
             purchase.Validate(customer is not null, customer?.SavedPoints ?? 0, customer?.MovingSaleUntil);
+            await productService.EnsureSellableAsync(purchase.ProductsSold.Select(l => l.Product.Id));
+            await customerOrderService.ValidatePickupAsync(purchase);
             
             foreach(var stock in purchase.ProductsSold)
             {
@@ -86,6 +89,9 @@ namespace StockFlow.Application.Services.CashRegister
             var log = purchase.ToCashRegisterLogsDto(employeeId);
             log.PointsEarned = pointsEarned;
             string receiptId = await cashRegisterLogsService.CreateCashRegisterLogsAsync(log);
+
+            if (purchase.CustomerOrderNumber is int customerOrderNumber)
+                await customerOrderService.MarkPickedUpAsync(customerOrderNumber, receiptId);
 
             if (customer is not null && (purchase.PointsUsed > 0 || pointsEarned > 0))
             {

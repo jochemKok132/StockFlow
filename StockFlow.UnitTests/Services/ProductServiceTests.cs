@@ -10,11 +10,15 @@ namespace StockFlow.UnitTests.Services
         private readonly Mock<IShelfRepository> _shelfRepository = new();
         private readonly Mock<IProductBrandRepository> _brandRepository = new();
         private readonly Mock<IStockLogsService> _stockLogsService = new();
+        private readonly Mock<ISupplierRepository> _supplierRepository = new();
         private readonly ProductService _sut;
 
         public ProductServiceTests()
         {
-            _sut = new ProductService(_productRepository.Object, _salesRepository.Object, _shelfRepository.Object, _brandRepository.Object, _stockLogsService.Object);
+            _sut = new ProductService(_productRepository.Object, _salesRepository.Object, _shelfRepository.Object, _brandRepository.Object, _stockLogsService.Object, _supplierRepository.Object);
+            _supplierRepository.Setup(r => r.GetByIdAsync(It.IsAny<Guid>())).ReturnsAsync((Guid id) => new Supplier { Id = id, SupplierName = "Wholesale" });
+            _productRepository.Setup(r => r.GetReservedStockAsync(It.IsAny<IEnumerable<Guid>>())).ReturnsAsync(new Dictionary<Guid, int>());
+            _productRepository.Setup(r => r.GetOnOrderAsync(It.IsAny<IEnumerable<Guid>>())).ReturnsAsync(new Dictionary<Guid, int>());
         }
 
         private (ProductBrand brand, Shelf shelf) SetupBrandAndShelf(bool brandDeleted = false, bool shelfDeleted = false)
@@ -24,6 +28,50 @@ namespace StockFlow.UnitTests.Services
             _brandRepository.Setup(r => r.GetByIdAsync(brand.Id)).ReturnsAsync(brand);
             _shelfRepository.Setup(r => r.GetByIdAsync(shelf.Id)).ReturnsAsync(shelf);
             return (brand, shelf);
+        }
+
+        [Fact]
+        public async Task GetSellableProductByBarcodeAsync_Draft_ThrowsArgumentException()
+        {
+            var product = TestData.Product();
+            product.Status = ProductStatus.Draft;
+            _productRepository.Setup(r => r.GetProductByBarcodeAsync(product.Barcode)).ReturnsAsync(product);
+
+            var exception = await Assert.ThrowsAsync<ArgumentException>(() => _sut.GetSellableProductByBarcodeAsync(product.Barcode));
+            Assert.Contains("draft", exception.Message);
+        }
+
+        [Fact]
+        public async Task GetProductByBarcodeAsync_StartedPlannedPrice_UpdatesThePrice()
+        {
+            var product = TestData.Product(price: 10m);
+            product.Prices.Add(new ProductPrice { Price = 8m, ValidFrom = DateTime.Today, CreatedAt = DateTime.UtcNow });
+            _productRepository.Setup(r => r.GetProductByBarcodeAsync(product.Barcode)).ReturnsAsync(product);
+
+            var result = await _sut.GetProductByBarcodeAsync(product.Barcode);
+
+            Assert.Equal(8m, result.Price);
+            _productRepository.Verify(r => r.UpdateAsync(product), Times.Once);
+        }
+
+        [Fact]
+        public async Task EnsureSellableAsync_RecalledProduct_ThrowsArgumentException()
+        {
+            var product = TestData.Product();
+            product.Recalled = true;
+            _productRepository.Setup(r => r.GetByIdsAsync(It.IsAny<IEnumerable<Guid>>())).ReturnsAsync([product]);
+
+            await Assert.ThrowsAsync<ArgumentException>(() => _sut.EnsureSellableAsync([product.Id]));
+        }
+
+        [Fact]
+        public async Task CreateProductAsync_SupplierDeleted_ThrowsArgumentException()
+        {
+            var (brand, shelf) = SetupBrandAndShelf();
+            var dto = TestData.CreateProductDto(brand.Id, shelf.Id);
+            _supplierRepository.Setup(r => r.GetByIdAsync(dto.SupplierId)).ReturnsAsync(TestData.Supplier(softDeleted: true));
+
+            await Assert.ThrowsAsync<ArgumentException>(() => _sut.CreateProductAsync(dto, Guid.NewGuid()));
         }
 
         [Fact]

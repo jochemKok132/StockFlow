@@ -32,6 +32,38 @@
                         <span>Shelves</span>
                     </NavLink>
 
+                    <AuthorizeView Roles="@Permissions.ViewStockCounts">
+                        <h5>Ordering</h5>
+                    </AuthorizeView>
+
+                    <AuthorizeView Roles="@Permissions.ViewOrders">
+                        <NavLink href="orders" class="ml-nav-link" Match="NavLinkMatch.Prefix">
+                            <i class="bi bi-truck"></i>
+                            <span>Orders</span>
+                        </NavLink>
+                    </AuthorizeView>
+
+                    <AuthorizeView Roles="@Permissions.ViewCustomerOrders">
+                        <NavLink href="customerorders" class="ml-nav-link" Match="NavLinkMatch.Prefix">
+                            <i class="bi bi-bag-check"></i>
+                            <span>Customer orders</span>
+                        </NavLink>
+                    </AuthorizeView>
+
+                    <AuthorizeView Roles="@Permissions.ViewStockCounts">
+                        <NavLink href="stockcounts" class="ml-nav-link" Match="NavLinkMatch.Prefix">
+                            <i class="bi bi-clipboard-check"></i>
+                            <span>Stock counts</span>
+                        </NavLink>
+                    </AuthorizeView>
+
+                    <AuthorizeView Roles="@Permissions.ViewSuppliers">
+                        <NavLink href="suppliers" class="ml-nav-link" Match="NavLinkMatch.Prefix">
+                            <i class="bi bi-buildings"></i>
+                            <span>Suppliers</span>
+                        </NavLink>
+                    </AuthorizeView>
+
                     <AuthorizeView Roles="@Permissions.CashRegisterLogs">
                         <h5>Logs</h5>
                         <NavLink href="cashregisterlogs" class="ml-nav-link" Match="NavLinkMatch.Prefix">

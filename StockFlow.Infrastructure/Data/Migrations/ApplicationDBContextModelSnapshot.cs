@@ -199,6 +199,254 @@ namespace StockFlow.Infrastructure.Data.Migrations
                     b.ToTable("RegisterItemDetails");
                 });
 
+            modelBuilder.Entity("StockFlow.Domain.Entities.Ordering.CustomerOrder", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime?>("CancelledAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid?>("CreatedById")
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("CustomerId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Note")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("OrderNumber")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime?>("PickedUpAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime?>("ReadyAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("ReceiptId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("Source")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CreatedById");
+
+                    b.HasIndex("CustomerId");
+
+                    b.HasIndex("OrderNumber")
+                        .IsUnique();
+
+                    b.ToTable("CustomerOrders");
+                });
+
+            modelBuilder.Entity("StockFlow.Domain.Entities.Ordering.CustomerOrderLine", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("Amount")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<Guid>("CustomerOrderId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("ProductId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("ReservedAmount")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CustomerOrderId");
+
+                    b.HasIndex("ProductId");
+
+                    b.ToTable("CustomerOrderLines");
+                });
+
+            modelBuilder.Entity("StockFlow.Domain.Entities.Ordering.PurchaseOrder", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("OrderDate")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("OrderNumber")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime?>("ReceivedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid?>("ReceivedById")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime?>("SentAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<Guid>("SupplierId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("OrderNumber")
+                        .IsUnique();
+
+                    b.HasIndex("ReceivedById");
+
+                    b.HasIndex("SupplierId");
+
+                    b.ToTable("PurchaseOrders");
+                });
+
+            modelBuilder.Entity("StockFlow.Domain.Entities.Ordering.PurchaseOrderLine", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid?>("AddedById")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("Amount")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<Guid?>("CustomerOrderId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("ProductId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("PurchaseOrderId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("ReceivedAmount")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("Source")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ProductId");
+
+                    b.HasIndex("PurchaseOrderId");
+
+                    b.ToTable("PurchaseOrderLines");
+                });
+
+            modelBuilder.Entity("StockFlow.Domain.Entities.Ordering.StockCount", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime?>("CompletedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid?>("CompletedById")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("CountNumber")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid?>("CreatedById")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime?>("DueDate")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Note")
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("ShelfId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("Type")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CompletedById");
+
+                    b.HasIndex("CountNumber")
+                        .IsUnique();
+
+                    b.HasIndex("CreatedById");
+
+                    b.HasIndex("ShelfId");
+
+                    b.ToTable("StockCounts");
+                });
+
+            modelBuilder.Entity("StockFlow.Domain.Entities.Ordering.StockCountLine", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("TEXT");
+
+                    b.Property<int?>("CountedStock")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("ExpectedStock")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("ExpiredAmount")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime?>("NextExpiryDate")
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("ProductId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("StockCountId")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ProductId");
+
+                    b.HasIndex("StockCountId");
+
+                    b.ToTable("StockCountLines");
+                });
+
             modelBuilder.Entity("StockFlow.Domain.Entities.People.Customer", b =>
                 {
                     b.Property<Guid>("Id")
@@ -305,11 +553,17 @@ namespace StockFlow.Infrastructure.Data.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("TEXT");
 
+                    b.Property<bool>("AutoOrder")
+                        .HasColumnType("INTEGER");
+
                     b.Property<int>("Barcode")
                         .HasColumnType("INTEGER");
 
                     b.Property<Guid>("BrandId")
                         .HasColumnType("TEXT");
+
+                    b.Property<bool>("CanExpire")
+                        .HasColumnType("INTEGER");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("TEXT");
@@ -321,6 +575,24 @@ namespace StockFlow.Infrastructure.Data.Migrations
                     b.Property<int>("Location")
                         .HasColumnType("INTEGER");
 
+                    b.Property<int>("MaximumStock")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("MinimumStock")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("OrderBlockReason")
+                        .HasColumnType("TEXT");
+
+                    b.Property<bool>("OrderBlocked")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime?>("OrderBlockedUntil")
+                        .HasColumnType("TEXT");
+
+                    b.Property<bool>("Orderable")
+                        .HasColumnType("INTEGER");
+
                     b.Property<decimal>("Price")
                         .HasColumnType("TEXT");
 
@@ -329,6 +601,15 @@ namespace StockFlow.Infrastructure.Data.Migrations
 
                     b.Property<string>("ProductName")
                         .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("RecallReason")
+                        .HasColumnType("TEXT");
+
+                    b.Property<bool>("Recalled")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime?>("RecalledAt")
                         .HasColumnType("TEXT");
 
                     b.PrimitiveCollection<string>("SalesTags")
@@ -344,8 +625,14 @@ namespace StockFlow.Infrastructure.Data.Migrations
                     b.Property<DateTime>("SoftDeletedAt")
                         .HasColumnType("TEXT");
 
+                    b.Property<int>("Status")
+                        .HasColumnType("INTEGER");
+
                     b.Property<int>("Stock")
                         .HasColumnType("INTEGER");
+
+                    b.Property<Guid>("SupplierId")
+                        .HasColumnType("TEXT");
 
                     b.Property<DateTime>("UpdatedAt")
                         .HasColumnType("TEXT");
@@ -355,6 +642,8 @@ namespace StockFlow.Infrastructure.Data.Migrations
                     b.HasIndex("BrandId");
 
                     b.HasIndex("ShelfId");
+
+                    b.HasIndex("SupplierId");
 
                     b.ToTable("Products");
                 });
@@ -369,8 +658,23 @@ namespace StockFlow.Infrastructure.Data.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("ContactEmail")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Country")
+                        .HasColumnType("TEXT");
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("TEXT");
+
+                    b.Property<string>("CustomerServicePhone")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("TEXT");
+
+                    b.Property<byte[]>("Logo")
+                        .HasColumnType("BLOB");
 
                     b.Property<bool>("SoftDeleted")
                         .HasColumnType("INTEGER");
@@ -381,9 +685,42 @@ namespace StockFlow.Infrastructure.Data.Migrations
                     b.Property<DateTime>("UpdatedAt")
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("Website")
+                        .HasColumnType("TEXT");
+
                     b.HasKey("Id");
 
                     b.ToTable("ProductBrands");
+                });
+
+            modelBuilder.Entity("StockFlow.Domain.Entities.Stock.ProductPrice", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid?>("CreatedById")
+                        .HasColumnType("TEXT");
+
+                    b.Property<decimal>("Price")
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("ProductId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("ValidFrom")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CreatedById");
+
+                    b.HasIndex("ProductId", "ValidFrom");
+
+                    b.ToTable("ProductPrices");
                 });
 
             modelBuilder.Entity("StockFlow.Domain.Entities.Stock.Sales", b =>
@@ -474,6 +811,79 @@ namespace StockFlow.Infrastructure.Data.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Shelves");
+                });
+
+            modelBuilder.Entity("StockFlow.Domain.Entities.Stock.StockBatch", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("Amount")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<bool>("CountForced")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("ExpiryDate")
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("ProductId")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ProductId");
+
+                    b.ToTable("StockBatches");
+                });
+
+            modelBuilder.Entity("StockFlow.Domain.Entities.Stock.Supplier", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("ContactName")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Email")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("LeadTimeDays")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("OrderDay")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Phone")
+                        .HasColumnType("TEXT");
+
+                    b.Property<bool>("SoftDeleted")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("SoftDeletedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("SupplierName")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Website")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Suppliers");
                 });
 
             modelBuilder.Entity("StockFlow.Domain.Entities.Support.Ticket", b =>
@@ -618,6 +1028,124 @@ namespace StockFlow.Infrastructure.Data.Migrations
                     b.Navigation("Sale");
                 });
 
+            modelBuilder.Entity("StockFlow.Domain.Entities.Ordering.CustomerOrder", b =>
+                {
+                    b.HasOne("StockFlow.Domain.Entities.People.Employee", "CreatedBy")
+                        .WithMany()
+                        .HasForeignKey("CreatedById")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("StockFlow.Domain.Entities.People.Customer", "Customer")
+                        .WithMany()
+                        .HasForeignKey("CustomerId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("CreatedBy");
+
+                    b.Navigation("Customer");
+                });
+
+            modelBuilder.Entity("StockFlow.Domain.Entities.Ordering.CustomerOrderLine", b =>
+                {
+                    b.HasOne("StockFlow.Domain.Entities.Ordering.CustomerOrder", "CustomerOrder")
+                        .WithMany("Lines")
+                        .HasForeignKey("CustomerOrderId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("StockFlow.Domain.Entities.Stock.Product", "Product")
+                        .WithMany()
+                        .HasForeignKey("ProductId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("CustomerOrder");
+
+                    b.Navigation("Product");
+                });
+
+            modelBuilder.Entity("StockFlow.Domain.Entities.Ordering.PurchaseOrder", b =>
+                {
+                    b.HasOne("StockFlow.Domain.Entities.People.Employee", "ReceivedBy")
+                        .WithMany()
+                        .HasForeignKey("ReceivedById")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("StockFlow.Domain.Entities.Stock.Supplier", "Supplier")
+                        .WithMany()
+                        .HasForeignKey("SupplierId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("ReceivedBy");
+
+                    b.Navigation("Supplier");
+                });
+
+            modelBuilder.Entity("StockFlow.Domain.Entities.Ordering.PurchaseOrderLine", b =>
+                {
+                    b.HasOne("StockFlow.Domain.Entities.Stock.Product", "Product")
+                        .WithMany()
+                        .HasForeignKey("ProductId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("StockFlow.Domain.Entities.Ordering.PurchaseOrder", "PurchaseOrder")
+                        .WithMany("Lines")
+                        .HasForeignKey("PurchaseOrderId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Product");
+
+                    b.Navigation("PurchaseOrder");
+                });
+
+            modelBuilder.Entity("StockFlow.Domain.Entities.Ordering.StockCount", b =>
+                {
+                    b.HasOne("StockFlow.Domain.Entities.People.Employee", "CompletedBy")
+                        .WithMany()
+                        .HasForeignKey("CompletedById")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("StockFlow.Domain.Entities.People.Employee", "CreatedBy")
+                        .WithMany()
+                        .HasForeignKey("CreatedById")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("StockFlow.Domain.Entities.Stock.Shelf", "Shelf")
+                        .WithMany()
+                        .HasForeignKey("ShelfId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("CompletedBy");
+
+                    b.Navigation("CreatedBy");
+
+                    b.Navigation("Shelf");
+                });
+
+            modelBuilder.Entity("StockFlow.Domain.Entities.Ordering.StockCountLine", b =>
+                {
+                    b.HasOne("StockFlow.Domain.Entities.Stock.Product", "Product")
+                        .WithMany()
+                        .HasForeignKey("ProductId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("StockFlow.Domain.Entities.Ordering.StockCount", "StockCount")
+                        .WithMany("Lines")
+                        .HasForeignKey("StockCountId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Product");
+
+                    b.Navigation("StockCount");
+                });
+
             modelBuilder.Entity("StockFlow.Domain.Entities.Stock.Product", b =>
                 {
                     b.HasOne("StockFlow.Domain.Entities.Stock.ProductBrand", "Brand")
@@ -632,9 +1160,46 @@ namespace StockFlow.Infrastructure.Data.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
+                    b.HasOne("StockFlow.Domain.Entities.Stock.Supplier", "Supplier")
+                        .WithMany("Products")
+                        .HasForeignKey("SupplierId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
                     b.Navigation("Brand");
 
                     b.Navigation("Shelf");
+
+                    b.Navigation("Supplier");
+                });
+
+            modelBuilder.Entity("StockFlow.Domain.Entities.Stock.ProductPrice", b =>
+                {
+                    b.HasOne("StockFlow.Domain.Entities.People.Employee", "CreatedBy")
+                        .WithMany()
+                        .HasForeignKey("CreatedById")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("StockFlow.Domain.Entities.Stock.Product", "Product")
+                        .WithMany("Prices")
+                        .HasForeignKey("ProductId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("CreatedBy");
+
+                    b.Navigation("Product");
+                });
+
+            modelBuilder.Entity("StockFlow.Domain.Entities.Stock.StockBatch", b =>
+                {
+                    b.HasOne("StockFlow.Domain.Entities.Stock.Product", "Product")
+                        .WithMany("Batches")
+                        .HasForeignKey("ProductId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Product");
                 });
 
             modelBuilder.Entity("StockFlow.Domain.Entities.Support.Ticket", b =>
@@ -660,12 +1225,39 @@ namespace StockFlow.Infrastructure.Data.Migrations
                     b.Navigation("ProductsSold");
                 });
 
+            modelBuilder.Entity("StockFlow.Domain.Entities.Ordering.CustomerOrder", b =>
+                {
+                    b.Navigation("Lines");
+                });
+
+            modelBuilder.Entity("StockFlow.Domain.Entities.Ordering.PurchaseOrder", b =>
+                {
+                    b.Navigation("Lines");
+                });
+
+            modelBuilder.Entity("StockFlow.Domain.Entities.Ordering.StockCount", b =>
+                {
+                    b.Navigation("Lines");
+                });
+
+            modelBuilder.Entity("StockFlow.Domain.Entities.Stock.Product", b =>
+                {
+                    b.Navigation("Batches");
+
+                    b.Navigation("Prices");
+                });
+
             modelBuilder.Entity("StockFlow.Domain.Entities.Stock.ProductBrand", b =>
                 {
                     b.Navigation("Products");
                 });
 
             modelBuilder.Entity("StockFlow.Domain.Entities.Stock.Shelf", b =>
+                {
+                    b.Navigation("Products");
+                });
+
+            modelBuilder.Entity("StockFlow.Domain.Entities.Stock.Supplier", b =>
                 {
                     b.Navigation("Products");
                 });

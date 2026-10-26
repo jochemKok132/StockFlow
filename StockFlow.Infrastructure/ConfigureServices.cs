@@ -1,4 +1,6 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using StockFlow.Infrastructure.Repositories.Ordering;
+using StockFlow.Application.Interfaces.Repositories.Ordering;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using StockFlow.Application.Interfaces.Helpers;
@@ -42,6 +44,10 @@ namespace StockFlow.Infrastructure
             services.AddScoped<IStatisticsRepository, StatisticsRepository>();
             services.AddScoped<ITicketRepository, TicketRepository>();
             services.AddScoped<IDeletedItemsRepository, DeletedItemsRepository>();
+            services.AddScoped<ISupplierRepository, SupplierRepository>();
+            services.AddScoped<IPurchaseOrderRepository, PurchaseOrderRepository>();
+            services.AddScoped<ICustomerOrderRepository, CustomerOrderRepository>();
+            services.AddScoped<IStockCountRepository, StockCountRepository>();
 
             return services;
         }

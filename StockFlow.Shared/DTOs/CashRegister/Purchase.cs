@@ -13,6 +13,7 @@ namespace StockFlow.Shared.DTOs.CashRegister
         public double TotalPrice { get; set; }
         public double TotalOff { get; set; }
         public int PointsUsed { get; set; }
+        public int? CustomerOrderNumber { get; set; }
         public IEnumerable<RegisterItemDetailDto> ProductsSold { get; set; } = [];
     }
 }

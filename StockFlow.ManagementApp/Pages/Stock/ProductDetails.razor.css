@@ -166,3 +166,21 @@
     background: var(--SuccessBg);
     border-radius: var(--RadiusSmall);
 }
+
+.muted {
+    color: var(--MutedText);
+}
+
+.check-label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    color: var(--TextColor);
+    cursor: pointer;
+}
+
+.panel-section .btn-delete,
+.panel-section .btn-edit {
+    align-self: flex-start;
+}

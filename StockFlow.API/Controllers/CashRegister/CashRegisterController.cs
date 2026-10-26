@@ -1,4 +1,6 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿using StockFlow.Shared.DTOs.Ordering;
+using StockFlow.Application.Interfaces.Ordering;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using StockFlow.Shared.Common;
 using StockFlow.Shared.DTOs.AuditLogs.CashRegister;
@@ -15,7 +17,7 @@ namespace StockFlow.API.Controllers.CashRegister
     [Authorize(Roles = Permissions.CashRegister)]
     [ApiController]
     [Route("[controller]")]
-    public class CashRegisterController(IRegisterDataService registerDataService, IProductService productService, ICashRegisterLogsService cashRegisterLogsService) : ControllerBase
+    public class CashRegisterController(IRegisterDataService registerDataService, IProductService productService, ICashRegisterLogsService cashRegisterLogsService, ICustomerOrderService customerOrderService) : ControllerBase
     {
         [HttpPost("Purchase")]
         public async Task<IActionResult> FinalizePurchaseAsync(Purchase purchase)
@@ -109,6 +111,15 @@ namespace StockFlow.API.Controllers.CashRegister
             }
         }
 
+        [HttpGet("CustomerOrder/{orderNumber}")]
+        public Task<IActionResult> GetCustomerOrderAsync(string orderNumber)
+        {
+            if (!IdentifierFormats.IsCustomerOrderNumber(orderNumber))
+                return Task.FromResult<IActionResult>(BadRequest(ApiResponse<CustomerOrderDto>.Fail(
+                    $"A customer order number must be {IdentifierFormats.CustomerOrderNumberLength} digits and start with {IdentifierFormats.CustomerOrderNumberPrefix}.")));
+            return this.RunAsync(() => customerOrderService.GetForPickupAsync(int.Parse(orderNumber)));
+        }
+
         [HttpGet("{input}")]
         public async Task<IActionResult> GetProductAsync(string input)
         {
@@ -118,8 +129,12 @@ namespace StockFlow.API.Controllers.CashRegister
 
             try
             {
-                ProductDto product = await productService.GetProductByBarcodeAsync(int.Parse(input));
+                ProductDto product = await productService.GetSellableProductByBarcodeAsync(int.Parse(input));
                 return Ok(ApiResponse<ProductDto>.Ok(product));
+            }
+            catch (ArgumentException exception)
+            {
+                return BadRequest(ApiResponse<ProductDto>.Fail(exception.Message));
             }
             catch (KeyNotFoundException exception)
             {

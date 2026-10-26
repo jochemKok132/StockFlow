@@ -1,3 +1,4 @@
+using StockFlow.ManagementApp.Services;
 using StockFlow.Shared.DTOs.AuditLogs.CashRegister;
 using StockFlow.Shared.DTOs.AuditLogs.Stock;
 using StockFlow.Shared.DTOs.Pagination;
@@ -13,6 +14,13 @@ namespace StockFlow.ManagementApp.Interfaces.Stock
         Task<string> UpdateProductAsync(UpdateProductDto product);
         Task<string> SoftDeleteProductAsync(Guid id);
         Task<(int? stock, string message)> WriteOffAsync(WriteOffRequest request);
+        Task<ApiResult<ProductDto>> SchedulePriceAsync(SchedulePriceRequest request);
+        Task<ApiResult<ProductDto>> CancelPriceAsync(Guid productId, Guid priceId);
+        Task<ApiResult<ProductDto>> RecallAsync(RecallRequest request);
+        Task<ApiResult<ProductDto>> UndoRecallAsync(Guid productId);
+        Task<ApiResult<ProductDto>> BlockOrdersAsync(OrderBlockRequest request);
+        Task<ApiResult<ProductDto>> UnblockOrdersAsync(Guid productId);
+        Task<ApiResult<ProductSalesDto>> GetSalesAsync(Guid productId, DateTime from, DateTime to);
     }
 }
 

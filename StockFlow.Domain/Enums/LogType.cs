@@ -14,5 +14,8 @@ namespace StockFlow.Domain.Enums
         Returned,
         WrittenOff,
         Restored,
+        Counted,
+        Received,
+        Recalled,
     }
 }

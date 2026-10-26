@@ -11,6 +11,11 @@ namespace StockFlow.API.Controllers
     [Authorize(Roles = Permissions.Statistics)]
     public class StatisticsController(IStatisticsService statisticsService) : ControllerBase
     {
+        [Authorize(Roles = Permissions.ProductSales)]
+        [HttpGet("Product/{productId:guid}")]
+        public Task<IActionResult> GetProductSalesAsync(Guid productId, [FromQuery] DateTime? from, [FromQuery] DateTime? to) =>
+            this.RunAsync(() => statisticsService.GetProductSalesAsync(productId, from, to));
+
         [HttpGet("Overview")]
         public async Task<IActionResult> GetOverviewAsync([FromQuery] DateTime? from, [FromQuery] DateTime? to)
         {

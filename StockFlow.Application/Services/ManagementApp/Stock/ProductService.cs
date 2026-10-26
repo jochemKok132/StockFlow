@@ -1,4 +1,5 @@
-﻿using StockFlow.Shared.DTOs.Enums;
+﻿using StockFlow.Shared.Common;
+using StockFlow.Shared.DTOs.Enums;
 using StockFlow.Shared.DTOs.Pagination;
 using StockFlow.Shared.DTOs.Stock.Product;
 using StockFlow.Application.Interfaces.ManagementApp.AuditLogs;
@@ -17,30 +18,37 @@ using StockFlow.Application.Validations.Stock;
 
 namespace StockFlow.Application.Services.ManagementApp.Stock
 {
-    public class ProductService(IProductRepository productRepository, ISalesRepository salesRepository, IShelfRepository shelfRepository, IProductBrandRepository productBrandRepository, IStockLogsService stockLogsService) : IProductService
+    public class ProductService(IProductRepository productRepository, ISalesRepository salesRepository, IShelfRepository shelfRepository, IProductBrandRepository productBrandRepository, IStockLogsService stockLogsService, ISupplierRepository supplierRepository) : IProductService
     {
-
         public async Task CreateProductAsync(CreateProductDto product, Guid employeeId)
         {
             product.Validate();
-            await EnsureBrandAndShelfExistAsync(product.BrandId, product.ShelfId);
+            await EnsureReferencesExistAsync(product.BrandId, product.ShelfId, product.SupplierId);
 
             var productEntity = product.ToProductEntity();
 
             var matchingSales = await salesRepository.GetAllSalesForProductTags(product.SalesTags.ToList());
-
             foreach (var sale in matchingSales)
             {
                 productEntity.Sales.Add(sale);
             }
+
+            productEntity.Prices.Add(NewPrice(productEntity.Id, productEntity.Price, employeeId));
             productEntity.Barcode = await productRepository.GetNewBarcode();
-
-
             await productRepository.AddAsync(productEntity);
             await stockLogsService.CreateStockLogsAsync(product.ToCreateStockLogsDto(employeeId, productEntity.Barcode));
         }
 
-        private async Task EnsureBrandAndShelfExistAsync(Guid brandId, Guid shelfId)
+        private static ProductPrice NewPrice(Guid productId, decimal price, Guid employeeId) => new()
+        {
+                    ProductId = productId,
+            Price = price,
+            ValidFrom = DateTime.Today,
+            CreatedAt = DateTime.UtcNow,
+            CreatedById = employeeId,
+        };
+
+        private async Task EnsureReferencesExistAsync(Guid brandId, Guid shelfId, Guid supplierId)
         {
             var brand = await productBrandRepository.GetByIdAsync(brandId);
             if (brand is null || brand.SoftDeleted)
@@ -49,9 +57,13 @@ namespace StockFlow.Application.Services.ManagementApp.Stock
             var shelf = await shelfRepository.GetByIdAsync(shelfId);
             if (shelf is null || shelf.SoftDeleted)
                 throw new ArgumentException("The chosen shelf doesn't exist.");
+
+            var supplier = await supplierRepository.GetByIdAsync(supplierId);
+            if (supplier is null || supplier.SoftDeleted)
+                throw new ArgumentException("The chosen supplier doesn't exist.");
         }
 
-        private async Task<List<string>> DescribeBrandAndShelfChangesAsync(Product product, UpdateProductDto productDto)
+        private async Task<List<string>> DescribeReferenceChangesAsync(Product product, UpdateProductDto productDto)
         {
             List<string> messages = [];
 
@@ -69,27 +81,28 @@ namespace StockFlow.Application.Services.ManagementApp.Stock
                 messages.Add($"ShelfName: New: {newShelf?.ShelfName ?? "-"}. Old: {oldShelf?.ShelfName ?? "-"}");
             }
 
+            if (product.SupplierId != productDto.SupplierId)
+            {
+                var oldSupplier = await supplierRepository.GetByIdAsync(product.SupplierId);
+                var newSupplier = await supplierRepository.GetByIdAsync(productDto.SupplierId);
+                messages.Add($"SupplierName: New: {newSupplier?.SupplierName ?? "-"}. Old: {oldSupplier?.SupplierName ?? "-"}");
+            }
+
             return messages;
         }
 
         public async Task<List<ProductBulkViewDto>> GetAllProductsAsync(ProductPaginationDto pagination)
         {
             pagination.Validate();
-
             var products = await productRepository.GetAllProductsAsync(pagination);
-
-            var result = new List<ProductBulkViewDto>();
-            foreach (var product in products)
-            {
-                result.Add(product.ToProductBulkViewDto());
-            }
-            return result;
+            return products.Select(p => p.ToProductBulkViewDto()).ToList();
         }
 
         public async Task SoftDeleteProductAsync(Guid id, Guid employeeId)
         {
             var product = await productRepository.GetByIdAsync(id);
             if (product == null) throw new KeyNotFoundException("Product not found.");
+
             await stockLogsService.CreateStockLogsAsync(product.ToSoftDeleteStockLogsDto(employeeId));
             await productRepository.SoftDeleteAsync(product);
         }
@@ -97,15 +110,20 @@ namespace StockFlow.Application.Services.ManagementApp.Stock
         public async Task UpdateProductAsync(UpdateProductDto productDto, Guid employeeId)
         {
             productDto.Validate();
-            await EnsureBrandAndShelfExistAsync(productDto.BrandId, productDto.ShelfId);
+            await EnsureReferencesExistAsync(productDto.BrandId, productDto.ShelfId, productDto.SupplierId);
 
             var product = await productRepository.GetByIdAsync(productDto.Id);
             if (product == null) throw new KeyNotFoundException("Product not found.");
 
             var log = productDto.ToUpdateStockLogsDto(product, employeeId);
-            log.Messages.AddRange(await DescribeBrandAndShelfChangesAsync(product, productDto));
+            log.Messages.AddRange(await DescribeReferenceChangesAsync(product, productDto));
 
+            bool priceChanged = product.Price != productDto.Price;
             product.ToProductEntity(productDto);
+            if (priceChanged)
+                product.Prices.Add(NewPrice(product.Id, productDto.Price, employeeId));
+            if (!product.CanExpire && product.Batches.Count > 0)
+                product.Batches.Clear();
 
             var matchingSales = (await salesRepository.GetAllSalesForProductTags(product.SalesTags.ToList())).ToList();
             var matchingIds = matchingSales.Select(s => s.Id).ToHashSet();
@@ -120,25 +138,68 @@ namespace StockFlow.Application.Services.ManagementApp.Stock
             await productRepository.UpdateAsync(product);
             await stockLogsService.CreateStockLogsAsync(log);
         }
-        public async Task<ProductDto> GetProductDetailsAsync(Guid id) 
+
+        public async Task<ProductDto> GetProductDetailsAsync(Guid id)
         {
             var product = await productRepository.GetByIdAsync(id);
             if (product == null) throw new KeyNotFoundException("Product not found.");
+
+            return await ToDetailsAsync(product);
+        }
+
+        private async Task<ProductDto> ToDetailsAsync(Product product)
+        {
             var productDto = product.ToProductDto();
             productDto.Brand = (await productBrandRepository.GetByIdAsync(productDto.BrandId))?.ToProductBrandDto();
             productDto.Shelf = (await shelfRepository.GetByIdAsync(productDto.ShelfId))?.ToShelfDto();
+            productDto.SupplierName ??= (await supplierRepository.GetByIdAsync(productDto.SupplierId))?.SupplierName;
+            productDto.ReservedStock = (await productRepository.GetReservedStockAsync([product.Id])).GetValueOrDefault(product.Id);
+            productDto.OnOrder = (await productRepository.GetOnOrderAsync([product.Id])).GetValueOrDefault(product.Id);
             return productDto;
-
         }
 
         public async Task<ProductDto> GetProductByBarcodeAsync(int barcode)
         {
             var product = await productRepository.GetProductByBarcodeAsync(barcode);
             if (product == null) throw new KeyNotFoundException($"Product with the barcode {barcode} not found.");
-            var productDto = product.ToProductDto();
-            productDto.Brand = (await productBrandRepository.GetByIdAsync(productDto.BrandId))?.ToProductBrandDto();
-            productDto.Shelf = (await shelfRepository.GetByIdAsync(productDto.ShelfId))?.ToShelfDto();
-            return productDto;
+
+            decimal current = product.CurrentPrice(DateTime.Today);
+            if (current != product.Price)
+            {
+                product.Price = current;
+                await productRepository.UpdateAsync(product);
+            }
+
+            return await ToDetailsAsync(product);
+        }
+
+        public async Task<ProductDto> GetSellableProductByBarcodeAsync(int barcode)
+        {
+            var product = await GetProductByBarcodeAsync(barcode);
+            if (product.SoftDeleted)
+                throw new KeyNotFoundException($"Product with the barcode {barcode} not found.");
+
+            string? refusal = ProductRules.SaleRefusal(product.ProductName, product.Status == ProductStatusDto.Active, product.Status == ProductStatusDto.Draft, product.Recalled);
+            if (refusal is not null)
+                throw new ArgumentException(refusal);
+
+            return product;
+        }
+
+        public async Task EnsureSellableAsync(IEnumerable<Guid> productIds)
+        {
+            var ids = productIds.Distinct().ToList();
+            var products = await productRepository.GetByIdsAsync(ids);
+            foreach (var id in ids)
+            {
+                var product = products.FirstOrDefault(p => p.Id == id);
+                if (product is null || product.SoftDeleted)
+                    throw new ArgumentException("A product on this receipt doesn't exist anymore.");
+
+                string? refusal = product.SaleRefusal();
+                if (refusal is not null)
+                    throw new ArgumentException(refusal);
+            }
         }
 
         public async Task<int> WriteOffStockAsync(WriteOffRequest request, Guid employeeId)
@@ -154,10 +215,11 @@ namespace StockFlow.Application.Services.ManagementApp.Stock
                 log.Messages.Add($"Note: {request.Note.Trim()}");
 
             product.ChangeStock(-request.Amount);
+            if (product.CanExpire)
+                product.ConsumeBatches(request.Amount);
 
             await productRepository.UpdateAsync(product);
             await stockLogsService.CreateStockLogsAsync(log);
-
             return product.Stock;
         }
 
@@ -169,8 +231,9 @@ namespace StockFlow.Application.Services.ManagementApp.Stock
             if (product == null) throw new KeyNotFoundException("Product not found.");
 
             var log = product.ChangeStock(amount, employeeId, logType);
-
             product.ChangeStock(amount);
+            if (amount < 0 && product.CanExpire)
+                product.ConsumeBatches(-amount);
 
             await productRepository.UpdateAsync(product);
             await stockLogsService.CreateStockLogsAsync(log);
