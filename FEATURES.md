@@ -1,6 +1,6 @@
 # StockFlow features
 
-A short list of everything StockFlow can do right now, followed by the [to-do list](#to-do). The details are in the [README](README.md).
+A short list of everything StockFlow can do right now, followed by the [to-do list](#to-do). The details are in the [wiki](https://github.com/jochemKok132/StockFlow/wiki).
 
 ## General
 

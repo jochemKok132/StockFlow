@@ -374,3 +374,5 @@ deploy/.env
 # SQLite temporary files
 *.db-shm
 *.db-wal
+# GitHub wiki (separate repository: StockFlow.wiki.git)
+/wiki/
