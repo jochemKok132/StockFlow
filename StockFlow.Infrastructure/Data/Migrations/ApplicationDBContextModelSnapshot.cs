@@ -131,6 +131,77 @@ namespace StockFlow.Infrastructure.Data.Migrations
                     b.ToTable("EmployeeLogs");
                 });
 
+            modelBuilder.Entity("StockFlow.Domain.Entities.AuditLogs.ReturnLogLine", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("Amount")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<decimal>("PriceAtTimeOfSale")
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("ProductId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<decimal>("RefundAmount")
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("ReturnLogId")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ProductId");
+
+                    b.HasIndex("ReturnLogId");
+
+                    b.ToTable("ReturnLogLines");
+                });
+
+            modelBuilder.Entity("StockFlow.Domain.Entities.AuditLogs.ReturnLogs", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("CashRegisterLogId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid?>("CustomerId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("EmployeeId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("PointsDeducted")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("ReceiptId")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<decimal>("RefundAmount")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CashRegisterLogId");
+
+                    b.HasIndex("CustomerId");
+
+                    b.HasIndex("EmployeeId");
+
+                    b.HasIndex("ReceiptId");
+
+                    b.ToTable("ReturnLogs");
+                });
+
             modelBuilder.Entity("StockFlow.Domain.Entities.AuditLogs.StockLogs", b =>
                 {
                     b.Property<Guid>("Id")
@@ -994,6 +1065,49 @@ namespace StockFlow.Infrastructure.Data.Migrations
                     b.Navigation("Employee");
                 });
 
+            modelBuilder.Entity("StockFlow.Domain.Entities.AuditLogs.ReturnLogLine", b =>
+                {
+                    b.HasOne("StockFlow.Domain.Entities.Stock.Product", "Product")
+                        .WithMany()
+                        .HasForeignKey("ProductId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("StockFlow.Domain.Entities.AuditLogs.ReturnLogs", null)
+                        .WithMany("Lines")
+                        .HasForeignKey("ReturnLogId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Product");
+                });
+
+            modelBuilder.Entity("StockFlow.Domain.Entities.AuditLogs.ReturnLogs", b =>
+                {
+                    b.HasOne("StockFlow.Domain.Entities.AuditLogs.CashRegisterLogs", "CashRegisterLog")
+                        .WithMany()
+                        .HasForeignKey("CashRegisterLogId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("StockFlow.Domain.Entities.People.Customer", "Customer")
+                        .WithMany()
+                        .HasForeignKey("CustomerId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("StockFlow.Domain.Entities.People.Employee", "Employee")
+                        .WithMany()
+                        .HasForeignKey("EmployeeId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("CashRegisterLog");
+
+                    b.Navigation("Customer");
+
+                    b.Navigation("Employee");
+                });
+
             modelBuilder.Entity("StockFlow.Domain.Entities.AuditLogs.StockLogs", b =>
                 {
                     b.HasOne("StockFlow.Domain.Entities.People.Employee", "Employee")
@@ -1223,6 +1337,11 @@ namespace StockFlow.Infrastructure.Data.Migrations
             modelBuilder.Entity("StockFlow.Domain.Entities.AuditLogs.CashRegisterLogs", b =>
                 {
                     b.Navigation("ProductsSold");
+                });
+
+            modelBuilder.Entity("StockFlow.Domain.Entities.AuditLogs.ReturnLogs", b =>
+                {
+                    b.Navigation("Lines");
                 });
 
             modelBuilder.Entity("StockFlow.Domain.Entities.Ordering.CustomerOrder", b =>

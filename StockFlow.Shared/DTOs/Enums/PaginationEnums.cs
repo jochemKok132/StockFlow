@@ -67,6 +67,13 @@ namespace StockFlow.Shared.DTOs.Enums
         Role
     }
 
+    public enum ReturnLogsOrderBy
+    {
+        CreatedAt,
+        RefundAmount,
+        ReceiptId,
+    }
+
     public enum CashRegisterLogsOrderBy
     {
         CreatedAt,

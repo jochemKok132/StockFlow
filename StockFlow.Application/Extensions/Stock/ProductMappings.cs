@@ -162,6 +162,7 @@ namespace StockFlow.Application.Mappings.Stock
                     .Select(s => SalePricing.DiscountedPrice(product.Price, s.PercentageOff))
                     .DefaultIfEmpty(product.Price)
                     .Min(),
+                RegularPrice = product.Price,
                 Sale = product.ActiveSales().Any(),
                 Stock = product.Stock,
                 BrandName = product.Brand?.BrandName ?? string.Empty,

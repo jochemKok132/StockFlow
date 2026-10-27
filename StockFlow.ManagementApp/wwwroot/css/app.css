@@ -1067,3 +1067,13 @@ body {
 .card + .card {
     margin-top: 16px;
 }
+
+.filter-select {
+    min-width: 200px;
+}
+
+.filter-group .filter-select input {
+    min-width: 0;
+    border: none;
+    box-shadow: none;
+}

@@ -46,6 +46,12 @@ namespace StockFlow.Shared.DTOs.Pagination
         public string? EmployeeId { get; set; }
         public EmployeeRoleDto? Role { get; set; }
     }
+    public class ReturnLogsPaginationDto : Pagination<ReturnLogsOrderBy>
+    {
+        public string? ReceiptId { get; set; }
+        public string? EmployeeId { get; set; }
+        public string? CustomerId { get; set; }
+    }
     public class CashRegisterLogsPaginationDto : Pagination<CashRegisterLogsOrderBy>
     {
         public string? ReceiptId { get; set; }

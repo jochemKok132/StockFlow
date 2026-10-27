@@ -16,7 +16,7 @@ A short list of everything StockFlow can do right now, followed by the [to-do li
 - The admin and Tester accounts are hidden from everyone except the admin
 - Passwords stored as BCrypt hashes only, never in a log
 - SQLite database that migrates and seeds itself on startup
-- Seed data: 24 employees (including a Tester and a Support account), 15 customers, 150 products with price history, expiry batches and every status, 25 brands with contact information, 15 shelves, 5 suppliers, 6 sales of every type plus the moving sale, 81 receipts, 4 supplier orders, 4 customer orders, 2 stock counts and 4 tickets
+- Seed data: 24 employees (including a Tester and a Support account), 15 customers, 150 products with price history, expiry batches and every status, 25 brands with contact information, 15 shelves, 5 suppliers, 6 sales of every type plus the moving sale, 81 receipts, 4 supplier orders, 4 customer orders, 2 stock counts, 4 tickets, and stock logs, customer logs and return records that match all of it
 - Soft delete for products, brands, sales and shelves
 - Users never see a GUID: forms, error messages and logs always use an identifier (barcode, brand name, shelf name, receipt id, employee id)
 - Maximum length on every text field, checked in the apps and again in the API
@@ -71,12 +71,16 @@ A short list of everything StockFlow can do right now, followed by the [to-do li
 - Refund lowered in proportion when points were used, so points are never paid out as cash
 - Points earned on returned items are taken back (never below 0)
 - Stock raised and a *Returned* stock log written per product
+- Every return saved as one record: receipt id, employee, customer, date and time, products with amount, price paid and refund, total refund and points taken back
 
 ## Management app
 
 - Sidebar only shows the pages your role can use, and buttons only show for roles that may use them
 - Goes to the login page automatically when the session ends
 - Inventory: paged, sortable and filterable, with a product details panel (image, sale price, location, stock, tags)
+- Inventory shows the regular price with the sale price under it; the brand filter is a searchable select and the sale filter only lists active sales
+- Product details: a button per section (sold, price history, recall, order block, write off) that opens only that section, and a button that opens the product on the public site
+- Number fields always use a dot as decimal separator, so editing a price works in every browser language
 - Create, edit and delete products, brands, sales and shelves (managers)
 - Sales types: percentage off, multi-buy (1+1, 2+1, …), second item half price, bundle price (3 for €10)
 - Sales with a start and end date, status *Scheduled* / *Active* / *Ended*, filter on status, ended sales kept as history with items sold
@@ -93,7 +97,8 @@ A short list of everything StockFlow can do right now, followed by the [to-do li
 - Employees: create with password, edit with optional password reset, only roles below your own
 - Customers: list, filter, sort and edit
 - Cash register logs with receipt filter, products overlay, returned amounts and a points column
-- Download any receipt as a till-style PDF, with a scannable barcode of the receipt id at the bottom to start a return
+- Return logs page: every return with its receipt, employee, customer, refund and points taken back, filter on receipt, employee and customer, and the returned products per return
+- Download any receipt as a till-style PDF, with a centered, scannable barcode of the receipt id at the bottom to start a return
 - Moving sales page to approve or reject requests
 - Statistics page: revenue, purchases, average receipt, % of purchases with a customer card, discounts, points, returns, new customers, revenue per day and top 10 products
 - Stock logs with old → new values
@@ -120,6 +125,7 @@ A short list of everything StockFlow can do right now, followed by the [to-do li
 
 - Stock logs for every create, update, delete, sale, return, write-off and restore
 - Cash register logs with prices at the time of sale, sales, discount, points used and earned
+- Return logs: one record per return with the refund per product and the points taken back
 - Employee logs for create, update and login
 - Customer logs for registration, login, update, password change, points changes and moving sale requests, approvals and rejections
 - Update logs show `Field: New: x. Old: y`
@@ -155,7 +161,7 @@ A short list of everything StockFlow can do right now, followed by the [to-do li
 
 ## Tests and CI
 
-- 642 xUnit + Moq unit tests: services, validations, mappings, shared rules, repositories (in-memory SQLite), controllers and the GitHub release service
+- 650 xUnit + Moq unit tests: services, validations, mappings, shared rules, repositories (in-memory SQLite), controllers and the GitHub release service
 - Build with 0 warnings
 - CI builds and tests every push and pull request to `master`
 
@@ -174,10 +180,6 @@ A short list of everything StockFlow can do right now, followed by the [to-do li
 
 # To-do
 
-## Bugs and fixes
-
-- [ ] Fix editing a product's price
-
 ## Product history
 
 - [ ] Show the barcode under *Sold*
@@ -185,8 +187,6 @@ A short list of everything StockFlow can do right now, followed by the [to-do li
 
 ## Products
 
-- [ ] Button in the product details that opens that product on the public site
-- [ ] Product details: a button for each section (price history, sold, recall, order block, write off) that opens it, instead of showing everything at once
 - [ ] Online customer orders through the public site (paid on the public site)
 
 ## Services

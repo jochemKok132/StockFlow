@@ -78,6 +78,9 @@ namespace StockFlow.Shared.Common
             return builder.ToString();
         }
 
+        public static int SvgWidth(string value, int moduleWidth = 2) =>
+            (Modules(value).Length + QuietZone * 2) * moduleWidth;
+
         public static string ToSvg(string value, int moduleWidth = 2, int height = 60, string color = "#111111", string background = "#ffffff")
         {
             string modules = Modules(value);

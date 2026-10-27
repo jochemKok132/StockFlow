@@ -13,9 +13,10 @@ RUN dotnet publish StockFlow.ManagementApp/StockFlow.ManagementApp.csproj -c Rel
 
 ARG BASE_PATH=/stockflow/management/
 ARG API_BASE_URL=/stockflow/api/
+ARG PUBLIC_SITE_URL=/stockflow/public/
 RUN cd /app/publish/wwwroot \
     && sed -i "s|<base href=\"/\" />|<base href=\"$BASE_PATH\" />|" index.html \
-    && printf '{\n  "ApiBaseUrl": "%s"\n}\n' "$API_BASE_URL" > appsettings.json \
+    && printf '{\n  "ApiBaseUrl": "%s",\n  "PublicSiteUrl": "%s"\n}\n' "$API_BASE_URL" "$PUBLIC_SITE_URL" > appsettings.json \
     && rm -f index.html.gz index.html.br appsettings.json.gz appsettings.json.br
 
 FROM nginx:1.27-alpine AS final

@@ -7,6 +7,21 @@ namespace StockFlow.UnitTests.Infrastructure
     public class ReceiptPdfServiceTests
     {
         [Fact]
+        public void BarcodeWidth_ReceiptId_KeepsTheSvgAspectRatioWithinThePaper()
+        {
+            float width = ReceiptPdfService.BarcodeWidth("9000000001");
+
+            Assert.Equal(14f * Code128.SvgWidth("9000000001", 2) / 60, width, 3);
+            Assert.True(width <= 66f);
+        }
+
+        [Fact]
+        public void BarcodeWidth_VeryLongValue_IsCappedAtThePaperWidth()
+        {
+            Assert.Equal(66f, ReceiptPdfService.BarcodeWidth(new string('A', 40)));
+        }
+
+        [Fact]
         public void Create_Receipt_ReturnsAPdf()
         {
             var sut = new ReceiptPdfService(Options.Create(new ReceiptOptions { StoreName = "StockFlow Hardware Store", AddressLines = ["Test Street 1"] }));

@@ -23,6 +23,8 @@ namespace StockFlow.Infrastructure.Data
         public DbSet<EmployeeLogs> EmployeeLogs { get; set; }
         public DbSet<RegisterItemDetail> RegisterItemDetails { get; set; }
         public DbSet<Ticket> Tickets { get; set; }
+        public DbSet<ReturnLogs> ReturnLogs { get; set; }
+        public DbSet<ReturnLogLine> ReturnLogLines { get; set; }
         public DbSet<Supplier> Suppliers { get; set; }
         public DbSet<ProductPrice> ProductPrices { get; set; }
         public DbSet<StockBatch> StockBatches { get; set; }
@@ -38,6 +40,7 @@ namespace StockFlow.Infrastructure.Data
             base.OnModelCreating(builder);
 
             ConfigureOrdering(builder);
+            ConfigureReturnLogs(builder);
 
             builder.Entity<ProductBrand>()
                    .HasMany(x => x.Products)
@@ -122,6 +125,43 @@ namespace StockFlow.Infrastructure.Data
                    .HasOne(a => a.Employee)
                    .WithMany()
                    .HasForeignKey(x => x.EmployeeId)
+                   .OnDelete(DeleteBehavior.Restrict);
+        }
+
+        private static void ConfigureReturnLogs(ModelBuilder builder)
+        {
+            builder.Entity<ReturnLogs>()
+                   .HasOne(r => r.CashRegisterLog)
+                   .WithMany()
+                   .HasForeignKey(r => r.CashRegisterLogId)
+                   .OnDelete(DeleteBehavior.Cascade);
+
+            builder.Entity<ReturnLogs>()
+                   .HasOne(r => r.Employee)
+                   .WithMany()
+                   .HasForeignKey(r => r.EmployeeId)
+                   .OnDelete(DeleteBehavior.Restrict);
+
+            builder.Entity<ReturnLogs>()
+                   .HasOne(r => r.Customer)
+                   .WithMany()
+                   .HasForeignKey(r => r.CustomerId)
+                   .IsRequired(false)
+                   .OnDelete(DeleteBehavior.SetNull);
+
+            builder.Entity<ReturnLogs>()
+                   .HasIndex(r => r.ReceiptId);
+
+            builder.Entity<ReturnLogs>()
+                   .HasMany(r => r.Lines)
+                   .WithOne()
+                   .HasForeignKey(l => l.ReturnLogId)
+                   .OnDelete(DeleteBehavior.Cascade);
+
+            builder.Entity<ReturnLogLine>()
+                   .HasOne(l => l.Product)
+                   .WithMany()
+                   .HasForeignKey(l => l.ProductId)
                    .OnDelete(DeleteBehavior.Restrict);
         }
 
@@ -261,6 +301,7 @@ namespace StockFlow.Infrastructure.Data
                 context.UsePurchaseOrderSeeder();
                 context.UseStockCountSeeder();
                 context.UseTicketSeeder();
+                context.UseLogSeeder();
             });
 
             base.OnConfiguring(optionsBuilder);

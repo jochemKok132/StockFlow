@@ -31,13 +31,13 @@
             </div>
             <div class="filter-group">
                 <label>Brand</label>
-                <select @bind="brandFilter" @bind:after="ApplyFilters">
-                    <option value="">All brands</option>
-                    @foreach (var brand in brandOptions)
-                    {
-                        <option value="@brand.Value">@brand.Label</option>
-                    }
-                </select>
+                <div class="filter-select">
+                    <SearchableSelect Id="brandFilter"
+                                      Options="brandOptions"
+                                      Value="@brandFilter"
+                                      ValueChanged="BrandChanged"
+                                      Placeholder="Search a brand..." />
+                </div>
             </div>
             <div class="filter-group">
                 <label>On sale</label>
@@ -50,7 +50,7 @@
             <div class="filter-group">
                 <label>Sale</label>
                 <select @bind="saleFilter" @bind:after="ApplyFilters">
-                    <option value="">All sales</option>
+                    <option value="">All active sales</option>
                     @foreach (var sale in saleOptions)
                     {
                         <option value="@sale.Value">@sale.Label (@sale.Detail)</option>
@@ -141,7 +141,13 @@
                             <ProductFlags Status="product.Status" Recalled="product.Recalled" OrderBlocked="product.OrderBlocked" Orderable="product.Orderable" CanExpire="product.CanExpire" />
                         </td>
                         <td>@product.Location</td>
-                        <td>@product.Price</td>
+                        <td>
+                            &euro;@product.RegularPrice.ToString("0.00")
+                            @if (product.Price < product.RegularPrice)
+                            {
+                                <div class="page-note">&euro;@product.Price.ToString("0.00") with sale</div>
+                            }
+                        </td>
                         <td>@if (product.Sale)
                             {
                                 <i class="bi bi-tag-fill"></i>
@@ -266,14 +272,20 @@
     private async Task LoadFilterOptionsAsync()
     {
         var brands = LookupService.GetBrandOptionsAsync();
-        var sales = LookupService.GetSaleOptionsAsync();
+        var sales = LookupService.GetActiveSaleOptionsAsync();
         var suppliers = authState is not null && authState.User.Allows(Permissions.ViewSuppliers)
             ? LookupService.GetSupplierOptionsAsync()
             : Task.FromResult((new List<SelectOption>(), ""));
         await Task.WhenAll(brands, sales, suppliers);
-        brandOptions = brands.Result.Item1;
+        brandOptions = [new SelectOption("", "All brands"), .. brands.Result.Item1];
         saleOptions = sales.Result.Item1;
         supplierOptions = suppliers.Result.Item1;
+    }
+
+    private async Task BrandChanged(string value)
+    {
+        brandFilter = value ?? "";
+        await ApplyFilters();
     }
 
     private async Task ApplyFilters()

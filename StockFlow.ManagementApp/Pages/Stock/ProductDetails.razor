@@ -1,4 +1,5 @@
-﻿@inject IProductService ProductService
+﻿@using Microsoft.Extensions.Configuration
+@inject IProductService ProductService
 @inject AuthenticationStateProvider AuthStateProvider
 @inject ConfirmService Confirm
 
@@ -139,7 +140,28 @@
                 </div>
             }
 
-            @if (canSeeSales)
+            <div class="section-buttons">
+                @if (canSeeSales)
+                {
+                    <button type="button" class="@SectionClass(Section.Sold)" @onclick="() => ToggleAsync(Section.Sold)"><i class="bi bi-bar-chart"></i> Sold</button>
+                }
+                <button type="button" class="@SectionClass(Section.Prices)" @onclick="() => ToggleAsync(Section.Prices)"><i class="bi bi-clock-history"></i> Price history</button>
+                @if (canManage)
+                {
+                    <button type="button" class="@SectionClass(Section.Recall)" @onclick="() => ToggleAsync(Section.Recall)"><i class="bi bi-exclamation-octagon"></i> @(product.Recalled ? "Lift recall" : "Recall")</button>
+                    <button type="button" class="@SectionClass(Section.OrderBlock)" @onclick="() => ToggleAsync(Section.OrderBlock)"><i class="bi bi-cart-x"></i> Order block</button>
+                }
+                @if (canWriteOff)
+                {
+                    <button type="button" class="@SectionClass(Section.WriteOff)" @onclick="() => ToggleAsync(Section.WriteOff)"><i class="bi bi-box-arrow-down"></i> Write off</button>
+                }
+                @if (PublicProductUrl is string publicUrl)
+                {
+                    <a class="btn-edit" href="@publicUrl" target="_blank" rel="noopener"><i class="bi bi-box-arrow-up-right"></i> Public site</a>
+                }
+            </div>
+
+            @if (canSeeSales && openSection == Section.Sold)
             {
                 <div class="panel-section">
                     <h4>Sold in the last @SalesDays days</h4>
@@ -164,6 +186,8 @@
                 </div>
             }
 
+            @if (openSection == Section.Prices)
+            {
             <div class="panel-section">
                 <h4>Price history</h4>
                 @if (product.Prices.Any())
@@ -217,8 +241,9 @@
                     </div>
                 }
             </div>
+            }
 
-            @if (canManage)
+            @if (canManage && openSection == Section.Recall)
             {
                 <div class="panel-section">
                     <h4>Recall</h4>
@@ -236,7 +261,10 @@
                         <button class="btn-delete" disabled="@(busy || viewOnly)" title="@(viewOnly ? AccessRules.ViewOnlyMessage : null)" @onclick="RecallAsync"><i class="bi bi-exclamation-octagon"></i> Recall product</button>
                     }
                 </div>
+            }
 
+            @if (canManage && openSection == Section.OrderBlock)
+            {
                 <div class="panel-section">
                     <h4>Order block</h4>
                     @if (product.OrderBlocked)
@@ -265,7 +293,7 @@
                 <div class="@(actionFailed ? "alert-danger" : "write-off-done")">@actionMessage</div>
             }
 
-            @if (canWriteOff)
+            @if (canWriteOff && openSection == Section.WriteOff)
             {
                 <div class="write-off">
                     <span class="panel-label">Write off stock</span>
@@ -313,6 +341,33 @@
     [Parameter] public EventCallback<ProductDto> OnProductChanged { get; set; }
 
     private const int SalesDays = 30;
+
+    private enum Section { None, Sold, Prices, Recall, OrderBlock, WriteOff }
+
+    private Section openSection = Section.None;
+
+    [Inject] private IConfiguration Configuration { get; set; } = default!;
+
+    private string? PublicProductUrl
+    {
+        get
+        {
+            string? baseUrl = Configuration["PublicSiteUrl"];
+            if (string.IsNullOrWhiteSpace(baseUrl) || product is null) return null;
+            return $"{baseUrl.TrimEnd('/')}/products/{product.Barcode}";
+        }
+    }
+
+    private string SectionClass(Section section) => openSection == section ? "btn-section is-open" : "btn-section";
+
+    private Task ToggleAsync(Section section)
+    {
+        openSection = openSection == section ? Section.None : section;
+        actionMessage = "";
+        if (openSection == Section.Sold && sales is null && product is not null)
+            _ = LoadSalesAsync(product.Id);
+        return Task.CompletedTask;
+    }
     private bool canManage;
     private bool canSeeSales;
     private bool busy;
@@ -355,8 +410,7 @@
         newPrice = new SchedulePriceRequest { Price = product?.Price ?? 0, ValidFrom = DateTime.Today.AddDays(1) };
         recall = new RecallRequest();
         block = new OrderBlockRequest();
-        if (product is not null && canSeeSales)
-            _ = LoadSalesAsync(product.Id);
+        openSection = Section.None;
     }
 
     private async Task LoadSalesAsync(Guid productId)

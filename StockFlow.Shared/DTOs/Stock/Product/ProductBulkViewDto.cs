@@ -16,6 +16,7 @@ namespace StockFlow.Shared.DTOs.Stock.Product
         public int Stock { get; set; }
         public string Location { get; set; } = string.Empty;
         public decimal Price { get; set; }
+        public decimal RegularPrice { get; set; }
 
         public string BrandName { get; set; } = string.Empty;
         public bool Sale { get; set; }

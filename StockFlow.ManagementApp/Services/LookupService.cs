@@ -81,7 +81,7 @@ namespace StockFlow.ManagementApp.Services
             return (suppliers.Select(s => new SelectOption(s.Id.ToString(), s.SupplierName, $"Order day {s.OrderDay}")).ToList(), error);
         }
 
-        public async Task<(List<SelectOption>, string error)> GetSaleOptionsAsync()
+        public async Task<(List<SelectOption>, string error)> GetActiveSaleOptionsAsync()
         {
             var (sales, error) = await LoadAllAsync(page => salesService.GetPaginatedSalesAsync(new SalesPaginationDto
             {
@@ -91,7 +91,7 @@ namespace StockFlow.ManagementApp.Services
                 OrderType = OrderType.Ascending,
             }));
             return (sales
-                .Where(s => s.SaleType != SaleTypeDto.Moving)
+                .Where(s => s.SaleType != SaleTypeDto.Moving && SalePricing.IsActive(s, DateTime.Today))
                 .Select(s => new SelectOption(s.Id.ToString(), s.SaleName, SalePricing.Describe(s)))
                 .ToList(), error);
         }

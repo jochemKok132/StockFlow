@@ -94,6 +94,7 @@
                                    autocomplete="@(prop.Name.Contains("Password") ? "new-password" : null)"
                                    placeholder="@(prop.Name == "NewPassword" ? "Leave empty to keep the current password" : null)"
                                    maxlength="@maxLength"
+                                   step="@StepFor(prop.PropertyType)"
                                    value="@GetValueAsString(prop)"
                                    readonly="@ReadMode"
                                    @oninput="e => OnTyping(prop, e)"
@@ -313,7 +314,18 @@
         if (value is IEnumerable enumerable && value is not string)
             return string.Join(", ", enumerable.Cast<object>());
 
+        if (value is IFormattable number && !value.GetType().IsEnum)
+            return number.ToString(null, CultureInfo.InvariantCulture);
+
         return value.ToString() ?? string.Empty;
+    }
+
+    private static string? StepFor(Type type)
+    {
+        var t = GetUnderlyingType(type);
+        if (t == typeof(decimal) || t == typeof(double) || t == typeof(float)) return "0.01";
+        if (t == typeof(int) || t == typeof(long) || t == typeof(short)) return "1";
+        return null;
     }
 
     private void SetValueFromString(PropertyInfo prop, string value)

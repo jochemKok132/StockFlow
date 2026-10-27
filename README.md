@@ -146,7 +146,7 @@ All dates are relative to the day the database is seeded.
 - **Order blocks:** `500000094` until 3 weeks from now, `500000137` without an end date.
 - **Prices:** every product has an older price (120 days ago) and the current price (30 days ago), set by the manager. `500000001`, `500000031`, `500000081` and `500000121` have a planned price that starts in a week.
 - **Expiry:** the 30 paint products can expire and have two batches each. The first batch of `500000021` expires in 5 days, so on the first start the stock automation creates a **forced expiry count** for the Histor shelf.
-- **Purchases:** 81 receipts (`9000000001` – `9000000081`) spread over the last 30 days, a few with returned items and about 40 % with a customer, so the statistics page and the sales graph per product have data. They don't change the stock.
+- **Purchases:** 81 receipts (`9000000001` – `9000000081`) spread over the last 30 days, a few with returned items and about 40 % with a customer, so the statistics page and the sales graph per product have data. The 13 receipts with returned items each have a return record (refund and points taken back, see the *Return logs* page).
 - **Supplier orders:**
   - `1001` ColorPro, received (one line short).
   - `1002` Sanitary Direct, sent last Thursday, waiting to be received.
@@ -154,6 +154,7 @@ All dates are relative to the day the database is seeded.
   - `1004` ElectroParts, cancelled.
 - **Customer orders:** `7000001` picked up (with its receipt), `7000002` ready for pickup (scan it at the cash register), `7000003` waiting for stock (3 of 5 reserved) and `7000004` cancelled.
 - **Stock counts:** `1001` completed for the screws shelf (two differences) and `1002` open for the locks shelf, due tomorrow. The forced expiry count becomes `1003`.
+- **Logs:** the stock logs and customer logs follow the rest of the seed data. Every product has a *Create* log, a price change 30 days ago (`Price: New: x. Old: y`) and, for the planned prices, a `ScheduledPrice` log. Every receipt line has a *Sold* log and every return a *Returned* log; order `1001` has *Received* logs, count `1001` has *Counted* logs for its two differences, `500000064` has a *Recalled* log and a *WrittenOff* log, and the two order blocks are logged. The `Stock: New: x. Old: y` values are worked out backwards from the current stock, so the product history adds up. Each customer has a *Create* log and a points log for every receipt with points (`Receipt:`, `PointsEarned:`) and every return (`Return: Receipt …`, `PointsDeducted:`); the saved points of the customer are the end result of those logs.
 - **Tickets:** 4 tickets (`1001` – `1004`): a support request that is done, an open support request, a bug in progress and an open feature request.
 
 ---
@@ -191,7 +192,7 @@ All role lists live in one place, `StockFlow.Shared/Common/Permissions.cs`. The 
 | Create / update / delete products, brands, sales, shelves | Manager, Admin (`ManageStock`) |
 | Write off stock | Every employee except the Tester (`WriteOffStock`) |
 | Cash register (scan, look up customers, purchase, returns) | Cashier, ServiceDesk, ShiftLeader, Manager, Admin (`CashRegister`) |
-| Cash register logs, receipt PDFs | Cashier, ServiceDesk, ShiftLeader, Support, Manager, Admin (`CashRegisterLogs`) |
+| Cash register logs, return logs, receipt PDFs | Cashier, ServiceDesk, ShiftLeader, Support, Manager, Admin (`CashRegisterLogs`) |
 | Stock logs, product history | ServiceDesk, ShiftLeader, Support, Manager, Admin (`StockLogs`) |
 | Employee logs | ShiftLeader, Support, Manager, Admin (`EmployeeLogs`) |
 | Customer logs | Support, Manager, Admin (`CustomerLogs`) |
@@ -250,7 +251,7 @@ Blazor WebAssembly app (`StockFlow.ManagementApp`). Log in with an employee id a
 | Page | Route | Features |
 |---|---|---|
 | Releases | `/` (home, also the version link at the bottom of the sidebar) | The version of the management app and of the newest cash register (*Up to date* / *Update available*; the API version is not shown to employees, and the public site will be added here later), a download card for the newest cash register zip, and every GitHub release with its notes, badges (*Latest*, *Pre-release*, *Running here*) and download links. |
-| Inventory | `/inventory` | Paged and sortable product list (also on price) with filters on barcode, name, location, **brand**, **on sale (yes / no)**, **a specific sale**, **status**, **supplier** and **below minimum**. Badges show *Recalled*, *Draft*, *Disabled*, *Order block* and *Not orderable*; a stock below the minimum is shown in orange. Click a row for the product details panel (image, price incl. sale, barcode as text and as a scannable barcode image, location, stock with reserved and on-order amounts, min / max stock, supplier, expiry batches, tags, brand, description, a **sales graph** of the last 30 days, the **price history** with planned prices, **recall**, **order block** and the write-off form, see [Products](#products-status-recall-and-order-block) and [Writing off stock](#writing-off-stock)). Create, edit and delete for managers. In the create / edit form, brand, shelf and supplier are searchable selects and sales tags are a searchable multi-select that shows which sale each tag belongs to. |
+| Inventory | `/inventory` | Paged and sortable product list (also on price) with filters on barcode, name, location, **brand** (a searchable select: type part of the brand name), **on sale (yes / no)**, **a specific sale** (only the sales that are active today), **status**, **supplier** and **below minimum**. The price column shows the regular price, with the price after the best active sale under it. Badges show *Recalled*, *Draft*, *Disabled*, *Order block* and *Not orderable*; a stock below the minimum is shown in orange. Click a row for the product details panel (image, price incl. sale, barcode as text and as a scannable barcode image, location, stock with reserved and on-order amounts, min / max stock, supplier, expiry batches, tags, brand and description). Under it is a row of buttons that each open one section, so the panel isn't one long page: **Sold** (the sales graph of the last 30 days), **Price history** (with planned prices), **Recall** / **Lift recall**, **Order block** and **Write off**. Click the open button again to close it. **Public site** opens the product on the public site (`PublicSiteUrl` + `products/<barcode>`, see [Configuration](#configuration)). See [Products](#products-status-recall-and-order-block) and [Writing off stock](#writing-off-stock). Create, edit and delete for managers. In the create / edit form, brand, shelf and supplier are searchable selects and sales tags are a searchable multi-select that shows which sale each tag belongs to. Number fields (price, stock) always use a dot as decimal separator, whatever language the browser is set to. |
 | Brands | `/productbrands` | List, create, edit, delete brands. A brand has a logo, description, website, country, contact email and customer service phone. |
 | Orders | `/orders` | Supplier orders: order a product by barcode, filter on status and supplier, open an order to change amounts, remove products or cancel it (open orders) or to receive the delivery (sent orders). Below it, the products below their minimum stock with a suggested amount and an **Order** button. See [Suppliers and orders](#suppliers-and-orders). |
 | Customer orders | `/customerorders` | Create an order for a customer (customer id, products, note), see what is reserved, cancel. See [Customer orders](#customer-orders). |
@@ -259,6 +260,7 @@ Blazor WebAssembly app (`StockFlow.ManagementApp`). Log in with an employee id a
 | Sales | `/sales` | List, create, edit, delete sales. Columns: deal (`-10%`, `2+1`, `2nd half price`, `3 for €10.00`), period, status (*Scheduled* / *Active* / *Ended*), tags, products and items sold. Filter on status; *Ended (history)* shows past sales. See [Sales](#sales). Sales tags are a searchable multi-select with the tags already in use; new tags can be added by typing them. |
 | Shelves | `/shelves` | List, create, edit, delete shelves. |
 | Cash register logs | `/cashregisterlogs` | Every purchase with its receipt id, customer and employee; filterable by receipt id. The products column also shows how many items were returned. Click **Products** to see what was sold, the amounts, how many were returned per product, the price per item, applied sales, the discount and the total. Click a product to open its details. **Download** saves the receipt as a PDF (see [Receipt PDFs](#receipt-pdfs)). |
+| Return logs | `/returnlogs` | Every return made at the cash register as one record: receipt id, employee, customer, date and time, number of items, refund and the points taken back. Filter on receipt id, employee id and customer id; sort on receipt, refund or date. Click **Products** to see each returned product with its amount, the price paid and the refund per line. |
 | Stock logs | `/stocklogs` | Every create / update / sale / return / write-off / receive / count / recall / delete of products, brands, sales and shelves. **Open message** shows what changed (old → new) and, for a write-off, the reason and note. |
 | Product history | `/producthistory?barcode=…` | Enter a barcode to see the product, current stock, units sold, units returned, units written off, units added and the full history (a write-off shows its reason and note under *Other changes*). Toggle between all changes and stock changes only. The barcode is kept in the URL so searches can be bookmarked or linked. |
 | Customer logs | `/customerlogs` | Customer changes, filterable by customer id, name, email and log type. |
@@ -354,7 +356,7 @@ A customer can't send a new request while one is waiting or while the moving sal
 
 ### Receipt PDFs
 
-**Download** on the cash register logs page asks the API for `GET CashRegisterLogs/Receipt/{receiptId}/Pdf` and saves `receipt-<receiptId>.pdf`. The PDF looks like a till receipt (80 mm wide, made with QuestPDF in `StockFlow.Infrastructure/Receipts/ReceiptPdfService.cs`): store name and address, receipt id, date and time, employee, customer, every line with amount, price and applied sale, returned items, discount, points used and earned, the total and the VAT included. Store name, address lines, VAT percentage and time zone come from the `Receipt` section in `appsettings.json`. At the bottom is a scannable Code 128 barcode of the receipt id, so a return can start by scanning the receipt into the cash register. The cash register itself doesn't print receipts yet.
+**Download** on the cash register logs page asks the API for `GET CashRegisterLogs/Receipt/{receiptId}/Pdf` and saves `receipt-<receiptId>.pdf`. The PDF looks like a till receipt (80 mm wide, made with QuestPDF in `StockFlow.Infrastructure/Receipts/ReceiptPdfService.cs`): store name and address, receipt id, date and time, employee, customer, every line with amount, price and applied sale, returned items, discount, points used and earned, the total and the VAT included. Store name, address lines, VAT percentage and time zone come from the `Receipt` section in `appsettings.json`. At the bottom, centered, is a scannable Code 128 barcode of the receipt id (its width follows from the barcode itself, so it is never stretched; at most the width of the paper), so a return can start by scanning the receipt into the cash register. The cash register itself doesn't print receipts yet.
 
 ### Statistics
 
@@ -524,6 +526,7 @@ Both clients read this envelope in their `HttpService.ReadAnswer`.
 | `Customer` | `GET GetAll`, `GET GetById/{id}`, `GET GetByEmail/{email}`, `GET Me`, `PUT Update`, `POST ChangePassword`, `POST Login`, `POST Register`, `POST MovingSale` (customer: request), `GET MovingSaleRequests`, `POST MovingSale/{id}/Approve`, `POST MovingSale/{id}/Reject` |
 | `CashRegister` | `GET {barcode}` (refuses recalled, draft and disabled products), `GET CustomerOrder/{orderNumber}`, `GET Customer/{customerId}`, `GET Customer/Search?postalCode=&houseNumber=`, `GET Receipt/{receiptId}`, `POST Purchase` (returns the receipt id), `POST Return` (returns receipt id, items returned, refund amount and points deducted) |
 | `StockLogs` | `GET GetAll`, `GET ProductHistory/{barcode}`, `POST Create` |
+| `ReturnLogs` | `GET GetAll` (filters `receiptId`, `employeeId`, `customerId`; order by `CreatedAt`, `RefundAmount` or `ReceiptId`) |
 | `CashRegisterLogs` | `GET GetAll` (filters include `receiptId`), `GET Receipt/{receiptId}/Pdf` (the receipt as a PDF file), `POST Create` (returns the receipt id) |
 | `Statistics` | `GET Overview?from=&to=`, `GET Product/{productId}?from=&to=` (units sold and revenue per day) |
 | `Ticket` | `POST Create`, `GET Mine`, `GET Support?status=`, `GET Feedback?status=`, `PUT Support/{ticketNumber}`, `PUT Feedback/{ticketNumber}` |
@@ -581,6 +584,7 @@ Validations are extension methods in `StockFlow.Application/Validations` that th
 |---|---|
 | Stock logs | Product, brand, sale or shelf is created, updated or deleted; a product is sold (*Sold*), returned (*Returned*), written off (*WrittenOff*, with reason and note), received from a supplier (*Received*, with the order number), counted (*Counted*, with the count number) or recalled (*Recalled*, with the reason); a deleted item is restored (*Restored*); prices change or are planned (`Price: New: x. Old: y`, `ScheduledPrice: …`); an order block is set or removed |
 | Cash register logs | A purchase is completed (receipt id, lines, prices at time of sale, applied sales, total, discount, points used, points earned, customer). A return raises `ReturnedAmount` on the lines of the original receipt. |
+| Return logs | A return is completed at the cash register: one record with the receipt id, employee, customer, date and time, the returned products with amount, price paid and refund per line, the total refund and the points taken back. |
 | Employee logs | Employee created, updated, logged in |
 | Customer logs | Customer registered, logged in, updated, password changed, saved points changed at the register (purchase or return), moving sale requested, approved or rejected |
 
@@ -602,6 +606,7 @@ Validations are extension methods in `StockFlow.Application/Validations` that th
 - `AddMovingSaleApprovalAndBundles` adds `BundlePrice` to `Sales` and the moving sale approval columns (`MovingSaleStatus`, `MovingSalePostalCode`, `MovingSaleHouseNumber`, `MovingSaleReviewedAt`, `MovingSaleReviewedBy`) to `Customers`.
 - `AddTickets` adds the `Tickets` table (unique `TicketNumber`, the employee who sent it and the one who handled it).
 - `AddOrderingAndStockCounts` adds the product settings (status, min / max stock, orderable, auto order, can expire, recall, order block, supplier), the brand information columns, and the tables `Suppliers`, `ProductPrices`, `StockBatches`, `PurchaseOrders` + `PurchaseOrderLines`, `CustomerOrders` + `CustomerOrderLines` and `StockCounts` + `StockCountLines`. It creates the default supplier *StockFlow Wholesale*, puts every existing product under it, marks every existing product as orderable and writes each product's current price as its first price history entry.
+- `AddReturnLogs` adds the tables `ReturnLogs` (receipt id, original receipt, employee, customer, refund, points deducted) and `ReturnLogLines` (product, amount, price paid, refund). Returns made before this migration have no return record; they are still visible as *Returned* stock logs and as returned amounts on the receipt.
 
 Adding a migration in the Package Manager Console (set **Default project** to `StockFlow.Infrastructure`, startup project `StockFlow.API`):
 
@@ -617,7 +622,7 @@ dotnet ef migrations add <Name> --project StockFlow.Infrastructure --startup-pro
 dotnet ef database update --project StockFlow.Infrastructure --startup-project StockFlow.API
 ```
 
-Seeders: `EmployeeSeeder`, `CustomerSeeder`, `ShelfSeeder`, `SupplierSeeder`, `ProductBrandSeeder`, `ProductSeeder`, `SalesSeeder`, `CashRegisterLogSeeder`, `CustomerOrderSeeder`, `PurchaseOrderSeeder`, `StockCountSeeder`, `TicketSeeder` (fixed ids in `SeedIds`) (registered in `ApplicationDBContext.OnConfiguring` through `UseSeeding`). All seed data (product names, descriptions, brands, shelves and sales) is in English; seeders only fill empty tables, so a database that was seeded earlier keeps its old product names.
+Seeders: `EmployeeSeeder`, `CustomerSeeder`, `ShelfSeeder`, `SupplierSeeder`, `ProductBrandSeeder`, `ProductSeeder`, `SalesSeeder`, `CashRegisterLogSeeder`, `CustomerOrderSeeder`, `PurchaseOrderSeeder`, `StockCountSeeder`, `TicketSeeder`, `LogSeeder` (stock logs, customer logs and return records that match the other seed data; it runs last) (fixed ids in `SeedIds`) (registered in `ApplicationDBContext.OnConfiguring` through `UseSeeding`). All seed data (product names, descriptions, brands, shelves and sales) is in English; seeders only fill empty tables, so a database that was seeded earlier keeps its old product names.
 
 ---
 
@@ -640,7 +645,7 @@ Seeders: `EmployeeSeeder`, `CustomerSeeder`, `ShelfSeeder`, `SupplierSeeder`, `P
 | `Receipt:StoreName`, `Receipt:AddressLines`, `Receipt:VatPercentage`, `Receipt:TimeZone` | What the receipt PDF shows at the top, the VAT it calculates (default 21 %) and the time zone for the date on the receipt (`Europe/Amsterdam`) |
 
 - Every key can be overridden with an environment variable using `__`, for example `JWT__Key` or `Cors__AllowedOrigins__0`. Production secrets go in environment variables, never in `appsettings.json`.
-- **Management app:** the API address is `ApiBaseUrl` in `wwwroot/appsettings.json` (`/stockflow/api/`; the Docker image writes this file from the `API_BASE_URL` build argument) and `wwwroot/appsettings.Development.json` (`https://localhost:7037/`, used by the dev server).
+- **Management app:** the API address is `ApiBaseUrl` in `wwwroot/appsettings.json` (`/stockflow/api/`; the Docker image writes this file from the `API_BASE_URL` build argument) and `wwwroot/appsettings.Development.json` (`https://localhost:7037/`, used by the dev server). `PublicSiteUrl` in the same files is the address of the public site, used by the **Public site** button in the product details (`/stockflow/public/`, written by the Docker image from the `PUBLIC_SITE_URL` build argument; `https://jochemkok.nl/stockflow/public/` in development).
 - **Cash register:** the API address is `ApiBaseUrl` in `appsettings.json` next to the `.exe` (default `https://localhost:7037/`), read by `RegisterSettings`. The file is not bundled into the single-file exe, so it can be edited after unzipping.
 
 ---
@@ -677,15 +682,15 @@ To change the logo, edit `logo.svg` and export the PNG and ICO sizes again from 
 
 ## Tests
 
-`StockFlow.UnitTests` (xUnit + Moq, about 640 tests). Run with `dotnet test` from the repository root or the Test Explorer. The release workflow runs them before anything is published.
+`StockFlow.UnitTests` (xUnit + Moq, about 650 tests). Run with `dotnet test` from the repository root or the Test Explorer. The release workflow runs them before anything is published.
 
 | Folder | Covers |
 |---|---|
-| `Services/` | Every Application service with mocked repositories: `CustomerService` (login, registration with welcome points, password change, update), `EmployeeService` (create, login, update, password reset), `ProductService`, `ProductBrandService`, `SalesService`, `ShelfService` (create, update, soft delete, not-found paths, sales/product re-linking), `RegisterDataService` (purchases, stock changes, points earned/used, returns, refunds, points taken back, unsellable products, customer order pickup), `SupplierService` (default supplier, suppliers with products, order day changes), `CustomerOrderService` pickup checks, `StockAllocator` (oldest customer order first), `StockAutomationService`, the product sales graph and `AuthenticationService` (JWT claims, expiry, missing configuration) |
-| `Services/AuditLogs/` | `CashRegisterLogsService` (receipt ids), `CustomerLogsService`, `EmployeeLogsService`, `StockLogsService` (product history) |
+| `Services/` | Every Application service with mocked repositories: `CustomerService` (login, registration with welcome points, password change, update), `EmployeeService` (create, login, update, password reset), `ProductService`, `ProductBrandService`, `SalesService`, `ShelfService` (create, update, soft delete, not-found paths, sales/product re-linking), `RegisterDataService` (purchases, stock changes, points earned/used, returns, refunds, points taken back, the return record, unsellable products, customer order pickup), `SupplierService` (default supplier, suppliers with products, order day changes), `CustomerOrderService` pickup checks, `StockAllocator` (oldest customer order first), `StockAutomationService`, the product sales graph and `AuthenticationService` (JWT claims, expiry, missing configuration) |
+| `Services/AuditLogs/` | `CashRegisterLogsService` (receipt ids), `CustomerLogsService`, `EmployeeLogsService`, `StockLogsService` (product history), `ReturnLogsService` (paging checks, lines and totals) |
 | `Validations/` | All validation rules: customers, employees, passwords, products, sales, shelves, brands, pagination, logs, purchases and returns |
 | `Mappings/` | `DifferenceFinder` (log messages), enum mappings, entity ↔ DTO mappings |
-| `Common/` | Shared rules: `ProductRules`, `PricePlanner`, `OrderDays`, `Reorder`, `ExpiryRules`, `LoyaltyPoints`, `ReturnRules`, `IdentifierFormats`, `ImageFormats` (detecting PNG / JPEG / GIF / WebP, allowed content types, the format after downsizing), `Code128` (codes, checksum, stop pattern, SVG), `AppVersion` (display, comparing versions) |
+| `Common/` | Shared rules: `ProductRules`, `PricePlanner`, `OrderDays`, `Reorder`, `ExpiryRules`, `LoyaltyPoints`, `ReturnRules`, `IdentifierFormats`, `ImageFormats` (detecting PNG / JPEG / GIF / WebP, allowed content types, the format after downsizing), `Code128` (codes, checksum, stop pattern, SVG and its width), `AppVersion` (display, comparing versions) |
 | `Infrastructure/` | `GitHubReleaseService` against a fake GitHub (mapping, drafts skipped, cash register asset, caching, stale fallback, errors), BCrypt `Password`, and the repositories against a real in-memory SQLite database (new customer / employee / receipt ids, barcodes, tag matching, soft delete, receipt filter, unique receipt ids, the new product filters, reserved and on-order amounts, suppliers, orders, customer orders, stock counts), and `OrderingFlowTests`, which run the ordering services against real repositories: price history, planned prices, adding to the supplier's open order, sending and receiving with expiry batches, customer order reservations and cancelling, automatic orders, forced expiry counts, recalls and write-offs that use the first expiring batch |
 | `Api/` | Controllers: status codes and `ApiResponse` envelopes for the cash register, customer, employee and releases endpoints (200 / 400 / 401 / 404 / 503), and `ViewOnlyGuard` (Tester changes refused, reads and login allowed) |
 
@@ -741,7 +746,7 @@ Everything runs on the existing jochemkok.nl server, next to the other sites, be
 | `https://jochemkok.nl/stockflow/management/` | `management` (image `stockflow-web`) | `127.0.0.1:5081` |
 | `https://jochemkok.nl/stockflow/public/` | public customer site (later) | `127.0.0.1:5082` |
 
-The containers only listen on `127.0.0.1`, so they are reachable through nginx only. nginx strips the `/stockflow/...` prefix before passing a request on, so the API itself still serves `/Product/GetAll` and so on. The management app image is built with `<base href="/stockflow/management/">` and `ApiBaseUrl` `/stockflow/api/` (build arguments `BASE_PATH` and `API_BASE_URL` in `StockFlow.ManagementApp/Dockerfile`). Inside the app all links are relative, so it works under any base path.
+The containers only listen on `127.0.0.1`, so they are reachable through nginx only. nginx strips the `/stockflow/...` prefix before passing a request on, so the API itself still serves `/Product/GetAll` and so on. The management app image is built with `<base href="/stockflow/management/">` and `ApiBaseUrl` `/stockflow/api/` and `PublicSiteUrl` `/stockflow/public/` (build arguments `BASE_PATH`, `API_BASE_URL` and `PUBLIC_SITE_URL` in `StockFlow.ManagementApp/Dockerfile`). Inside the app all links are relative, so it works under any base path.
 
 ### One-time GitHub setup
 

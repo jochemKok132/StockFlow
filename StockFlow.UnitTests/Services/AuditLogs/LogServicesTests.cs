@@ -1,5 +1,7 @@
 ﻿using StockFlow.Application.Services.ManagementApp.AuditLogs;
 using StockFlow.UnitTests.Helpers;
+using StockFlow.Application.Interfaces.Repositories.ManagementApp.AuditLogs;
+using StockFlow.Shared.DTOs.AuditLogs.Return;
 
 namespace StockFlow.UnitTests.Services.AuditLogs
 {
@@ -227,6 +229,58 @@ namespace StockFlow.UnitTests.Services.AuditLogs
             var result = await _sut.GetAllStockLogsAsync(new StockLogsPaginationDto { PageNumber = 1, PageSize = 10 });
 
             Assert.Single(result);
+        }
+    }
+
+    public class ReturnLogsServiceTests
+    {
+        private readonly Mock<IReturnLogsRepository> _repository = new();
+        private readonly ReturnLogsService _sut;
+
+        public ReturnLogsServiceTests()
+        {
+            _sut = new ReturnLogsService(_repository.Object);
+        }
+
+        [Fact]
+        public async Task GetAllReturnLogsAsync_InvalidPage_ThrowsArgumentException()
+        {
+            await Assert.ThrowsAsync<ArgumentException>(() => _sut.GetAllReturnLogsAsync(new ReturnLogsPaginationDto { PageNumber = 0 }));
+        }
+
+        [Fact]
+        public async Task GetAllReturnLogsAsync_InvalidOrderBy_ThrowsArgumentException()
+        {
+            await Assert.ThrowsAsync<ArgumentException>(() => _sut.GetAllReturnLogsAsync(new ReturnLogsPaginationDto { OrderBy = (ReturnLogsOrderBy)99 }));
+        }
+
+        [Fact]
+        public async Task GetAllReturnLogsAsync_Logs_MapsLinesAndTotals()
+        {
+            var product = TestData.Product();
+            var log = new ReturnLogs
+            {
+                Id = Guid.NewGuid(),
+                ReceiptId = "9000000007",
+                Employee = TestData.Employee(),
+                RefundAmount = 7.5m,
+                PointsDeducted = 4,
+                Lines =
+                [
+                    new ReturnLogLine { Id = Guid.NewGuid(), ProductId = product.Id, Product = product, Amount = 2, PriceAtTimeOfSale = 3m, RefundAmount = 6m },
+                    new ReturnLogLine { Id = Guid.NewGuid(), ProductId = product.Id, Product = product, Amount = 1, PriceAtTimeOfSale = 1.5m, RefundAmount = 1.5m },
+                ],
+            };
+            _repository.Setup(r => r.GetAllReturnLogsAsync(It.IsAny<ReturnLogsPaginationDto>())).ReturnsAsync([log]);
+
+            var result = Assert.Single(await _sut.GetAllReturnLogsAsync(new ReturnLogsPaginationDto()));
+
+            Assert.Equal("9000000007", result.ReceiptId);
+            Assert.Equal(3, result.ItemsReturned);
+            Assert.Equal(7.5m, result.RefundAmount);
+            Assert.Equal(4, result.PointsDeducted);
+            Assert.Equal(2, result.Lines.Count);
+            Assert.Null(result.CustomerId);
         }
     }
 }

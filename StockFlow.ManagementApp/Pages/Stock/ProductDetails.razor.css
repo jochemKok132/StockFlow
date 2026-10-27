@@ -184,3 +184,36 @@
 .panel-section .btn-edit {
     align-self: flex-start;
 }
+
+.section-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.btn-section {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 12px;
+    font-size: 13px;
+    color: var(--TextColor);
+    background: var(--TaskbarColor);
+    border: 1px solid var(--BorderColor);
+    border-radius: var(--RadiusSmall);
+    cursor: pointer;
+}
+
+    .btn-section:hover {
+        border-color: var(--BorderStrongColor);
+    }
+
+    .btn-section.is-open {
+        color: var(--ButtonTextColor);
+        background: var(--ButtonColor);
+        border-color: var(--ButtonColor);
+    }
+
+.section-buttons a {
+    text-decoration: none;
+}

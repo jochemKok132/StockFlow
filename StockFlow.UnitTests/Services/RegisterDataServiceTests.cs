@@ -1,4 +1,6 @@
-﻿using StockFlow.Application.Interfaces.Ordering;
+﻿using StockFlow.Domain.Entities.AuditLogs;
+using StockFlow.Application.Interfaces.Repositories.ManagementApp.AuditLogs;
+using StockFlow.Application.Interfaces.Ordering;
 using StockFlow.Application.Services.CashRegister;
 using StockFlow.UnitTests.Helpers;
 
@@ -15,12 +17,13 @@ namespace StockFlow.UnitTests.Services
         private readonly Mock<ICashRegisterLogsRepository> _cashRegisterLogsRepository = new();
         private readonly Mock<ISalesRepository> _salesRepository = new();
         private readonly Mock<ICustomerOrderService> _customerOrderService = new();
+        private readonly Mock<IReturnLogsRepository> _returnLogsRepository = new();
         private readonly RegisterDataService _sut;
         private readonly Guid _employeeId = Guid.NewGuid();
 
         public RegisterDataServiceTests()
         {
-            _sut = new RegisterDataService(_productService.Object, _cashRegisterLogsService.Object, _customerRepository.Object, _customerLogsService.Object, _cashRegisterLogsRepository.Object, _salesRepository.Object, _customerOrderService.Object);
+            _sut = new RegisterDataService(_productService.Object, _cashRegisterLogsService.Object, _customerRepository.Object, _customerLogsService.Object, _cashRegisterLogsRepository.Object, _salesRepository.Object, _customerOrderService.Object, _returnLogsRepository.Object);
             _cashRegisterLogsService.Setup(s => s.CreateCashRegisterLogsAsync(It.IsAny<CreateCashRegisterLogsDto>())).ReturnsAsync(ReceiptId);
         }
 
@@ -343,6 +346,43 @@ namespace StockFlow.UnitTests.Services
             await _sut.ProcessReturn(ReturnOf(productId, 1), _employeeId);
 
             Assert.Equal(0, customer.SavedPoints);
+        }
+
+        [Fact]
+        public async Task ProcessReturn_ValidReturn_SavesOneReturnLogWithLines()
+        {
+            var productId = Guid.NewGuid();
+            var customer = TestData.Customer(savedPoints: 20);
+            var receipt = Receipt(productId, 3, 0, 4m, pointsEarned: 12, customerId: customer.Id);
+            _customerRepository.Setup(r => r.GetByIdAsync(customer.Id)).ReturnsAsync(customer);
+            ReturnLogs? saved = null;
+            _returnLogsRepository.Setup(r => r.AddAsync(It.IsAny<ReturnLogs>())).Callback<ReturnLogs>(l => saved = l);
+
+            await _sut.ProcessReturn(ReturnOf(productId, 2), _employeeId);
+
+            Assert.NotNull(saved);
+            Assert.Equal(ReceiptId, saved.ReceiptId);
+            Assert.Equal(receipt.Id, saved.CashRegisterLogId);
+            Assert.Equal(_employeeId, saved.EmployeeId);
+            Assert.Equal(customer.Id, saved.CustomerId);
+            Assert.Equal(8.00m, saved.RefundAmount);
+            Assert.Equal(8, saved.PointsDeducted);
+            var line = Assert.Single(saved.Lines);
+            Assert.Equal(productId, line.ProductId);
+            Assert.Equal(2, line.Amount);
+            Assert.Equal(4m, line.PriceAtTimeOfSale);
+            Assert.Equal(8.00m, line.RefundAmount);
+        }
+
+        [Fact]
+        public async Task ProcessReturn_InvalidReturn_SavesNoReturnLog()
+        {
+            var productId = Guid.NewGuid();
+            Receipt(productId, 2, 2, 5m);
+
+            await Assert.ThrowsAsync<ArgumentException>(() => _sut.ProcessReturn(ReturnOf(productId, 1), _employeeId));
+
+            _returnLogsRepository.Verify(r => r.AddAsync(It.IsAny<ReturnLogs>()), Times.Never);
         }
     }
 }

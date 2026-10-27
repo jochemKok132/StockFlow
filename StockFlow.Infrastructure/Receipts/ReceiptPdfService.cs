@@ -12,8 +12,10 @@ namespace StockFlow.Infrastructure.Receipts
     public class ReceiptPdfService(IOptions<ReceiptOptions> options) : IReceiptPdfService
     {
         private static readonly CultureInfo Culture = CultureInfo.GetCultureInfo("en-IE");
-        private const float BarcodeWidthMm = 60;
+        private const float MaxBarcodeWidthMm = 66;
         private const float BarcodeHeightMm = 14;
+        private const int BarcodeModuleWidth = 2;
+        private const int BarcodeSvgHeight = 60;
 
         static ReceiptPdfService()
         {
@@ -98,13 +100,16 @@ namespace StockFlow.Infrastructure.Receipts
                         column.Item().AlignCenter().Text("Thank you for your purchase!");
                         column.Item().AlignCenter().Text("Keep this receipt for exchanges or returns.").FontColor(Colors.Grey.Darken2);
 
-                        column.Item().PaddingTop(8).AlignCenter().Width(BarcodeWidthMm, Unit.Millimetre).Height(BarcodeHeightMm, Unit.Millimetre)
-                            .Svg(Code128.ToSvg(receipt.ReceiptId, 2, 60));
+                        column.Item().PaddingTop(8).AlignCenter().Width(BarcodeWidth(receipt.ReceiptId), Unit.Millimetre).Height(BarcodeHeightMm, Unit.Millimetre)
+                            .Svg(Code128.ToSvg(receipt.ReceiptId, BarcodeModuleWidth, BarcodeSvgHeight));
                         column.Item().AlignCenter().Text(receipt.ReceiptId).FontSize(8).LetterSpacing(0.2f);
                     });
                 });
             }).GeneratePdf();
         }
+
+        public static float BarcodeWidth(string receiptId) =>
+            Math.Min(MaxBarcodeWidthMm, BarcodeHeightMm * Code128.SvgWidth(receiptId, BarcodeModuleWidth) / BarcodeSvgHeight);
 
         private static void Pair(ColumnDescriptor column, string label, string value) =>
             column.Item().Row(row =>

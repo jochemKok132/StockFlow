@@ -1,4 +1,5 @@
-﻿using StockFlow.Application.Interfaces.Ordering;
+﻿using StockFlow.Application.Interfaces.Repositories.ManagementApp.AuditLogs;
+using StockFlow.Application.Interfaces.Ordering;
 using StockFlow.Shared.Common;
 using StockFlow.Shared.DTOs.AuditLogs.CashRegister;
 using StockFlow.Shared.DTOs.AuditLogs.Customer;
@@ -25,7 +26,7 @@ using StockFlow.Shared.DTOs.Customer;
 
 namespace StockFlow.Application.Services.CashRegister
 {
-    public class RegisterDataService(IProductService productService, ICashRegisterLogsService cashRegisterLogsService, ICustomerRepository customerRepository, ICustomerLogsService customerLogsService, ICashRegisterLogsRepository cashRegisterLogsRepository, ISalesRepository salesRepository, ICustomerOrderService customerOrderService) : IRegisterDataService
+    public class RegisterDataService(IProductService productService, ICashRegisterLogsService cashRegisterLogsService, ICustomerRepository customerRepository, ICustomerLogsService customerLogsService, ICashRegisterLogsRepository cashRegisterLogsRepository, ISalesRepository salesRepository, ICustomerOrderService customerOrderService, IReturnLogsRepository returnLogsRepository) : IRegisterDataService
     {
         public async Task<CustomerDto> GetCustomerAsync(string customerId)
         {
@@ -157,6 +158,7 @@ namespace StockFlow.Application.Services.CashRegister
             decimal linesTotal = log.ProductsSold.Sum(l => SalePricing.Total(l.PriceAtTimeOfSale, l.Amount));
             decimal totalPaid = (decimal)log.TotalPrice;
             decimal refund = 0m;
+            var returnLines = new List<ReturnLogLine>();
 
             foreach (var item in items)
             {
@@ -167,7 +169,16 @@ namespace StockFlow.Application.Services.CashRegister
                     if (take <= 0) continue;
 
                     line.ReturnedAmount += take;
-                    refund += ReturnRules.RefundFor(line.PriceAtTimeOfSale, take, totalPaid, linesTotal);
+                    decimal lineRefund = ReturnRules.RefundFor(line.PriceAtTimeOfSale, take, totalPaid, linesTotal);
+                    refund += lineRefund;
+                    returnLines.Add(new ReturnLogLine
+                    {
+                        Id = Guid.NewGuid(),
+                        ProductId = item.ProductId,
+                        Amount = take,
+                        PriceAtTimeOfSale = line.PriceAtTimeOfSale,
+                        RefundAmount = lineRefund,
+                    });
                     left -= take;
                     if (left == 0) break;
                 }
@@ -180,6 +191,18 @@ namespace StockFlow.Application.Services.CashRegister
             log.PointsEarned = pointsStillEarned;
 
             await cashRegisterLogsRepository.SaveChangesAsync();
+
+            await returnLogsRepository.AddAsync(new ReturnLogs
+            {
+                Id = Guid.NewGuid(),
+                ReceiptId = log.ReceiptId,
+                CashRegisterLogId = log.Id,
+                EmployeeId = employeeId,
+                CustomerId = log.CustomerId,
+                RefundAmount = refund,
+                PointsDeducted = pointsDeducted,
+                Lines = returnLines,
+            });
 
             foreach (var item in items)
                 await productService.UpdateProductStockAsync(item.ProductId, item.Amount, employeeId, LogTypeDto.Returned);

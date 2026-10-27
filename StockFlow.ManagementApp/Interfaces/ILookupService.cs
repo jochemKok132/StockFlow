@@ -8,6 +8,6 @@ namespace StockFlow.ManagementApp.Interfaces
         Task<(List<SelectOption>, string error)> GetShelfOptionsAsync();
         Task<(List<SelectOption>, string error)> GetSalesTagOptionsAsync();
         Task<(List<SelectOption>, string error)> GetSupplierOptionsAsync();
-        Task<(List<SelectOption>, string error)> GetSaleOptionsAsync();
+        Task<(List<SelectOption>, string error)> GetActiveSaleOptionsAsync();
     }
 }

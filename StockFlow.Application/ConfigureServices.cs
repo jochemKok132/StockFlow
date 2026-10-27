@@ -46,6 +46,7 @@ namespace StockFlow.Application
             services.AddScoped<ITicketService, TicketService>();
             services.AddScoped<IDeletedItemsService, DeletedItemsService>();
             services.AddScoped<ISupplierService, SupplierService>();
+            services.AddScoped<IReturnLogsService, ReturnLogsService>();
             services.AddScoped<IProductControlService, ProductControlService>();
             services.AddScoped<IStockAllocator, StockAllocator>();
             services.AddScoped<IPurchaseOrderService, PurchaseOrderService>();

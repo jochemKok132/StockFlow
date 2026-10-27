@@ -46,6 +46,15 @@
         }
 
         [Fact]
+        public void SvgWidth_Value_MatchesTheWidthOfTheSvg()
+        {
+            int width = Code128.SvgWidth("9000000005", 2);
+
+            Assert.Contains($"width=\"{width}\"", Code128.ToSvg("9000000005", 2, 60));
+            Assert.Equal((Code128.Modules("9000000005").Length + 20) * 2, width);
+        }
+
+        [Fact]
         public void ToSvg_ReturnsAnSvgWithBarsAndLabel()
         {
             var svg = Code128.ToSvg("500000001", 2, 56);

@@ -32,6 +32,7 @@ namespace StockFlow.ManagementApp
             builder.Services.AddScoped<IStockLogsService, StockLogsService>();
             builder.Services.AddScoped<IEmployeeLogsService, EmployeeLogsService>();
             builder.Services.AddScoped<ICashRegisterLogsService, CashRegisterLogsService>();
+            builder.Services.AddScoped<IReturnLogsService, ReturnLogsService>();
             builder.Services.AddScoped<ICustomerLogsService, CustomerLogsService>();
             builder.Services.AddScoped<IProductService, ProductService>();
             builder.Services.AddScoped<IProductBrandService, ProductBrandService>();
