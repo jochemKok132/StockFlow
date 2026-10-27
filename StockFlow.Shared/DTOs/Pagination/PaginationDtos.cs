@@ -84,4 +84,9 @@ namespace StockFlow.Shared.DTOs.Pagination
         public LogTypeDto? LogType { get; set; }
 
     }
+
+    public class ProductHistoryPaginationDto : PaginationBase
+    {
+        public bool StockOnly { get; set; }
+    }
 }

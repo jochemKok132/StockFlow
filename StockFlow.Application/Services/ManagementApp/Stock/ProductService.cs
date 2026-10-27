@@ -223,7 +223,13 @@ namespace StockFlow.Application.Services.ManagementApp.Stock
             return product.Stock;
         }
 
-        public async Task UpdateProductStockAsync(Guid id, int amount, Guid employeeId, LogTypeDto logType = LogTypeDto.Sold)
+        public Task UpdateProductStockAsync(Guid id, int amount, Guid employeeId, LogTypeDto logType = LogTypeDto.Sold) =>
+            ChangeStockAsync(id, amount, employeeId, logType, []);
+
+        public Task SellAsync(Guid id, int amount, Guid employeeId, string receiptId) =>
+            ChangeStockAsync(id, -amount, employeeId, LogTypeDto.Sold, [$"Receipt: {receiptId}"]);
+
+        private async Task ChangeStockAsync(Guid id, int amount, Guid employeeId, LogTypeDto logType, List<string> extraMessages)
         {
             ProductValidation.ValidateStockChange(amount);
 
@@ -231,6 +237,7 @@ namespace StockFlow.Application.Services.ManagementApp.Stock
             if (product == null) throw new KeyNotFoundException("Product not found.");
 
             var log = product.ChangeStock(amount, employeeId, logType);
+            log.Messages.AddRange(extraMessages);
             product.ChangeStock(amount);
             if (amount < 0 && product.CanExpire)
                 product.ConsumeBatches(-amount);

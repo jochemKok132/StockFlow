@@ -16,7 +16,7 @@ A short list of everything StockFlow can do right now, followed by the [to-do li
 - The admin and Tester accounts are hidden from everyone except the admin
 - Passwords stored as BCrypt hashes only, never in a log
 - SQLite database that migrates and seeds itself on startup
-- Seed data: 24 employees (including a Tester and a Support account), 15 customers, 150 products with price history, expiry batches and every status, 25 brands with contact information, 15 shelves, 5 suppliers, 6 sales of every type plus the moving sale, 81 receipts, 4 supplier orders, 4 customer orders, 2 stock counts, 4 tickets, and stock logs, customer logs and return records that match all of it
+- Seed data: 24 employees (including a Tester and a Support account), 15 customers, 150 products with price history, expiry batches and every status, 25 brands with contact information, 15 shelves, 5 suppliers, 6 sales of every type plus the moving sale, 81 receipts, 4 supplier orders, 4 customer orders, 2 stock counts, 4 tickets, 13 weekly shifts with contract hours and availability, 5 schedule weeks and 4 swap / day-off requests, and stock logs, customer logs and return records that match all of it
 - Soft delete for products, brands, sales and shelves
 - Users never see a GUID: forms, error messages and logs always use an identifier (barcode, brand name, shelf name, receipt id, employee id)
 - Maximum length on every text field, checked in the apps and again in the API
@@ -102,7 +102,7 @@ A short list of everything StockFlow can do right now, followed by the [to-do li
 - Moving sales page to approve or reject requests
 - Statistics page: revenue, purchases, average receipt, % of purchases with a customer card, discounts, points, returns, new customers, revenue per day and top 10 products
 - Stock logs with old → new values
-- Product history per barcode (sold, returned, added, all changes or stock only), bookmarkable URL
+- Product history per barcode (sold, returned, added, all changes or stock only), bookmarkable URL, paged on the server with totals over the whole history, and the receipt id under every sale (click it to open the receipt)
 - Customer logs and employee logs (including logins)
 - Releases page: management app and cash register versions (no API version), *Up to date* / *Update available*, cash register download, release notes
 - Version shown in the sidebar
@@ -123,7 +123,7 @@ A short list of everything StockFlow can do right now, followed by the [to-do li
 
 ## Audit logging
 
-- Stock logs for every create, update, delete, sale, return, write-off and restore
+- Stock logs for every create, update, delete, sale (with the receipt id), return, write-off and restore
 - Cash register logs with prices at the time of sale, sales, discount, points used and earned
 - Return logs: one record per return with the refund per product and the points taken back
 - Employee logs for create, update and login
@@ -159,9 +159,19 @@ A short list of everything StockFlow can do right now, followed by the [to-do li
 - Stock counts (*tellingen*) per shelf with counted and expired amounts and the differences
 - Stock automation every 15 minutes: planned prices, forced counts, automatic orders and sending orders on the order day
 
+## Staff schedule
+
+- Shifts per week per role (days, times, number of employees), with the hours needed per role against the contract hours
+- Contract hours and availability per day for every employee
+- Schedule generated automatically 4 weeks ahead: the right role, within contract hours and availability, one shift a day, no days off, fair spread; shifts nobody fits stay open
+- Week view per day with open shifts and your own shifts highlighted, and your next shifts at the top
+- Shift leaders change draft weeks (generate again, add, change or remove shifts) and see planned against contract hours
+- The manager confirms a week; employees only see confirmed weeks, and only a manager can change a confirmed week
+- Swap a shift with a colleague (take-over or exchange) and ask for a day off; the manager approves or rejects with a note, and the schedule changes straight away
+
 ## Tests and CI
 
-- 650 xUnit + Moq unit tests: services, validations, mappings, shared rules, repositories (in-memory SQLite), controllers and the GitHub release service
+- 725 xUnit + Moq unit tests: services, validations, mappings, shared rules, repositories (in-memory SQLite), controllers and the GitHub release service
 - Build with 0 warnings
 - CI builds and tests every push and pull request to `master`
 
@@ -180,11 +190,6 @@ A short list of everything StockFlow can do right now, followed by the [to-do li
 
 # To-do
 
-## Product history
-
-- [ ] Show the barcode under *Sold*
-- [ ] Pagination
-
 ## Products
 
 - [ ] Online customer orders through the public site (paid on the public site)
@@ -197,12 +202,6 @@ A short list of everything StockFlow can do right now, followed by the [to-do li
 - [ ] Paint mixed in a colour the customer specifies
 
 
-## Employees and permissions
-
-- [ ] Staff schedule management: generated automatically 4 weeks ahead, can be changed, the manager has to confirm it
-
-
-
 ## Login
 
 - [ ] Refresh tokens
@@ -211,6 +210,7 @@ A short list of everything StockFlow can do right now, followed by the [to-do li
 
 - [ ] Public site for customers (`jochemkok.nl/stockflow/public`)
 - [ ] Mobile management app with products, orders, sales and stock counts
+- [ ] Schedule app for employees to see the schedule
 - [ ] Email service
 
 ## Look and feel

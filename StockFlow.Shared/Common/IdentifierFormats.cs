@@ -15,6 +15,9 @@
         public const int FirstCustomerOrderNumber = 7000001;
         public const int LastCustomerOrderNumber = 7999999;
 
+        public static bool IsEmployeeId(string? input) =>
+            input is { Length: FieldLimits.EmployeeId } && input.All(char.IsAsciiDigit);
+
         public static bool IsProductBarcode(string? input) =>
             input is { Length: ProductBarcodeLength } && input.All(char.IsDigit);
 

@@ -593,6 +593,11 @@ namespace StockFlow.Infrastructure.Data.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("TEXT");
 
+                    b.Property<int>("ContractHours")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER")
+                        .HasDefaultValue(0);
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("TEXT");
 
@@ -616,6 +621,208 @@ namespace StockFlow.Infrastructure.Data.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Employees");
+                });
+
+            modelBuilder.Entity("StockFlow.Domain.Entities.Scheduling.EmployeeAvailability", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("TEXT");
+
+                    b.Property<TimeOnly>("AvailableFrom")
+                        .HasColumnType("TEXT");
+
+                    b.Property<TimeOnly>("AvailableUntil")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("Day")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<Guid>("EmployeeId")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("EmployeeId", "Day")
+                        .IsUnique();
+
+                    b.ToTable("EmployeeAvailability");
+                });
+
+            modelBuilder.Entity("StockFlow.Domain.Entities.Scheduling.ScheduleRequest", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateOnly?>("Date")
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("EmployeeId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Reason")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("RequestNumber")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("ReviewNote")
+                        .HasMaxLength(200)
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime?>("ReviewedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid?>("ReviewedById")
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid?>("ShiftId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<Guid?>("TargetEmployeeId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid?>("TargetShiftId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("Type")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("EmployeeId");
+
+                    b.HasIndex("RequestNumber")
+                        .IsUnique();
+
+                    b.HasIndex("ReviewedById");
+
+                    b.HasIndex("ShiftId");
+
+                    b.HasIndex("TargetEmployeeId");
+
+                    b.HasIndex("TargetShiftId");
+
+                    b.ToTable("ScheduleRequests");
+                });
+
+            modelBuilder.Entity("StockFlow.Domain.Entities.Scheduling.ScheduleWeek", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime?>("ConfirmedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid?>("ConfirmedById")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("GeneratedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateOnly>("WeekStart")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ConfirmedById");
+
+                    b.HasIndex("WeekStart")
+                        .IsUnique();
+
+                    b.ToTable("ScheduleWeeks");
+                });
+
+            modelBuilder.Entity("StockFlow.Domain.Entities.Scheduling.ScheduledShift", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateOnly>("Date")
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid?>("EmployeeId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<TimeOnly>("EndTime")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("Role")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<Guid>("ScheduleWeekId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<TimeOnly>("StartTime")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ScheduleWeekId");
+
+                    b.HasIndex("EmployeeId", "Date");
+
+                    b.ToTable("ScheduledShifts");
+                });
+
+            modelBuilder.Entity("StockFlow.Domain.Entities.Scheduling.ShiftTemplate", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("Days")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<TimeOnly>("EndTime")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("RequiredStaff")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("Role")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<TimeOnly>("StartTime")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("ShiftTemplates");
                 });
 
             modelBuilder.Entity("StockFlow.Domain.Entities.Stock.Product", b =>
@@ -1260,6 +1467,84 @@ namespace StockFlow.Infrastructure.Data.Migrations
                     b.Navigation("StockCount");
                 });
 
+            modelBuilder.Entity("StockFlow.Domain.Entities.Scheduling.EmployeeAvailability", b =>
+                {
+                    b.HasOne("StockFlow.Domain.Entities.People.Employee", "Employee")
+                        .WithMany("Availability")
+                        .HasForeignKey("EmployeeId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Employee");
+                });
+
+            modelBuilder.Entity("StockFlow.Domain.Entities.Scheduling.ScheduleRequest", b =>
+                {
+                    b.HasOne("StockFlow.Domain.Entities.People.Employee", "Employee")
+                        .WithMany()
+                        .HasForeignKey("EmployeeId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("StockFlow.Domain.Entities.People.Employee", "ReviewedBy")
+                        .WithMany()
+                        .HasForeignKey("ReviewedById")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("StockFlow.Domain.Entities.Scheduling.ScheduledShift", "Shift")
+                        .WithMany()
+                        .HasForeignKey("ShiftId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("StockFlow.Domain.Entities.People.Employee", "TargetEmployee")
+                        .WithMany()
+                        .HasForeignKey("TargetEmployeeId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("StockFlow.Domain.Entities.Scheduling.ScheduledShift", "TargetShift")
+                        .WithMany()
+                        .HasForeignKey("TargetShiftId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("Employee");
+
+                    b.Navigation("ReviewedBy");
+
+                    b.Navigation("Shift");
+
+                    b.Navigation("TargetEmployee");
+
+                    b.Navigation("TargetShift");
+                });
+
+            modelBuilder.Entity("StockFlow.Domain.Entities.Scheduling.ScheduleWeek", b =>
+                {
+                    b.HasOne("StockFlow.Domain.Entities.People.Employee", "ConfirmedBy")
+                        .WithMany()
+                        .HasForeignKey("ConfirmedById")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("ConfirmedBy");
+                });
+
+            modelBuilder.Entity("StockFlow.Domain.Entities.Scheduling.ScheduledShift", b =>
+                {
+                    b.HasOne("StockFlow.Domain.Entities.People.Employee", "Employee")
+                        .WithMany()
+                        .HasForeignKey("EmployeeId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("StockFlow.Domain.Entities.Scheduling.ScheduleWeek", "ScheduleWeek")
+                        .WithMany("Shifts")
+                        .HasForeignKey("ScheduleWeekId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Employee");
+
+                    b.Navigation("ScheduleWeek");
+                });
+
             modelBuilder.Entity("StockFlow.Domain.Entities.Stock.Product", b =>
                 {
                     b.HasOne("StockFlow.Domain.Entities.Stock.ProductBrand", "Brand")
@@ -1357,6 +1642,16 @@ namespace StockFlow.Infrastructure.Data.Migrations
             modelBuilder.Entity("StockFlow.Domain.Entities.Ordering.StockCount", b =>
                 {
                     b.Navigation("Lines");
+                });
+
+            modelBuilder.Entity("StockFlow.Domain.Entities.People.Employee", b =>
+                {
+                    b.Navigation("Availability");
+                });
+
+            modelBuilder.Entity("StockFlow.Domain.Entities.Scheduling.ScheduleWeek", b =>
+                {
+                    b.Navigation("Shifts");
                 });
 
             modelBuilder.Entity("StockFlow.Domain.Entities.Stock.Product", b =>

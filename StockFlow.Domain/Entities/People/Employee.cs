@@ -1,4 +1,5 @@
-﻿using StockFlow.Domain.Entities.IEntities;
+﻿using StockFlow.Domain.Entities.Scheduling;
+using StockFlow.Domain.Entities.IEntities;
 using StockFlow.Domain.Enums;
 using System;
 using System.Collections.Generic;
@@ -15,5 +16,7 @@ namespace StockFlow.Domain.Entities.People
         public required string FullName { get; set; }
         public string? HashedPassword { get; set; }
         public EmployeeRole Role { get; set; } = EmployeeRole.None;
+        public int ContractHours { get; set; }
+        public ICollection<EmployeeAvailability> Availability { get; set; } = [];
     }
 }

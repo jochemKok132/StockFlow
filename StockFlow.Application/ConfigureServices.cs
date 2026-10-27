@@ -1,4 +1,6 @@
-﻿using StockFlow.Application.Services.Ordering;
+﻿using StockFlow.Application.Services.Scheduling;
+using StockFlow.Application.Interfaces.Scheduling;
+using StockFlow.Application.Services.Ordering;
 using StockFlow.Application.Interfaces.Ordering;
 using Microsoft.Extensions.DependencyInjection;
 using StockFlow.Application.Interfaces;
@@ -47,6 +49,7 @@ namespace StockFlow.Application
             services.AddScoped<IDeletedItemsService, DeletedItemsService>();
             services.AddScoped<ISupplierService, SupplierService>();
             services.AddScoped<IReturnLogsService, ReturnLogsService>();
+            services.AddScoped<IScheduleService, ScheduleService>();
             services.AddScoped<IProductControlService, ProductControlService>();
             services.AddScoped<IStockAllocator, StockAllocator>();
             services.AddScoped<IPurchaseOrderService, PurchaseOrderService>();

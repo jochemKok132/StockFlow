@@ -80,16 +80,15 @@ namespace StockFlow.Application.Services.CashRegister
             await productService.EnsureSellableAsync(purchase.ProductsSold.Select(l => l.Product.Id));
             await customerOrderService.ValidatePickupAsync(purchase);
             
-            foreach(var stock in purchase.ProductsSold)
-            {
-                await productService.UpdateProductStockAsync(stock.Product.Id, -stock.Amount, employeeId);
-            }
             decimal amountPaid = purchase.ProductsSold.Sum(l => SalePricing.Total(l.PriceAtTimeOfSale, l.Amount)) - LoyaltyPoints.ToEuros(purchase.PointsUsed);
             int pointsEarned = customer is null ? 0 : LoyaltyPoints.PointsEarned(amountPaid);
 
             var log = purchase.ToCashRegisterLogsDto(employeeId);
             log.PointsEarned = pointsEarned;
             string receiptId = await cashRegisterLogsService.CreateCashRegisterLogsAsync(log);
+
+            foreach (var stock in purchase.ProductsSold)
+                await productService.SellAsync(stock.Product.Id, stock.Amount, employeeId, receiptId);
 
             if (purchase.CustomerOrderNumber is int customerOrderNumber)
                 await customerOrderService.MarkPickedUpAsync(customerOrderNumber, receiptId);

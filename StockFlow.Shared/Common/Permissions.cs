@@ -38,6 +38,14 @@ namespace StockFlow.Shared.Common
         public const string CountStock = WriteOffStock;
         public const string PlanStockCounts = "ShiftLeader,Manager,Admin";
         public const string ProductSales = Statistics;
+        public const string ViewSchedule = Employees;
+        public const string ViewScheduleDrafts = "ShiftLeader,Manager,Admin,Tester";
+        public const string EditSchedule = "ShiftLeader,Manager,Admin";
+        public const string ConfirmSchedule = "Manager,Admin";
+        public const string RequestScheduleChanges = "Manager,ShiftLeader,ServiceDesk,Cashier,FloorWorker,Support";
+        public const string ReviewScheduleRequests = ConfirmSchedule;
+        public const string ViewScheduleSettings = "Manager,Admin,Tester";
+        public const string ManageScheduleSettings = "Manager,Admin";
 
         public static bool Allows(this ClaimsPrincipal user, string roles) =>
             roles.Split(',').Any(user.IsInRole);

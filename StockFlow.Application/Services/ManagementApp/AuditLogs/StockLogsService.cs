@@ -1,4 +1,5 @@
-﻿using StockFlow.Shared.DTOs.AuditLogs.Stock;
+﻿using StockFlow.Shared.DTOs.Enums;
+using StockFlow.Shared.DTOs.AuditLogs.Stock;
 using StockFlow.Shared.DTOs.Pagination;
 using StockFlow.Application.Interfaces.ManagementApp.AuditLogs;
 using StockFlow.Application.Interfaces.ManagementApp.Stock;
@@ -24,8 +25,9 @@ namespace StockFlow.Application.Services.ManagementApp.AuditLogs
             await stockLogsRepository.AddAsync(log.ToStockLogsEntity());
         }
 
-        public async Task<ProductStockHistoryDto> GetProductStockHistoryAsync(int barcode)
+        public async Task<ProductStockHistoryDto> GetProductStockHistoryAsync(int barcode, ProductHistoryPaginationDto pagination)
         {
+            pagination.Validate();
             if (!IdentifierFormats.IsProductBarcode(barcode.ToString()))
                 throw new ArgumentException($"A product barcode must be {IdentifierFormats.ProductBarcodeLength} digits.");
 
@@ -36,12 +38,31 @@ namespace StockFlow.Application.Services.ManagementApp.AuditLogs
             productDto.Brand = product.Brand?.ToProductBrandDto();
             productDto.Shelf = product.Shelf?.ToShelfDto();
 
-            var logs = await stockLogsRepository.GetLogsByIdentifierAsync(StockLogType.Product, barcode.ToString());
+            var logs = (await stockLogsRepository.GetLogsByIdentifierAsync(StockLogType.Product, barcode.ToString()))
+                .Select(l => l.ToStockLogsDto())
+                .Select(l => (Log: l, Change: StockLogMessages.StockChange(l.Messages)))
+                .ToList();
+            var matching = pagination.StockOnly ? logs.Where(l => l.Change.HasValue).ToList() : logs;
+
+            int Units(Func<LogTypeDto, bool> type, int sign) =>
+                logs.Where(l => type(l.Log.LogType) && l.Change * sign > 0).Sum(l => l.Change!.Value * sign);
 
             return new ProductStockHistoryDto
             {
                 Product = productDto,
-                Logs = logs.Select(l => l.ToStockLogsDto()).ToList(),
+                Logs = matching
+                    .Skip((pagination.PageNumber - 1) * pagination.PageSize)
+                    .Take(pagination.PageSize)
+                    .Select(l => l.Log)
+                    .ToList(),
+                PageNumber = pagination.PageNumber,
+                PageSize = pagination.PageSize,
+                MatchingLogs = matching.Count,
+                TotalLogs = logs.Count,
+                UnitsSold = Units(t => t == LogTypeDto.Sold, -1),
+                UnitsReturned = Units(t => t == LogTypeDto.Returned, 1),
+                UnitsWrittenOff = Units(t => t == LogTypeDto.WrittenOff, -1),
+                UnitsAdded = Units(t => t != LogTypeDto.Sold && t != LogTypeDto.Returned, 1),
             };
         }
 

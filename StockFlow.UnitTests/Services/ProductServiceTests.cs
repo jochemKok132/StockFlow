@@ -337,6 +337,18 @@ namespace StockFlow.UnitTests.Services
         }
 
         [Fact]
+        public async Task SellAsync_Sale_LowersStockAndLogsSoldWithReceiptId()
+        {
+            var product = TestData.Product(stock: 10);
+            _productRepository.Setup(r => r.GetByIdAsync(product.Id)).ReturnsAsync(product);
+
+            await _sut.SellAsync(product.Id, 3, Guid.NewGuid(), "9000000042");
+
+            Assert.Equal(7, product.Stock);
+            _stockLogsService.Verify(s => s.CreateStockLogsAsync(It.Is<CreateStockLogsDto>(l => l.LogType == LogTypeDto.Sold && l.Messages.Contains("Stock: New: 7. Old: 10") && l.Messages.Contains("Receipt: 9000000042"))), Times.Once);
+        }
+
+        [Fact]
         public async Task UpdateProductStockAsync_MoreThanInStock_AllowsNegativeStock()
         {
             var product = TestData.Product(stock: 1);

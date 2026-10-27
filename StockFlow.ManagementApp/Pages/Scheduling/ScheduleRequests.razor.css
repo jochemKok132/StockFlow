@@ -1,0 +1,40 @@
+.request-form {
+    margin-top: 12px;
+}
+
+.segmented {
+    display: inline-flex;
+    border: 1px solid var(--BorderColor);
+    border-radius: var(--RadiusSmall);
+    overflow: hidden;
+}
+
+    .segmented button {
+        padding: 4px 12px;
+        background: var(--TaskbarColor);
+        border: none;
+        border-left: 1px solid var(--BorderColor);
+        font-size: 12px;
+        font-weight: 500;
+        color: var(--MutedText);
+        cursor: pointer;
+    }
+
+        .segmented button:first-child {
+            border-left: none;
+        }
+
+        .segmented button:hover {
+            color: var(--TextColor);
+            background: var(--SurfaceColor);
+        }
+
+        .segmented button:focus-visible {
+            outline: none;
+            box-shadow: inset 0 0 0 2px var(--AccentColorSoft);
+        }
+
+        .segmented button.active {
+            background: var(--ButtonColor);
+            color: var(--ButtonTextColor);
+        }

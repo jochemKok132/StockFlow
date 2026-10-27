@@ -1,4 +1,5 @@
-﻿using StockFlow.Application.Interfaces.Ordering;
+﻿using StockFlow.Application.Interfaces.Scheduling;
+using StockFlow.Application.Interfaces.Ordering;
 
 namespace StockFlow.API
 {
@@ -16,6 +17,9 @@ namespace StockFlow.API
                     using var scope = scopeFactory.CreateScope();
                     var automation = scope.ServiceProvider.GetRequiredService<IStockAutomationService>();
                     var result = await automation.RunAsync(DateTime.Today);
+                    int weeks = await scope.ServiceProvider.GetRequiredService<IScheduleService>().GenerateUpcomingWeeksAsync(DateOnly.FromDateTime(DateTime.Today));
+                    if (weeks > 0)
+                        logger.LogInformation("Staff schedule: {Weeks} week(s) generated.", weeks);
                     if (result.PricesApplied + result.ExpiryCountsCreated + result.AutomaticOrderLines + result.OrdersSent > 0)
                         logger.LogInformation("Stock automation: {Prices} price(s) applied, {Counts} expiry count(s) created, {Lines} automatic order line(s), {Sent} order(s) sent.",
                             result.PricesApplied, result.ExpiryCountsCreated, result.AutomaticOrderLines, result.OrdersSent);

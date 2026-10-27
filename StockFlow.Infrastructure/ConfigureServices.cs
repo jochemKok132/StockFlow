@@ -1,4 +1,6 @@
-﻿using StockFlow.Application.Interfaces.Repositories.ManagementApp.AuditLogs;
+﻿using StockFlow.Infrastructure.Repositories.Scheduling;
+using StockFlow.Application.Interfaces.Repositories.Scheduling;
+using StockFlow.Application.Interfaces.Repositories.ManagementApp.AuditLogs;
 using StockFlow.Infrastructure.Repositories.Ordering;
 using StockFlow.Application.Interfaces.Repositories.Ordering;
 using Microsoft.EntityFrameworkCore;
@@ -47,6 +49,7 @@ namespace StockFlow.Infrastructure
             services.AddScoped<IDeletedItemsRepository, DeletedItemsRepository>();
             services.AddScoped<ISupplierRepository, SupplierRepository>();
             services.AddScoped<IReturnLogsRepository, ReturnLogsRepository>();
+            services.AddScoped<IScheduleRepository, ScheduleRepository>();
             services.AddScoped<IPurchaseOrderRepository, PurchaseOrderRepository>();
             services.AddScoped<ICustomerOrderRepository, CustomerOrderRepository>();
             services.AddScoped<IStockCountRepository, StockCountRepository>();

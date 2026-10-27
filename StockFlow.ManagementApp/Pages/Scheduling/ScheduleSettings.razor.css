@@ -1,0 +1,33 @@
+.section-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.hours-summary {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 24px;
+    margin-top: 12px;
+    font-size: 13px;
+    color: var(--MutedText);
+}
+
+.hours-short {
+    color: var(--WarningText);
+}
+
+.day-checks {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.availability-table {
+    margin-top: 12px;
+}
+
+    .availability-table input[type="time"] {
+        width: 120px;
+    }

@@ -153,6 +153,9 @@
                 OnClose="CloseProductDetails" />
 
 @code {
+    [SupplyParameterFromQuery(Name = "receiptId")]
+    public string? ReceiptIdQuery { get; set; }
+
     private List<CashRegisterLogsDto> cashRegisterLogs = new List<CashRegisterLogsDto>();
     private string? downloading;
     private string receiptError = "";
@@ -211,8 +214,10 @@
         ReceiptId = null,
     };
 
-    protected override async Task OnInitializedAsync()
+    protected override async Task OnParametersSetAsync()
     {
+        pagination.ReceiptId = string.IsNullOrWhiteSpace(ReceiptIdQuery) ? pagination.ReceiptId : ReceiptIdQuery.Trim();
+        pagination.PageNumber = 1;
         await LoadLogs();
     }
 

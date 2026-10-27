@@ -28,9 +28,10 @@ namespace StockFlow.ManagementApp.Services.AuditLogs
                 return (new List<StockLogsDto>(), $"Error: {response.Message}");
         }
 
-        public async Task<(ProductStockHistoryDto?, string error)> GetProductStockHistoryAsync(int barcode)
+        public async Task<(ProductStockHistoryDto?, string error)> GetProductStockHistoryAsync(int barcode, ProductHistoryPaginationDto pagination)
         {
-            var response = await httpService.GetAsync<ProductStockHistoryDto>($"StockLogs/ProductHistory/{barcode}");
+            var response = await httpService.GetAsync<ProductStockHistoryDto>(
+                $"StockLogs/ProductHistory/{barcode}?pageNumber={pagination.PageNumber}&pageSize={pagination.PageSize}&stockOnly={pagination.StockOnly}");
             if (response.Succeeded)
                 return (response.Value, "");
             else

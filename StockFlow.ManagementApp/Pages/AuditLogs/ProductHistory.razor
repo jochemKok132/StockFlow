@@ -1,5 +1,4 @@
 ﻿@page "/producthistory"
-@using System.Text.RegularExpressions
 @attribute [Authorize(Roles = Permissions.ProductHistory)]
 @inject IStockLogsService StockLogsService
 @inject NavigationManager Nav
@@ -75,23 +74,23 @@
                     <span class="stat-label">Current stock</span>
                 </div>
                 <div class="stat">
-                    <span class="stat-value">@UnitsSold</span>
+                    <span class="stat-value">@history.UnitsSold</span>
                     <span class="stat-label">Units sold</span>
                 </div>
                 <div class="stat">
-                    <span class="stat-value">@UnitsReturned</span>
+                    <span class="stat-value">@history.UnitsReturned</span>
                     <span class="stat-label">Units returned</span>
                 </div>
                 <div class="stat">
-                    <span class="stat-value">@UnitsWrittenOff</span>
+                    <span class="stat-value">@history.UnitsWrittenOff</span>
                     <span class="stat-label">Units written off</span>
                 </div>
                 <div class="stat">
-                    <span class="stat-value">@UnitsAdded</span>
+                    <span class="stat-value">@history.UnitsAdded</span>
                     <span class="stat-label">Units added</span>
                 </div>
                 <div class="stat">
-                    <span class="stat-value">@history.Logs.Count</span>
+                    <span class="stat-value">@history.TotalLogs</span>
                     <span class="stat-label">Log entries</span>
                 </div>
             </div>
@@ -100,8 +99,8 @@
         <div class="history-toolbar">
             <span class="panel-label">History</span>
             <div class="segmented">
-                <button type="button" class="@(stockOnly ? "" : "active")" @onclick="() => stockOnly = false">All changes</button>
-                <button type="button" class="@(stockOnly ? "active" : "")" @onclick="() => stockOnly = true">Stock changes only</button>
+                <button type="button" class="@(pagination.StockOnly ? "" : "active")" @onclick="() => SetStockOnly(false)">All changes</button>
+                <button type="button" class="@(pagination.StockOnly ? "active" : "")" @onclick="() => SetStockOnly(true)">Stock changes only</button>
             </div>
         </div>
 
@@ -116,15 +115,21 @@
                 </tr>
             </thead>
             <tbody>
-                @if (!VisibleRows.Any())
+                @if (rows.Count == 0)
                 {
-                    <tr><td colspan="5" class="empty-state">No @(stockOnly ? "stock changes" : "log entries") found for this product.</td></tr>
+                    <tr><td colspan="5" class="empty-state">No @(pagination.StockOnly ? "stock changes" : "log entries") found for this product.</td></tr>
                 }
-                @foreach (var row in VisibleRows)
+                @foreach (var row in rows)
                 {
                     <tr>
                         <td class="date-cell">@row.Log.CreatedAt.ToLocalTime().ToString("dd-MM-yyyy HH:mm")</td>
-                        <td><span class="badge @BadgeClass(row.Log.LogType)">@row.Log.LogType</span></td>
+                        <td>
+                            <span class="badge @BadgeClass(row.Log.LogType)">@row.Log.LogType</span>
+                            @if (row.ReceiptId is string receiptId)
+                            {
+                                <a class="receipt-link" href="cashregisterlogs?receiptId=@receiptId" title="Open receipt @receiptId">Receipt @receiptId</a>
+                            }
+                        </td>
                         <td>
                             <strong>@row.Log.Employee.FullName</strong>
                             <span class="sub-text">@row.Log.Employee.EmployeeId</span>
@@ -161,6 +166,21 @@
                 }
             </tbody>
         </table>
+
+        <div class="pagination">
+            <button @onclick="PrevPage" disabled="@(pagination.PageNumber <= 1)">&#8592; Previous</button>
+            <span>Page <strong>@pagination.PageNumber</strong> of @TotalPages</span>
+            <button @onclick="NextPage" disabled="@(pagination.PageNumber >= TotalPages)">Next &#8594;</button>
+            <div class="page-size">
+                <label>Per page:</label>
+                <select @bind="pagination.PageSize" @bind:after="ResetAndLoad">
+                    <option value="10">10</option>
+                    <option value="25">25</option>
+                    <option value="50">50</option>
+                    <option value="100">100</option>
+                </select>
+            </div>
+        </div>
     }
 </div>
 
@@ -186,40 +206,23 @@
 
     private bool loading = false;
     private string error = "";
-    private bool stockOnly = false;
+
+    private readonly ProductHistoryPaginationDto pagination = new() { PageNumber = 1, PageSize = 25 };
+
+    private int TotalPages => Math.Max(1, (int)Math.Ceiling((history?.MatchingLogs ?? 0) / (double)pagination.PageSize));
 
     private bool showMessages = false;
     private List<string>? selectedMessages;
     private bool showDetails = false;
 
-    private record HistoryRow(StockLogsDto Log, int? StockOld, int? StockNew, List<string> OtherMessages);
-
-    private static readonly Regex StockPattern = new(@"^Stock: New: (?<new>-?\d+)\. Old: (?<old>-?\d+)$");
-
-    private IEnumerable<HistoryRow> VisibleRows =>
-        stockOnly ? rows.Where(r => r.StockNew.HasValue) : rows;
-
-    private int UnitsSold =>
-        rows.Where(r => r.Log.LogType == LogTypeDto.Sold && r.StockNew < r.StockOld)
-            .Sum(r => r.StockOld!.Value - r.StockNew!.Value);
-
-    private int UnitsReturned =>
-        rows.Where(r => r.Log.LogType == LogTypeDto.Returned && r.StockNew > r.StockOld)
-            .Sum(r => r.StockNew!.Value - r.StockOld!.Value);
-
-    private int UnitsWrittenOff =>
-        rows.Where(r => r.Log.LogType == LogTypeDto.WrittenOff && r.StockNew < r.StockOld)
-            .Sum(r => r.StockOld!.Value - r.StockNew!.Value);
-
-    private int UnitsAdded =>
-        rows.Where(r => r.Log.LogType != LogTypeDto.Sold && r.Log.LogType != LogTypeDto.Returned && r.StockNew > r.StockOld)
-            .Sum(r => r.StockNew!.Value - r.StockOld!.Value);
+    private record HistoryRow(StockLogsDto Log, int? StockOld, int? StockNew, string? ReceiptId, List<string> OtherMessages);
 
     protected override async Task OnParametersSetAsync()
     {
         if (BarcodeQuery is int barcode && barcode != loadedBarcode)
         {
             barcodeInput = barcode.ToString();
+            pagination.PageNumber = 1;
             await LoadHistory(barcode);
         }
     }
@@ -235,7 +238,10 @@
         }
 
         if (barcode == loadedBarcode)
+        {
+            pagination.PageNumber = 1;
             await LoadHistory(barcode);
+        }
         else
             Nav.NavigateTo($"producthistory?barcode={barcode}");
     }
@@ -249,6 +255,34 @@
         }
     }
 
+    private async Task SetStockOnly(bool stockOnly)
+    {
+        if (pagination.StockOnly == stockOnly) return;
+        pagination.StockOnly = stockOnly;
+        await ResetAndLoad();
+    }
+
+    private async Task ResetAndLoad()
+    {
+        pagination.PageNumber = 1;
+        if (loadedBarcode is int barcode)
+            await LoadHistory(barcode);
+    }
+
+    private async Task NextPage()
+    {
+        if (loadedBarcode is not int barcode || pagination.PageNumber >= TotalPages) return;
+        pagination.PageNumber++;
+        await LoadHistory(barcode);
+    }
+
+    private async Task PrevPage()
+    {
+        if (loadedBarcode is not int barcode || pagination.PageNumber <= 1) return;
+        pagination.PageNumber--;
+        await LoadHistory(barcode);
+    }
+
     private async Task LoadHistory(int barcode)
     {
         loading = true;
@@ -258,7 +292,7 @@
         loadedBarcode = barcode;
         StateHasChanged();
 
-        (history, error) = await StockLogsService.GetProductStockHistoryAsync(barcode);
+        (history, error) = await StockLogsService.GetProductStockHistoryAsync(barcode, pagination);
         if (history is not null)
             rows = history.Logs.Select(ToRow).ToList();
 
@@ -268,23 +302,23 @@
     private static HistoryRow ToRow(StockLogsDto log)
     {
         int? oldStock = null, newStock = null;
+        string? receiptId = log.LogType == LogTypeDto.Sold ? StockLogMessages.ReceiptId(log.Messages) : null;
         var other = new List<string>();
 
         foreach (var message in log.Messages)
         {
-            var match = StockPattern.Match(message);
-            if (match.Success)
+            if (StockLogMessages.TryParseStock(message, out int parsedNew, out int parsedOld))
             {
-                newStock = int.Parse(match.Groups["new"].Value);
-                oldStock = int.Parse(match.Groups["old"].Value);
+                newStock = parsedNew;
+                oldStock = parsedOld;
             }
-            else
+            else if (receiptId is null || !message.StartsWith(StockLogMessages.ReceiptPrefix))
             {
                 other.Add(message);
             }
         }
 
-        return new HistoryRow(log, oldStock, newStock, other);
+        return new HistoryRow(log, oldStock, newStock, receiptId, other);
     }
 
     private void OpenMessages(List<string> messages)

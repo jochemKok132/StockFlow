@@ -101,7 +101,7 @@ namespace StockFlow.UnitTests.Services
 
             await Assert.ThrowsAsync<ArgumentException>(() => _sut.FinalizePurchase(Purchase(null, 0, Line(Guid.NewGuid(), 10m, 1)), _employeeId));
 
-            _productService.Verify(p => p.UpdateProductStockAsync(It.IsAny<Guid>(), It.IsAny<int>(), It.IsAny<Guid>(), It.IsAny<LogTypeDto>()), Times.Never);
+            _productService.Verify(p => p.SellAsync(It.IsAny<Guid>(), It.IsAny<int>(), It.IsAny<Guid>(), It.IsAny<string>()), Times.Never);
         }
 
         [Fact]
@@ -146,8 +146,8 @@ namespace StockFlow.UnitTests.Services
             var result = await _sut.FinalizePurchase(Purchase(null, 0, Line(hammer, 10m, 2), Line(saw, 5m, 1)), _employeeId);
 
             Assert.Equal(ReceiptId, result);
-            _productService.Verify(p => p.UpdateProductStockAsync(hammer, -2, _employeeId, LogTypeDto.Sold), Times.Once);
-            _productService.Verify(p => p.UpdateProductStockAsync(saw, -1, _employeeId, LogTypeDto.Sold), Times.Once);
+            _productService.Verify(p => p.SellAsync(hammer, 2, _employeeId, ReceiptId), Times.Once);
+            _productService.Verify(p => p.SellAsync(saw, 1, _employeeId, ReceiptId), Times.Once);
             Assert.Equal(0, log?.PointsEarned);
             _customerRepository.Verify(r => r.UpdateAsync(It.IsAny<Customer>()), Times.Never);
         }
@@ -159,7 +159,7 @@ namespace StockFlow.UnitTests.Services
             _customerRepository.Setup(r => r.GetByIdAsync(customer.Id)).ReturnsAsync(customer);
 
             await Assert.ThrowsAsync<ArgumentException>(() => _sut.FinalizePurchase(Purchase(customer.Id, 0, Line(Guid.NewGuid(), 10m, 1)), _employeeId));
-            _productService.Verify(p => p.UpdateProductStockAsync(It.IsAny<Guid>(), It.IsAny<int>(), It.IsAny<Guid>(), It.IsAny<LogTypeDto>()), Times.Never);
+            _productService.Verify(p => p.SellAsync(It.IsAny<Guid>(), It.IsAny<int>(), It.IsAny<Guid>(), It.IsAny<string>()), Times.Never);
         }
 
         [Fact]

@@ -194,7 +194,7 @@ namespace StockFlow.UnitTests.Services.AuditLogs
         [Fact]
         public async Task GetProductStockHistoryAsync_InvalidBarcode_ThrowsArgumentException()
         {
-            await Assert.ThrowsAsync<ArgumentException>(() => _sut.GetProductStockHistoryAsync(1234));
+            await Assert.ThrowsAsync<ArgumentException>(() => _sut.GetProductStockHistoryAsync(1234, new ProductHistoryPaginationDto()));
         }
 
         [Fact]
@@ -202,7 +202,7 @@ namespace StockFlow.UnitTests.Services.AuditLogs
         {
             _productRepository.Setup(r => r.GetProductByBarcodeAsync(500000001)).ReturnsAsync((Product?)null);
 
-            await Assert.ThrowsAsync<KeyNotFoundException>(() => _sut.GetProductStockHistoryAsync(500000001));
+            await Assert.ThrowsAsync<KeyNotFoundException>(() => _sut.GetProductStockHistoryAsync(500000001, new ProductHistoryPaginationDto()));
         }
 
         [Fact]
@@ -213,11 +213,62 @@ namespace StockFlow.UnitTests.Services.AuditLogs
             _productRepository.Setup(r => r.GetProductByBarcodeAsync(500000001)).ReturnsAsync(product);
             _repository.Setup(r => r.GetLogsByIdentifierAsync(StockLogType.Product, "500000001")).ReturnsAsync(new[] { log });
 
-            var result = await _sut.GetProductStockHistoryAsync(500000001);
+            var result = await _sut.GetProductStockHistoryAsync(500000001, new ProductHistoryPaginationDto());
 
             Assert.Equal(product.Id, result.Product.Id);
             Assert.Equal("Bosch", result.Product.Brand?.BrandName);
             Assert.Single(result.Logs);
+        }
+
+        [Fact]
+        public async Task GetProductStockHistoryAsync_InvalidPage_ThrowsArgumentException()
+        {
+            await Assert.ThrowsAsync<ArgumentException>(() => _sut.GetProductStockHistoryAsync(500000001, new ProductHistoryPaginationDto { PageNumber = 0 }));
+        }
+
+        [Fact]
+        public async Task GetProductStockHistoryAsync_ManyLogs_ReturnsOnePageAndTotalsOverAllLogs()
+        {
+            var employee = TestData.Employee();
+            StockLogs Log(LogType type, params string[] messages) => new() { Id = Guid.NewGuid(), Identifier = "500000001", Employee = employee, LogType = type, Messages = messages };
+            _productRepository.Setup(r => r.GetProductByBarcodeAsync(500000001)).ReturnsAsync(TestData.Product());
+            _repository.Setup(r => r.GetLogsByIdentifierAsync(StockLogType.Product, "500000001")).ReturnsAsync(new[]
+            {
+                Log(LogType.Sold, "Stock: New: 8. Old: 10", "Receipt: 9000000002"),
+                Log(LogType.Update, "Price: New: 2.00. Old: 1.00"),
+                Log(LogType.Returned, "Stock: New: 10. Old: 9"),
+                Log(LogType.Received, "Stock: New: 9. Old: 4", "Order: 1001"),
+                Log(LogType.WrittenOff, "Stock: New: 4. Old: 7"),
+            });
+
+            var result = await _sut.GetProductStockHistoryAsync(500000001, new ProductHistoryPaginationDto { PageNumber = 2, PageSize = 2 });
+
+            Assert.Equal(5, result.TotalLogs);
+            Assert.Equal(5, result.MatchingLogs);
+            Assert.Equal(2, result.Logs.Count);
+            Assert.Equal(LogTypeDto.Returned, result.Logs[0].LogType);
+            Assert.Equal(2, result.UnitsSold);
+            Assert.Equal(1, result.UnitsReturned);
+            Assert.Equal(3, result.UnitsWrittenOff);
+            Assert.Equal(5, result.UnitsAdded);
+        }
+
+        [Fact]
+        public async Task GetProductStockHistoryAsync_StockOnly_SkipsLogsWithoutAStockChange()
+        {
+            var employee = TestData.Employee();
+            _productRepository.Setup(r => r.GetProductByBarcodeAsync(500000001)).ReturnsAsync(TestData.Product());
+            _repository.Setup(r => r.GetLogsByIdentifierAsync(StockLogType.Product, "500000001")).ReturnsAsync(new[]
+            {
+                new StockLogs { Id = Guid.NewGuid(), Identifier = "500000001", Employee = employee, LogType = LogType.Update, Messages = ["Price: New: 2.00. Old: 1.00"] },
+                new StockLogs { Id = Guid.NewGuid(), Identifier = "500000001", Employee = employee, LogType = LogType.Sold, Messages = ["Stock: New: 8. Old: 10"] },
+            });
+
+            var result = await _sut.GetProductStockHistoryAsync(500000001, new ProductHistoryPaginationDto { StockOnly = true });
+
+            Assert.Equal(2, result.TotalLogs);
+            Assert.Equal(1, result.MatchingLogs);
+            Assert.Equal(LogTypeDto.Sold, Assert.Single(result.Logs).LogType);
         }
 
         [Fact]

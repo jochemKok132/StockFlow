@@ -64,6 +64,25 @@
                         </NavLink>
                     </AuthorizeView>
 
+                    <AuthorizeView Roles="@Permissions.ViewSchedule">
+                        <h5>Schedule</h5>
+                        <NavLink href="schedule" class="ml-nav-link" Match="NavLinkMatch.All">
+                            <i class="bi bi-calendar-week"></i>
+                            <span>Schedule</span>
+                        </NavLink>
+                        <NavLink href="schedule/requests" class="ml-nav-link" Match="NavLinkMatch.Prefix">
+                            <i class="bi bi-arrow-left-right"></i>
+                            <span>Swaps and days off</span>
+                        </NavLink>
+                    </AuthorizeView>
+
+                    <AuthorizeView Roles="@Permissions.ViewScheduleSettings">
+                        <NavLink href="schedule/settings" class="ml-nav-link" Match="NavLinkMatch.Prefix">
+                            <i class="bi bi-sliders"></i>
+                            <span>Schedule settings</span>
+                        </NavLink>
+                    </AuthorizeView>
+
                     <AuthorizeView Roles="@Permissions.CashRegisterLogs">
                         <h5>Logs</h5>
                         <NavLink href="cashregisterlogs" class="ml-nav-link" Match="NavLinkMatch.Prefix">

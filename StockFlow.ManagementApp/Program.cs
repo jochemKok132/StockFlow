@@ -1,3 +1,5 @@
+using StockFlow.ManagementApp.Services.Scheduling;
+using StockFlow.ManagementApp.Interfaces.Scheduling;
 using StockFlow.ManagementApp.Services.Ordering;
 using StockFlow.ManagementApp.Interfaces.Ordering;
 using Microsoft.AspNetCore.Components.Authorization;
@@ -50,6 +52,7 @@ namespace StockFlow.ManagementApp
             builder.Services.AddScoped<IPurchaseOrderService, PurchaseOrderService>();
             builder.Services.AddScoped<ICustomerOrderService, CustomerOrderService>();
             builder.Services.AddScoped<IStockCountService, StockCountService>();
+            builder.Services.AddScoped<IScheduleService, ScheduleService>();
             builder.Services.AddTransient<AuthHandler>();
 
             string apiBaseUrl = builder.Configuration["ApiBaseUrl"] ?? "https://localhost:7037/";

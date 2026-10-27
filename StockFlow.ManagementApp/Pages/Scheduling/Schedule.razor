@@ -1,0 +1,430 @@
+﻿@page "/schedule"
+@attribute [Authorize(Roles = Permissions.ViewSchedule)]
+@using System.Globalization
+@inject IScheduleService ScheduleService
+@inject AuthenticationStateProvider AuthStateProvider
+@inject ConfirmService Confirm
+@inject NavigationManager Nav
+
+<div class="tasks-header">
+    <div>
+        <h2>Schedule</h2>
+        <p class="page-note">The schedule is made automatically @ScheduleRules.WeeksAhead weeks ahead from the shifts and everyone's contract hours and availability. Shift leaders can change a week, a manager confirms it. You only see a week once it is confirmed.</p>
+    </div>
+    @if (canRequest)
+    {
+        <a class="btn-edit" href="schedule/requests"><i class="bi bi-arrow-left-right"></i> Swap or day off</a>
+    }
+</div>
+
+@if (myShifts.Count > 0)
+{
+    <div class="card">
+        <h3 class="section-title">My next shifts</h3>
+        <div class="my-shifts">
+            @foreach (var shift in myShifts.Take(8))
+            {
+                <div class="my-shift @(shift.Date == today ? "is-today" : "")">
+                    <span class="my-shift-day">@DayLabel(shift.Date)</span>
+                    <strong>@Time(shift.StartTime) – @Time(shift.EndTime)</strong>
+                    <span class="page-note">@shift.Role · @shift.Hours.ToString("0.##") h</span>
+                    @if (canRequest && shift.Date > today)
+                    {
+                        <a class="my-shift-action" href="schedule/requests?shift=@shift.Id">Ask to swap</a>
+                    }
+                </div>
+            }
+        </div>
+    </div>
+}
+
+<div class="card">
+    <div class="week-bar">
+        <div class="week-nav">
+            <button class="btn-icon" title="Previous week" @onclick="() => GoToAsync(weekStart.AddDays(-7))"><i class="bi bi-chevron-left"></i></button>
+            <div class="week-title">
+                <strong>Week @ISOWeek.GetWeekOfYear(weekStart.ToDateTime(TimeOnly.MinValue))</strong>
+                <span class="page-note">@weekStart.ToString("dd-MM-yyyy") – @weekStart.AddDays(6).ToString("dd-MM-yyyy")</span>
+            </div>
+            <button class="btn-icon" title="Next week" @onclick="() => GoToAsync(weekStart.AddDays(7))"><i class="bi bi-chevron-right"></i></button>
+            @if (weekStart != ScheduleRules.WeekStart(today))
+            {
+                <button class="btn-cancel" @onclick="() => GoToAsync(ScheduleRules.WeekStart(today))">This week</button>
+            }
+            @if (week is { Exists: true })
+            {
+                <span class="status-badge @(week.Status == ScheduleWeekStatusDto.Confirmed ? "status-ok" : "status-update")">@week.Status</span>
+            }
+        </div>
+        <div class="week-actions">
+            @if (canEdit && week is not null && CanGenerate)
+            {
+                <button class="btn-cancel" disabled="@(busy || viewOnly)" title="@(viewOnly ? AccessRules.ViewOnlyMessage : null)" @onclick="GenerateAsync"><i class="bi bi-magic"></i> @(week.Exists ? "Generate again" : "Generate")</button>
+            }
+            @if (canEdit && Editable)
+            {
+                <button class="btn-edit" disabled="@(busy || viewOnly)" title="@(viewOnly ? AccessRules.ViewOnlyMessage : null)" @onclick="() => OpenNew(weekStart)"><i class="bi bi-plus-lg"></i> Add shift</button>
+            }
+            @if (canConfirm && week is { Exists: true, Status: ScheduleWeekStatusDto.Draft } && weekStart.AddDays(6) >= today)
+            {
+                <button class="btn-save" disabled="@(busy || viewOnly)" title="@(viewOnly ? AccessRules.ViewOnlyMessage : null)" @onclick="ConfirmAsync"><i class="bi bi-check2-circle"></i> Confirm week</button>
+            }
+        </div>
+    </div>
+
+    @if (weeks.Count > 0)
+    {
+        <div class="week-chips">
+            @foreach (var summary in weeks)
+            {
+                <button class="week-chip @(summary.WeekStart == weekStart ? "is-open" : "")" @onclick="() => GoToAsync(summary.WeekStart)">
+                    <span>Week @ISOWeek.GetWeekOfYear(summary.WeekStart.ToDateTime(TimeOnly.MinValue))</span>
+                    <span class="page-note">
+                        @if (!summary.Exists)
+                        {
+                            <text>Not made yet</text>
+                        }
+                        else if (summary.Status == ScheduleWeekStatusDto.Confirmed)
+                        {
+                            <text>Confirmed</text>
+                        }
+                        else
+                        {
+                            <text>Draft</text>
+                        }
+                        @if (summary.OpenShifts > 0)
+                        {
+                            <text> · @summary.OpenShifts open</text>
+                        }
+                    </span>
+                </button>
+            }
+        </div>
+    }
+
+    @if (!string.IsNullOrEmpty(message))
+    {
+        <div class="@(failed ? "alert-danger" : "notice-ok")">@message</div>
+    }
+
+    @if (loading)
+    {
+        <div class="loading">Loading...</div>
+    }
+    else if (!string.IsNullOrEmpty(error))
+    {
+        <div class="alert-danger">@error</div>
+    }
+    else if (week is null || !week.Exists)
+    {
+        <div class="empty-state">There is no schedule for this week yet.@(canEdit && CanGenerate ? " Click Generate to make one." : "")</div>
+    }
+    else if (week.ShiftsHidden)
+    {
+        <div class="empty-state">The schedule for this week isn't confirmed yet.</div>
+    }
+    else
+    {
+        @if (week.Status == ScheduleWeekStatusDto.Draft)
+        {
+            <div class="alert-warning"><i class="bi bi-pencil-square"></i> Draft: employees can't see this week until a manager confirms it.@(week.OpenShifts > 0 ? $" {week.OpenShifts} shift(s) have nobody yet." : "")</div>
+        }
+        else if (week.ConfirmedAt is { } confirmedAt)
+        {
+            <p class="page-note">Confirmed @confirmedAt.ToLocalTime().ToString("dd-MM-yyyy HH:mm") by @(week.ConfirmedByName ?? "-").@(week.OpenShifts > 0 ? $" {week.OpenShifts} shift(s) have nobody." : "")</p>
+        }
+
+        <div class="week-grid">
+            @for (int offset = 0; offset < 7; offset++)
+            {
+                var date = weekStart.AddDays(offset);
+                var shifts = week.Shifts.Where(s => s.Date == date).ToList();
+                <div class="day-column @(date == today ? "is-today" : "")">
+                    <div class="day-header">
+                        <strong>@date.ToString("dddd", CultureInfo.InvariantCulture)</strong>
+                        <span class="page-note">@date.ToString("dd-MM")</span>
+                    </div>
+                    @if (shifts.Count == 0)
+                    {
+                        <span class="page-note">Closed</span>
+                    }
+                    @foreach (var shift in shifts)
+                    {
+                        <button class="shift-card @(shift.EmployeeId is null ? "is-open" : "") @(shift.EmployeeId == myEmployeeId ? "is-mine" : "") @(canEdit && Editable ? "is-editable" : "")"
+                                disabled="@(!(canEdit && Editable))" @onclick="() => OpenEdit(shift)">
+                            <span class="shift-time">@Time(shift.StartTime) – @Time(shift.EndTime)</span>
+                            <span class="shift-role">@shift.Role</span>
+                            <span class="shift-name">@(shift.EmployeeName ?? "Open")</span>
+                        </button>
+                    }
+                    @if (canEdit && Editable)
+                    {
+                        <button class="day-add" disabled="@viewOnly" @onclick="() => OpenNew(date)"><i class="bi bi-plus"></i> Shift</button>
+                    }
+                </div>
+            }
+        </div>
+
+        @if (week.Staff.Count > 0)
+        {
+            <h3 class="section-title">Hours this week</h3>
+            <table class="tasks-table">
+                <thead>
+                    <tr>
+                        <th>Employee</th>
+                        <th>Role</th>
+                        <th>Shifts</th>
+                        <th>Planned</th>
+                        <th>Contract</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var member in week.Staff)
+                    {
+                        <tr>
+                            <td><strong>@member.FullName</strong> <span class="page-note">@member.EmployeeId</span></td>
+                            <td>@member.Role</td>
+                            <td>@member.Shifts</td>
+                            <td class="@(member.PlannedHours > member.ContractHours ? "hours-over" : member.PlannedHours < member.ContractHours ? "hours-under" : "")">@member.PlannedHours.ToString("0.##") h</td>
+                            <td>@member.ContractHours h</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+    }
+</div>
+
+@if (editing is not null)
+{
+    <ModalOverlay OnClose="CloseEdit">
+        <div class="panel-header">
+            <div>
+                <span class="panel-label">Week @ISOWeek.GetWeekOfYear(weekStart.ToDateTime(TimeOnly.MinValue))</span>
+                <h3>@(editingId is null ? "Add shift" : "Change shift")</h3>
+            </div>
+            <button class="btn-icon" title="Close" @onclick="CloseEdit"><i class="bi bi-x-lg"></i></button>
+        </div>
+
+        @if (!string.IsNullOrEmpty(panelMessage))
+        {
+            <div class="alert-danger">@panelMessage</div>
+        }
+
+        <div class="field-row">
+            <div class="field">
+                <label for="shiftDay">Day</label>
+                <select id="shiftDay" @bind="EditingDate">
+                    @for (int offset = 0; offset < 7; offset++)
+                    {
+                        var date = weekStart.AddDays(offset);
+                        <option value="@date.ToString("yyyy-MM-dd")">@DayLabel(date)</option>
+                    }
+                </select>
+            </div>
+            <div class="field">
+                <label for="shiftStart">From</label>
+                <input id="shiftStart" type="time" @bind="editing.StartTime" />
+            </div>
+            <div class="field">
+                <label for="shiftEnd">Until</label>
+                <input id="shiftEnd" type="time" @bind="editing.EndTime" />
+            </div>
+        </div>
+        <div class="field-row">
+            <div class="field">
+                <label for="shiftRole">Role</label>
+                <select id="shiftRole" @bind="editing.Role" @bind:after="RoleChanged">
+                    @foreach (var role in ScheduledRoles)
+                    {
+                        <option value="@role">@role</option>
+                    }
+                </select>
+            </div>
+            <div class="field field-grow">
+                <label for="shiftEmployee">Employee</label>
+                <select id="shiftEmployee" @bind="editing.EmployeeId">
+                    <option value="">Open (nobody yet)</option>
+                    @foreach (var member in (week?.Staff ?? []).Where(s => s.Role == editing.Role))
+                    {
+                        <option value="@member.EmployeeId">@member.FullName (@member.PlannedHours.ToString("0.##") / @member.ContractHours h)</option>
+                    }
+                </select>
+            </div>
+        </div>
+
+        <div class="form-actions">
+            @if (editingId is Guid id)
+            {
+                <button class="btn-delete" disabled="@busy" @onclick="() => DeleteAsync(id)"><i class="bi bi-trash"></i> Remove</button>
+            }
+            <button class="btn-save" disabled="@busy" @onclick="SaveAsync"><i class="bi bi-check-lg"></i> Save</button>
+            <button class="btn-cancel" @onclick="CloseEdit">Cancel</button>
+        </div>
+    </ModalOverlay>
+}
+
+@code {
+    private static readonly EmployeeRoleDto[] ScheduledRoles =
+        [EmployeeRoleDto.ShiftLeader, EmployeeRoleDto.ServiceDesk, EmployeeRoleDto.Cashier, EmployeeRoleDto.FloorWorker, EmployeeRoleDto.Manager, EmployeeRoleDto.Support];
+
+    private readonly DateOnly today = DateOnly.FromDateTime(DateTime.Today);
+    private DateOnly weekStart;
+    private ScheduleWeekDto? week;
+    private List<ScheduleWeekSummaryDto> weeks = [];
+    private List<ScheduledShiftDto> myShifts = [];
+    private SaveShiftRequest? editing;
+    private Guid? editingId;
+    private string? myEmployeeId;
+    private bool canEdit;
+    private bool canConfirm;
+    private bool canRequest;
+    private bool viewOnly;
+    private bool loading;
+    private bool busy;
+    private bool failed;
+    private string error = "";
+    private string message = "";
+    private string panelMessage = "";
+
+    private bool CanGenerate => weekStart > ScheduleRules.WeekStart(today) && week?.Status != ScheduleWeekStatusDto.Confirmed;
+    private bool Editable => week is { Exists: true } && weekStart.AddDays(6) >= today && (week.Status == ScheduleWeekStatusDto.Draft || canConfirm);
+
+    protected override async Task OnInitializedAsync()
+    {
+        var user = (await AuthStateProvider.GetAuthenticationStateAsync()).User;
+        canEdit = user.CanOpen(Permissions.EditSchedule);
+        canConfirm = user.CanOpen(Permissions.ConfirmSchedule);
+        canRequest = user.Allows(Permissions.RequestScheduleChanges);
+        viewOnly = user.IsInRole(AccessRules.ViewOnlyRole);
+        myEmployeeId = user.FindFirst(System.Security.Claims.ClaimTypes.Thumbprint)?.Value;
+
+        weekStart = ScheduleRules.WeekStart(today);
+        var mine = await ScheduleService.GetMyShiftsAsync();
+        myShifts = mine.Value ?? [];
+        await LoadAsync();
+    }
+
+    private async Task GoToAsync(DateOnly start)
+    {
+        weekStart = ScheduleRules.WeekStart(start);
+        message = "";
+        await LoadAsync();
+    }
+
+    private async Task LoadAsync()
+    {
+        loading = true;
+        var result = await ScheduleService.GetWeekAsync(weekStart);
+        week = result.Value;
+        error = result.Succeeded ? "" : result.Message;
+        weeks = (await ScheduleService.GetWeeksAsync()).Value ?? weeks;
+        loading = false;
+    }
+
+    private void Show(ApiResult<ScheduleWeekDto> result)
+    {
+        failed = !result.Succeeded;
+        message = result.Message;
+        if (result.Succeeded && result.Value is not null)
+            week = result.Value;
+    }
+
+    private async Task GenerateAsync()
+    {
+        if (week is { Exists: true } &&
+            !await Confirm.AskAsync("Generate again", "Make this week again from the shifts? All changes made to this week are lost.", "Generate", danger: true))
+            return;
+        busy = true;
+        Show(await ScheduleService.GenerateAsync(weekStart));
+        weeks = (await ScheduleService.GetWeeksAsync()).Value ?? weeks;
+        busy = false;
+    }
+
+    private async Task ConfirmAsync()
+    {
+        var details = new List<string>();
+        if (week?.OpenShifts > 0) details.Add($"{week.OpenShifts} shift(s) still have nobody.");
+        details.AddRange((week?.Staff ?? []).Where(s => s.PlannedHours > s.ContractHours).Select(s => $"{s.FullName} works {s.PlannedHours:0.##} of {s.ContractHours} contract hours."));
+        if (!await Confirm.AskAsync("Confirm week", $"Confirm week {ISOWeek.GetWeekOfYear(weekStart.ToDateTime(TimeOnly.MinValue))}? Everyone can see it after this.", "Confirm", details: details))
+            return;
+        busy = true;
+        Show(await ScheduleService.ConfirmAsync(weekStart));
+        weeks = (await ScheduleService.GetWeeksAsync()).Value ?? weeks;
+        busy = false;
+    }
+
+    private string EditingDate
+    {
+        get => editing?.Date.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture) ?? "";
+        set
+        {
+            if (editing is not null && DateOnly.TryParseExact(value, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var date))
+                editing.Date = date;
+        }
+    }
+
+    private void OpenNew(DateOnly date)
+    {
+        editingId = null;
+        panelMessage = "";
+        editing = new SaveShiftRequest { Date = date, StartTime = new TimeOnly(9, 0), EndTime = new TimeOnly(17, 0), Role = EmployeeRoleDto.Cashier };
+    }
+
+    private void OpenEdit(ScheduledShiftDto shift)
+    {
+        if (!(canEdit && Editable)) return;
+        editingId = shift.Id;
+        panelMessage = "";
+        editing = new SaveShiftRequest { Date = shift.Date, StartTime = shift.StartTime, EndTime = shift.EndTime, Role = shift.Role, EmployeeId = shift.EmployeeId };
+    }
+
+    private void RoleChanged()
+    {
+        if (editing is not null && (week?.Staff ?? []).All(s => s.EmployeeId != editing.EmployeeId || s.Role != editing.Role))
+            editing.EmployeeId = null;
+    }
+
+    private void CloseEdit()
+    {
+        editing = null;
+        editingId = null;
+    }
+
+    private async Task SaveAsync()
+    {
+        if (editing is null) return;
+        if (string.IsNullOrEmpty(editing.EmployeeId)) editing.EmployeeId = null;
+        busy = true;
+        var result = editingId is Guid id
+            ? await ScheduleService.UpdateShiftAsync(id, editing)
+            : await ScheduleService.AddShiftAsync(editing);
+        busy = false;
+        if (!result.Succeeded)
+        {
+            panelMessage = result.Message;
+            return;
+        }
+        Show(result);
+        CloseEdit();
+    }
+
+    private async Task DeleteAsync(Guid id)
+    {
+        if (!await Confirm.AskAsync("Remove shift", "Remove this shift from the schedule?", "Remove", danger: true)) return;
+        busy = true;
+        var result = await ScheduleService.DeleteShiftAsync(id);
+        busy = false;
+        if (!result.Succeeded)
+        {
+            panelMessage = result.Message;
+            return;
+        }
+        Show(result);
+        CloseEdit();
+    }
+
+    private static string Time(TimeOnly time) => time.ToString("HH:mm", CultureInfo.InvariantCulture);
+
+    private static string DayLabel(DateOnly date) => date.ToString("ddd dd-MM", CultureInfo.InvariantCulture);
+}

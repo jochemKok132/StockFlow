@@ -252,3 +252,18 @@
     background: var(--DangerBg);
     color: var(--DangerText);
 }
+
+.receipt-link {
+    display: block;
+    margin-top: 4px;
+    font-family: Consolas, "Courier New", monospace;
+    font-size: 12px;
+    color: var(--AccentColor);
+    text-decoration: none;
+    white-space: nowrap;
+}
+
+    .receipt-link:hover {
+        color: var(--AccentColorHover);
+        text-decoration: underline;
+    }

@@ -1,0 +1,405 @@
+﻿@page "/schedule/settings"
+@attribute [Authorize(Roles = Permissions.ViewScheduleSettings)]
+@using System.Globalization
+@inject IScheduleService ScheduleService
+@inject AuthenticationStateProvider AuthStateProvider
+@inject ConfirmService Confirm
+
+<div class="tasks-header">
+    <div>
+        <h2>Schedule settings</h2>
+        <p class="page-note">The shifts the store needs every week, and the contract hours and availability of every employee. The schedule is made from these @ScheduleRules.WeeksAhead weeks ahead; changes only count for weeks that are made (or generated again) after the change.</p>
+    </div>
+    <a class="btn-cancel" href="schedule"><i class="bi bi-calendar-week"></i> Schedule</a>
+</div>
+
+@if (!string.IsNullOrEmpty(message))
+{
+    <div class="@(failed ? "alert-danger" : "notice-ok")">@message</div>
+}
+
+<div class="card">
+    <div class="section-head">
+        <h3 class="section-title">Shifts per week</h3>
+        @if (canManage)
+        {
+            <button class="btn-save" disabled="@viewOnly" title="@(viewOnly ? AccessRules.ViewOnlyMessage : null)" @onclick="NewTemplate"><i class="bi bi-plus-lg"></i> New shift</button>
+        }
+    </div>
+    <table class="tasks-table">
+        <thead>
+            <tr>
+                <th>Shift</th>
+                <th>Role</th>
+                <th>Days</th>
+                <th>Time</th>
+                <th>Employees</th>
+                <th>Hours per week</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (templates.Count == 0)
+            {
+                <tr><td class="empty-state">No shifts yet. Without shifts no schedule is made.</td></tr>
+            }
+            @foreach (var template in templates)
+            {
+                <tr>
+                    <td><strong>@template.Name</strong></td>
+                    <td>@template.Role</td>
+                    <td>@DaysLabel(template.Days)</td>
+                    <td>@Time(template.StartTime) – @Time(template.EndTime) <div class="page-note">@template.Hours.ToString("0.##") h</div></td>
+                    <td>@template.RequiredStaff</td>
+                    <td>@((template.Hours * template.RequiredStaff * DayCount(template.Days)).ToString("0.##")) h</td>
+                    <td class="actions-cell">
+                        @if (canManage)
+                        {
+                            <button class="btn-edit" @onclick="() => EditTemplate(template)">Edit</button>
+                            <button class="btn-delete" disabled="@viewOnly" @onclick="() => DeleteTemplateAsync(template)">Delete</button>
+                        }
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+    @if (templates.Count > 0)
+    {
+        <div class="hours-summary">
+            @foreach (var group in templates.GroupBy(t => t.Role))
+            {
+                decimal needed = group.Sum(t => t.Hours * t.RequiredStaff * DayCount(t.Days));
+                int contract = staff.Where(s => s.Role == group.Key).Sum(s => s.ContractHours);
+                <span class="@(contract < needed ? "hours-short" : "")"><strong>@group.Key</strong>: @needed.ToString("0.##") h needed, @contract h contract</span>
+            }
+        </div>
+    }
+</div>
+
+<div class="card">
+    <h3 class="section-title">Contract hours and availability</h3>
+    <table class="tasks-table">
+        <thead>
+            <tr>
+                <th>Employee</th>
+                <th>Role</th>
+                <th>Contract hours</th>
+                <th>Availability</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var member in staff)
+            {
+                <tr>
+                    <td><strong>@member.FullName</strong> <div class="page-note">@member.EmployeeId</div></td>
+                    <td>@member.Role</td>
+                    <td>@(member.ContractHours == 0 ? "Not scheduled" : $"{member.ContractHours} h")</td>
+                    <td>
+                        @if (member.Availability.Count == 0)
+                        {
+                            <span class="page-note">Any time</span>
+                        }
+                        else
+                        {
+                            @foreach (var slot in member.Availability)
+                            {
+                                <div>@slot.Day.ToString()[..3] @Time(slot.AvailableFrom) – @Time(slot.AvailableUntil)</div>
+                            }
+                        }
+                    </td>
+                    <td class="actions-cell">
+                        @if (canManage)
+                        {
+                            <button class="btn-edit" @onclick="() => EditStaff(member)">Edit</button>
+                        }
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+@if (templateForm is not null)
+{
+    <ModalOverlay OnClose="() => templateForm = null">
+        <div class="panel-header">
+            <div>
+                <span class="panel-label">Shift</span>
+                <h3>@(templateId is null ? "New shift" : templateForm.Name)</h3>
+            </div>
+            <button class="btn-icon" title="Close" @onclick="() => templateForm = null"><i class="bi bi-x-lg"></i></button>
+        </div>
+        @if (!string.IsNullOrEmpty(panelMessage))
+        {
+            <div class="alert-danger">@panelMessage</div>
+        }
+        <div class="field">
+            <label for="templateName">Name</label>
+            <input id="templateName" type="text" maxlength="@FieldLimits.Name" @bind="templateForm.Name" @bind:event="oninput" placeholder="e.g. Register morning" />
+        </div>
+        <div class="field-row">
+            <div class="field">
+                <label for="templateRole">Role</label>
+                <select id="templateRole" @bind="templateForm.Role">
+                    @foreach (var role in ScheduledRoles)
+                    {
+                        <option value="@role">@role</option>
+                    }
+                </select>
+            </div>
+            <div class="field">
+                <label for="templateStart">From</label>
+                <input id="templateStart" type="time" @bind="templateForm.StartTime" />
+            </div>
+            <div class="field">
+                <label for="templateEnd">Until</label>
+                <input id="templateEnd" type="time" @bind="templateForm.EndTime" />
+            </div>
+            <div class="field">
+                <label for="templateStaff">Employees</label>
+                <input id="templateStaff" type="number" min="1" max="@ScheduleRules.MaxRequiredStaff" @bind="templateForm.RequiredStaff" />
+            </div>
+        </div>
+        <div class="field">
+            <label>Days</label>
+            <div class="day-checks">
+                @foreach (var day in AllDays)
+                {
+                    <label class="check-inline">
+                        <input type="checkbox" checked="@templateForm.Days.HasFlag(day)" @onchange="e => ToggleDay(day, (bool)e.Value!)" /> @day.ToString()[..3]
+                    </label>
+                }
+            </div>
+        </div>
+        <div class="form-actions">
+            <button class="btn-save" disabled="@(busy || viewOnly)" @onclick="SaveTemplateAsync"><i class="bi bi-check-lg"></i> Save</button>
+            <button class="btn-cancel" @onclick="() => templateForm = null">Cancel</button>
+        </div>
+    </ModalOverlay>
+}
+
+@if (staffMember is not null)
+{
+    <ModalOverlay OnClose="() => staffMember = null">
+        <div class="panel-header">
+            <div>
+                <span class="panel-label">@staffMember.Role · @staffMember.EmployeeId</span>
+                <h3>@staffMember.FullName</h3>
+            </div>
+            <button class="btn-icon" title="Close" @onclick="() => staffMember = null"><i class="bi bi-x-lg"></i></button>
+        </div>
+        @if (!string.IsNullOrEmpty(panelMessage))
+        {
+            <div class="alert-danger">@panelMessage</div>
+        }
+        <div class="field">
+            <label for="contractHours">Contract hours per week (0 = not scheduled)</label>
+            <input id="contractHours" type="number" min="0" max="@ScheduleRules.MaxContractHours" @bind="contractHours" />
+        </div>
+        <label class="check-inline"><input type="checkbox" @bind="limited" /> Only available on certain days or times</label>
+        @if (limited)
+        {
+            <table class="tasks-table availability-table">
+                <thead>
+                    <tr>
+                        <th>Day</th>
+                        <th>Available</th>
+                        <th>From</th>
+                        <th>Until</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var slot in availability)
+                    {
+                        <tr>
+                            <td>@slot.Day</td>
+                            <td><input type="checkbox" @bind="slot.Available" /></td>
+                            <td><input type="time" disabled="@(!slot.Available)" @bind="slot.From" /></td>
+                            <td><input type="time" disabled="@(!slot.Available)" @bind="slot.Until" /></td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+        <div class="form-actions">
+            <button class="btn-save" disabled="@(busy || viewOnly)" @onclick="SaveStaffAsync"><i class="bi bi-check-lg"></i> Save</button>
+            <button class="btn-cancel" @onclick="() => staffMember = null">Cancel</button>
+        </div>
+    </ModalOverlay>
+}
+
+@code {
+    private static readonly EmployeeRoleDto[] ScheduledRoles =
+        [EmployeeRoleDto.ShiftLeader, EmployeeRoleDto.ServiceDesk, EmployeeRoleDto.Cashier, EmployeeRoleDto.FloorWorker, EmployeeRoleDto.Manager, EmployeeRoleDto.Support];
+
+    private static readonly WeekDaysDto[] AllDays =
+        [WeekDaysDto.Monday, WeekDaysDto.Tuesday, WeekDaysDto.Wednesday, WeekDaysDto.Thursday, WeekDaysDto.Friday, WeekDaysDto.Saturday, WeekDaysDto.Sunday];
+
+    private static readonly DayOfWeek[] WeekOrder =
+        [DayOfWeek.Monday, DayOfWeek.Tuesday, DayOfWeek.Wednesday, DayOfWeek.Thursday, DayOfWeek.Friday, DayOfWeek.Saturday, DayOfWeek.Sunday];
+
+    private class AvailabilityRow
+    {
+        public DayOfWeek Day { get; set; }
+        public bool Available { get; set; }
+        public TimeOnly From { get; set; } = new(8, 0);
+        public TimeOnly Until { get; set; } = new(21, 0);
+    }
+
+    private List<ShiftTemplateDto> templates = [];
+    private List<StaffMemberDto> staff = [];
+    private SaveShiftTemplateRequest? templateForm;
+    private Guid? templateId;
+    private StaffMemberDto? staffMember;
+    private int contractHours;
+    private bool limited;
+    private List<AvailabilityRow> availability = [];
+    private bool canManage;
+    private bool viewOnly;
+    private bool busy;
+    private bool failed;
+    private string message = "";
+    private string panelMessage = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        var user = (await AuthStateProvider.GetAuthenticationStateAsync()).User;
+        canManage = user.CanOpen(Permissions.ManageScheduleSettings);
+        viewOnly = user.IsInRole(AccessRules.ViewOnlyRole);
+        await LoadAsync();
+    }
+
+    private async Task LoadAsync()
+    {
+        var templateResult = await ScheduleService.GetTemplatesAsync();
+        var staffResult = await ScheduleService.GetStaffAsync();
+        templates = templateResult.Value ?? [];
+        staff = staffResult.Value ?? [];
+        if (!templateResult.Succeeded || !staffResult.Succeeded)
+        {
+            failed = true;
+            message = templateResult.Succeeded ? staffResult.Message : templateResult.Message;
+        }
+    }
+
+    private void NewTemplate()
+    {
+        templateId = null;
+        panelMessage = "";
+        templateForm = new SaveShiftTemplateRequest
+        {
+            Days = WeekDaysDto.Monday | WeekDaysDto.Tuesday | WeekDaysDto.Wednesday | WeekDaysDto.Thursday | WeekDaysDto.Friday | WeekDaysDto.Saturday,
+            StartTime = new TimeOnly(9, 0),
+            EndTime = new TimeOnly(17, 0),
+            Role = EmployeeRoleDto.Cashier,
+            RequiredStaff = 1,
+        };
+    }
+
+    private void EditTemplate(ShiftTemplateDto template)
+    {
+        templateId = template.Id;
+        panelMessage = "";
+        templateForm = new SaveShiftTemplateRequest
+        {
+            Name = template.Name,
+            Days = template.Days,
+            StartTime = template.StartTime,
+            EndTime = template.EndTime,
+            Role = template.Role,
+            RequiredStaff = template.RequiredStaff,
+        };
+    }
+
+    private void ToggleDay(WeekDaysDto day, bool on)
+    {
+        if (templateForm is null) return;
+        templateForm.Days = on ? templateForm.Days | day : templateForm.Days & ~day;
+    }
+
+    private async Task SaveTemplateAsync()
+    {
+        if (templateForm is null) return;
+        busy = true;
+        var result = templateId is Guid id
+            ? await ScheduleService.UpdateTemplateAsync(id, templateForm)
+            : await ScheduleService.CreateTemplateAsync(templateForm);
+        busy = false;
+        if (!result.Succeeded)
+        {
+            panelMessage = result.Message;
+            return;
+        }
+        templateForm = null;
+        failed = false;
+        message = result.Message;
+        await LoadAsync();
+    }
+
+    private async Task DeleteTemplateAsync(ShiftTemplateDto template)
+    {
+        if (!await Confirm.AskAsync("Delete shift", $"Delete the shift {template.Name}? Weeks that were already made keep their shifts.", "Delete", danger: true)) return;
+        var result = await ScheduleService.DeleteTemplateAsync(template.Id);
+        failed = !result.Succeeded;
+        message = result.Message;
+        await LoadAsync();
+    }
+
+    private void EditStaff(StaffMemberDto member)
+    {
+        staffMember = member;
+        panelMessage = "";
+        contractHours = member.ContractHours;
+        limited = member.Availability.Count > 0;
+        availability = WeekOrder.Select(day =>
+        {
+            var slot = member.Availability.FirstOrDefault(a => a.Day == day);
+            return slot is null
+                ? new AvailabilityRow { Day = day, Available = !limited }
+                : new AvailabilityRow { Day = day, Available = true, From = slot.AvailableFrom, Until = slot.AvailableUntil };
+        }).ToList();
+    }
+
+    private async Task SaveStaffAsync()
+    {
+        if (staffMember is null) return;
+        var request = new SaveStaffRequest
+        {
+            ContractHours = contractHours,
+            Availability = limited
+                ? availability.Where(a => a.Available).Select(a => new AvailabilityDto { Day = a.Day, AvailableFrom = a.From, AvailableUntil = a.Until }).ToList()
+                : [],
+        };
+        if (limited && request.Availability.Count == 0)
+        {
+            panelMessage = "Tick at least one day, or untick 'Only available on certain days or times'.";
+            return;
+        }
+        busy = true;
+        var result = await ScheduleService.SaveStaffAsync(staffMember.EmployeeId, request);
+        busy = false;
+        if (!result.Succeeded)
+        {
+            panelMessage = result.Message;
+            return;
+        }
+        staffMember = null;
+        failed = false;
+        message = result.Message;
+        await LoadAsync();
+    }
+
+    private static int DayCount(WeekDaysDto days) => AllDays.Count(d => days.HasFlag(d));
+
+    private static string DaysLabel(WeekDaysDto days)
+    {
+        var picked = AllDays.Where(d => days.HasFlag(d)).ToList();
+        if (picked.Count == 7) return "Every day";
+        if (picked.Count == 6 && !days.HasFlag(WeekDaysDto.Sunday)) return "Mon – Sat";
+        if (picked.Count == 5 && !days.HasFlag(WeekDaysDto.Saturday) && !days.HasFlag(WeekDaysDto.Sunday)) return "Mon – Fri";
+        return string.Join(", ", picked.Select(d => d.ToString()[..3]));
+    }
+
+    private static string Time(TimeOnly time) => time.ToString("HH:mm", CultureInfo.InvariantCulture);
+}

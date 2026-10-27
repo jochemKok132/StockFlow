@@ -1,4 +1,6 @@
-﻿using StockFlow.Domain.Entities.Ordering;
+﻿using StockFlow.Shared.Common;
+using StockFlow.Domain.Entities.Scheduling;
+using StockFlow.Domain.Entities.Ordering;
 using Microsoft.EntityFrameworkCore;
 using StockFlow.Domain.Entities.People;
 using StockFlow.Domain.Entities.Stock;
@@ -12,6 +14,11 @@ namespace StockFlow.Infrastructure.Data
     public class ApplicationDBContext(DbContextOptions<ApplicationDBContext> options) : DbContext(options)
     {
         public DbSet<Employee> Employees { get; set; }
+        public DbSet<EmployeeAvailability> EmployeeAvailability { get; set; }
+        public DbSet<ShiftTemplate> ShiftTemplates { get; set; }
+        public DbSet<ScheduleWeek> ScheduleWeeks { get; set; }
+        public DbSet<ScheduledShift> ScheduledShifts { get; set; }
+        public DbSet<ScheduleRequest> ScheduleRequests { get; set; }
         public DbSet<Customer> Customers { get; set; }
         public DbSet<Product> Products { get; set; }
         public DbSet<ProductBrand> ProductBrands { get; set; }
@@ -41,6 +48,7 @@ namespace StockFlow.Infrastructure.Data
 
             ConfigureOrdering(builder);
             ConfigureReturnLogs(builder);
+            ConfigureScheduling(builder);
 
             builder.Entity<ProductBrand>()
                    .HasMany(x => x.Products)
@@ -126,6 +134,94 @@ namespace StockFlow.Infrastructure.Data
                    .WithMany()
                    .HasForeignKey(x => x.EmployeeId)
                    .OnDelete(DeleteBehavior.Restrict);
+        }
+
+        private static void ConfigureScheduling(ModelBuilder builder)
+        {
+            builder.Entity<Employee>()
+                   .Property(e => e.ContractHours)
+                   .HasDefaultValue(0);
+
+            builder.Entity<EmployeeAvailability>()
+                   .HasOne(a => a.Employee)
+                   .WithMany(e => e.Availability)
+                   .HasForeignKey(a => a.EmployeeId)
+                   .OnDelete(DeleteBehavior.Cascade);
+
+            builder.Entity<EmployeeAvailability>()
+                   .HasIndex(a => new { a.EmployeeId, a.Day })
+                   .IsUnique();
+
+            builder.Entity<ShiftTemplate>()
+                   .Property(t => t.Name)
+                   .HasMaxLength(FieldLimits.Name);
+
+            builder.Entity<ScheduleWeek>()
+                   .HasIndex(w => w.WeekStart)
+                   .IsUnique();
+
+            builder.Entity<ScheduleWeek>()
+                   .HasOne(w => w.ConfirmedBy)
+                   .WithMany()
+                   .HasForeignKey(w => w.ConfirmedById)
+                   .OnDelete(DeleteBehavior.SetNull);
+
+            builder.Entity<ScheduleWeek>()
+                   .HasMany(w => w.Shifts)
+                   .WithOne(s => s.ScheduleWeek)
+                   .HasForeignKey(s => s.ScheduleWeekId)
+                   .OnDelete(DeleteBehavior.Cascade);
+
+            builder.Entity<ScheduledShift>()
+                   .HasOne(s => s.Employee)
+                   .WithMany()
+                   .HasForeignKey(s => s.EmployeeId)
+                   .OnDelete(DeleteBehavior.SetNull);
+
+            builder.Entity<ScheduledShift>()
+                   .HasIndex(s => new { s.EmployeeId, s.Date });
+
+            builder.Entity<ScheduleRequest>()
+                   .HasIndex(r => r.RequestNumber)
+                   .IsUnique();
+
+            builder.Entity<ScheduleRequest>()
+                   .Property(r => r.Reason)
+                   .HasMaxLength(FieldLimits.Reason);
+
+            builder.Entity<ScheduleRequest>()
+                   .Property(r => r.ReviewNote)
+                   .HasMaxLength(FieldLimits.Reason);
+
+            builder.Entity<ScheduleRequest>()
+                   .HasOne(r => r.Employee)
+                   .WithMany()
+                   .HasForeignKey(r => r.EmployeeId)
+                   .OnDelete(DeleteBehavior.Cascade);
+
+            builder.Entity<ScheduleRequest>()
+                   .HasOne(r => r.TargetEmployee)
+                   .WithMany()
+                   .HasForeignKey(r => r.TargetEmployeeId)
+                   .OnDelete(DeleteBehavior.SetNull);
+
+            builder.Entity<ScheduleRequest>()
+                   .HasOne(r => r.ReviewedBy)
+                   .WithMany()
+                   .HasForeignKey(r => r.ReviewedById)
+                   .OnDelete(DeleteBehavior.SetNull);
+
+            builder.Entity<ScheduleRequest>()
+                   .HasOne(r => r.Shift)
+                   .WithMany()
+                   .HasForeignKey(r => r.ShiftId)
+                   .OnDelete(DeleteBehavior.SetNull);
+
+            builder.Entity<ScheduleRequest>()
+                   .HasOne(r => r.TargetShift)
+                   .WithMany()
+                   .HasForeignKey(r => r.TargetShiftId)
+                   .OnDelete(DeleteBehavior.SetNull);
         }
 
         private static void ConfigureReturnLogs(ModelBuilder builder)
@@ -301,6 +397,7 @@ namespace StockFlow.Infrastructure.Data
                 context.UsePurchaseOrderSeeder();
                 context.UseStockCountSeeder();
                 context.UseTicketSeeder();
+                context.UseScheduleSeeder();
                 context.UseLogSeeder();
             });
 

@@ -1,0 +1,346 @@
+﻿@page "/schedule/requests"
+@attribute [Authorize(Roles = Permissions.ViewSchedule)]
+@using System.Globalization
+@inject IScheduleService ScheduleService
+@inject AuthenticationStateProvider AuthStateProvider
+@inject ConfirmService Confirm
+
+<div class="tasks-header">
+    <div>
+        <h2>Swaps and days off</h2>
+        <p class="page-note">Ask a colleague with the same role to take over one of your shifts (or swap it for one of theirs), or ask for a day off. A manager approves or rejects it; an approved swap changes the schedule straight away, and an approved day off makes your shifts that day open.</p>
+    </div>
+    <a class="btn-cancel" href="schedule"><i class="bi bi-calendar-week"></i> Schedule</a>
+</div>
+
+@if (canRequest)
+{
+    <div class="card">
+        <h3 class="section-title">New request</h3>
+        <div class="segmented">
+            <button type="button" class="@(form.Type == ScheduleRequestTypeDto.Swap ? "active" : "")" @onclick="() => form.Type = ScheduleRequestTypeDto.Swap">Swap a shift</button>
+            <button type="button" class="@(form.Type == ScheduleRequestTypeDto.DayOff ? "active" : "")" @onclick="() => form.Type = ScheduleRequestTypeDto.DayOff">Day off</button>
+        </div>
+
+        <div class="inline-form request-form">
+            @if (form.Type == ScheduleRequestTypeDto.Swap)
+            {
+                <div class="field">
+                    <label for="myShift">My shift</label>
+                    <select id="myShift" @bind="shiftInput">
+                        <option value="">Choose a shift</option>
+                        @foreach (var shift in myShifts.Where(s => s.Date > today))
+                        {
+                            <option value="@shift.Id">@ShiftLabel(shift)</option>
+                        }
+                    </select>
+                </div>
+                <div class="field">
+                    <label for="colleague">Colleague</label>
+                    <select id="colleague" @bind="colleagueInput" @bind:after="() => targetShiftInput = string.Empty">
+                        <option value="">Choose a colleague</option>
+                        @foreach (var colleague in colleagues)
+                        {
+                            <option value="@colleague.EmployeeId">@colleague.FullName (@colleague.EmployeeId)</option>
+                        }
+                    </select>
+                </div>
+                <div class="field">
+                    <label for="targetShift">In exchange for</label>
+                    <select id="targetShift" @bind="targetShiftInput" disabled="@(SelectedColleague is null)">
+                        <option value="">Nothing: the colleague takes it over</option>
+                        @foreach (var shift in SelectedColleague?.UpcomingShifts ?? [])
+                        {
+                            <option value="@shift.Id">@ShiftLabel(shift)</option>
+                        }
+                    </select>
+                </div>
+            }
+            else
+            {
+                <div class="field">
+                    <label for="dayOff">Day</label>
+                    <input id="dayOff" type="date" min="@today.AddDays(1).ToString("yyyy-MM-dd")" @bind="dayOffInput" />
+                </div>
+            }
+            <div class="field field-grow">
+                <label for="reason">Reason</label>
+                <input id="reason" type="text" maxlength="@FieldLimits.Reason" @bind="form.Reason" @bind:event="oninput" placeholder="e.g. doctor's appointment" />
+            </div>
+            <button class="btn-save" disabled="@busy" @onclick="SendAsync"><i class="bi bi-send"></i> Send</button>
+        </div>
+        @if (myShifts.Count == 0 && form.Type == ScheduleRequestTypeDto.Swap)
+        {
+            <p class="page-note">You have no upcoming shifts in a confirmed week.</p>
+        }
+    </div>
+}
+
+<div class="card">
+    <div class="filters-bar">
+        <div class="filters">
+            <div class="filter-group">
+                <label>Status</label>
+                <select @bind="statusFilter" @bind:after="LoadAsync">
+                    <option value="">All</option>
+                    @foreach (var status in Enum.GetValues<ScheduleRequestStatusDto>())
+                    {
+                        <option value="@status">@status</option>
+                    }
+                </select>
+            </div>
+        </div>
+    </div>
+
+    @if (!string.IsNullOrEmpty(message))
+    {
+        <div class="@(failed ? "alert-danger" : "notice-ok")">@message</div>
+    }
+
+    <table class="tasks-table">
+        <thead>
+            <tr>
+                <th>Request</th>
+                <th>Employee</th>
+                <th>What</th>
+                <th>Reason</th>
+                <th>Status</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (loading)
+            {
+                <tr><td class="loading">Loading...</td></tr>
+            }
+            else if (!string.IsNullOrEmpty(error))
+            {
+                <tr><td class="alert-danger">@error</td></tr>
+            }
+            else if (requests.Count == 0)
+            {
+                <tr><td class="empty-state">No requests found.</td></tr>
+            }
+            else
+            {
+                @foreach (var request in requests)
+                {
+                    <tr>
+                        <td class="id-cell">@request.RequestNumber <div class="page-note">@request.CreatedAt.ToLocalTime().ToString("dd-MM-yyyy")</div></td>
+                        <td><strong>@request.EmployeeName</strong> <div class="page-note">@request.EmployeeId</div></td>
+                        <td>
+                            @if (request.Type == ScheduleRequestTypeDto.DayOff)
+                            {
+                                <span class="status-badge status-ended">Day off</span>
+                                <div>@request.Date?.ToString("ddd dd-MM-yyyy", CultureInfo.InvariantCulture)</div>
+                            }
+                            else
+                            {
+                                <span class="status-badge status-ended">Swap</span>
+                                <div>@(request.Shift is null ? "Shift removed" : ShiftLabel(request.Shift))</div>
+                                <div class="page-note">
+                                    to @(request.TargetEmployeeName ?? "-")
+                                    @if (request.TargetShift is not null)
+                                    {
+                                        <text>, in exchange for @ShiftLabel(request.TargetShift)</text>
+                                    }
+                                </div>
+                            }
+                        </td>
+                        <td>@request.Reason</td>
+                        <td>
+                            <span class="status-badge @StatusClass(request.Status)">@request.Status</span>
+                            @if (request.ReviewedByName is not null)
+                            {
+                                <div class="page-note">by @request.ReviewedByName</div>
+                            }
+                            @if (!string.IsNullOrWhiteSpace(request.ReviewNote))
+                            {
+                                <div class="page-note">"@request.ReviewNote"</div>
+                            }
+                        </td>
+                        <td class="actions-cell">
+                            @if (request.Status == ScheduleRequestStatusDto.Pending)
+                            {
+                                @if (canReview && request.EmployeeId != myEmployeeId)
+                                {
+                                    <button class="btn-save" disabled="@(busy || viewOnly)" title="@(viewOnly ? AccessRules.ViewOnlyMessage : null)" @onclick="() => OpenReview(request, true)">Approve</button>
+                                    <button class="btn-delete" disabled="@(busy || viewOnly)" title="@(viewOnly ? AccessRules.ViewOnlyMessage : null)" @onclick="() => OpenReview(request, false)">Reject</button>
+                                }
+                                @if (request.EmployeeId == myEmployeeId)
+                                {
+                                    <button class="btn-cancel" disabled="@busy" @onclick="() => CancelAsync(request)">Cancel</button>
+                                }
+                            }
+                        </td>
+                    </tr>
+                }
+            }
+        </tbody>
+    </table>
+</div>
+
+@if (reviewing is not null)
+{
+    <ModalOverlay OnClose="() => reviewing = null">
+        <div class="panel-header">
+            <div>
+                <span class="panel-label">Request @reviewing.RequestNumber · @reviewing.EmployeeName</span>
+                <h3>@(approving ? "Approve" : "Reject") request</h3>
+            </div>
+            <button class="btn-icon" title="Close" @onclick="() => reviewing = null"><i class="bi bi-x-lg"></i></button>
+        </div>
+        @if (!string.IsNullOrEmpty(panelMessage))
+        {
+            <div class="alert-danger">@panelMessage</div>
+        }
+        <div class="field">
+            <label for="reviewNote">Note for @reviewing.EmployeeName</label>
+            <input id="reviewNote" type="text" maxlength="@FieldLimits.Reason" @bind="reviewNote" @bind:event="oninput" placeholder="optional" />
+        </div>
+        <div class="form-actions">
+            <button class="@(approving ? "btn-save" : "btn-delete")" disabled="@busy" @onclick="ReviewAsync">@(approving ? "Approve" : "Reject")</button>
+            <button class="btn-cancel" @onclick="() => reviewing = null">Cancel</button>
+        </div>
+    </ModalOverlay>
+}
+
+@code {
+    [SupplyParameterFromQuery(Name = "shift")]
+    public Guid? ShiftQuery { get; set; }
+
+    private readonly DateOnly today = DateOnly.FromDateTime(DateTime.Today);
+    private CreateScheduleRequest form = new() { Type = ScheduleRequestTypeDto.Swap };
+    private List<ScheduleRequestDto> requests = [];
+    private List<ScheduledShiftDto> myShifts = [];
+    private List<ColleagueDto> colleagues = [];
+    private ScheduleRequestDto? reviewing;
+    private bool approving;
+    private string? reviewNote;
+    private string shiftInput = "";
+    private string colleagueInput = "";
+    private string targetShiftInput = "";
+    private DateOnly? dayOffInput;
+    private string statusFilter = "";
+    private string? myEmployeeId;
+    private bool canRequest;
+    private bool canReview;
+    private bool viewOnly;
+    private bool loading;
+    private bool busy;
+    private bool failed;
+    private string error = "";
+    private string message = "";
+    private string panelMessage = "";
+
+    private ColleagueDto? SelectedColleague => colleagues.FirstOrDefault(c => c.EmployeeId == colleagueInput);
+
+    protected override async Task OnInitializedAsync()
+    {
+        var user = (await AuthStateProvider.GetAuthenticationStateAsync()).User;
+        canRequest = user.Allows(Permissions.RequestScheduleChanges);
+        canReview = user.CanOpen(Permissions.ReviewScheduleRequests);
+        viewOnly = user.IsInRole(AccessRules.ViewOnlyRole);
+        myEmployeeId = user.FindFirst(System.Security.Claims.ClaimTypes.Thumbprint)?.Value;
+
+        if (canRequest)
+        {
+            myShifts = (await ScheduleService.GetMyShiftsAsync()).Value ?? [];
+            colleagues = (await ScheduleService.GetColleaguesAsync()).Value ?? [];
+            if (ShiftQuery is Guid shiftId && myShifts.Any(s => s.Id == shiftId))
+                shiftInput = shiftId.ToString();
+        }
+        await LoadAsync();
+    }
+
+    private async Task LoadAsync()
+    {
+        loading = true;
+        var status = Enum.TryParse<ScheduleRequestStatusDto>(statusFilter, out var value) ? value : (ScheduleRequestStatusDto?)null;
+        var result = await ScheduleService.GetRequestsAsync(status);
+        requests = result.Value ?? [];
+        error = result.Succeeded ? "" : result.Message;
+        loading = false;
+    }
+
+    private async Task SendAsync()
+    {
+        form.ShiftId = Guid.TryParse(shiftInput, out var shiftId) ? shiftId : null;
+        form.TargetEmployeeId = string.IsNullOrEmpty(colleagueInput) ? null : colleagueInput;
+        form.TargetShiftId = Guid.TryParse(targetShiftInput, out var targetId) ? targetId : null;
+        form.Date = dayOffInput;
+        if (form.Type == ScheduleRequestTypeDto.DayOff)
+        {
+            form.ShiftId = null;
+            form.TargetEmployeeId = null;
+            form.TargetShiftId = null;
+        }
+        else
+        {
+            form.Date = null;
+        }
+
+        busy = true;
+        var result = await ScheduleService.CreateRequestAsync(form);
+        busy = false;
+        failed = !result.Succeeded;
+        message = result.Message;
+        if (result.Succeeded)
+        {
+            form = new CreateScheduleRequest { Type = form.Type };
+            shiftInput = colleagueInput = targetShiftInput = "";
+            dayOffInput = null;
+            await LoadAsync();
+        }
+    }
+
+    private async Task CancelAsync(ScheduleRequestDto request)
+    {
+        if (!await Confirm.AskAsync("Cancel request", $"Cancel request {request.RequestNumber}?", "Cancel request", danger: true)) return;
+        busy = true;
+        var result = await ScheduleService.CancelRequestAsync(request.Id);
+        busy = false;
+        failed = !result.Succeeded;
+        message = result.Message;
+        await LoadAsync();
+    }
+
+    private void OpenReview(ScheduleRequestDto request, bool approve)
+    {
+        reviewing = request;
+        approving = approve;
+        reviewNote = null;
+        panelMessage = "";
+    }
+
+    private async Task ReviewAsync()
+    {
+        if (reviewing is null) return;
+        busy = true;
+        var review = new ReviewScheduleRequest { Note = reviewNote };
+        var result = approving
+            ? await ScheduleService.ApproveRequestAsync(reviewing.Id, review)
+            : await ScheduleService.RejectRequestAsync(reviewing.Id, review);
+        busy = false;
+        if (!result.Succeeded)
+        {
+            panelMessage = result.Message;
+            return;
+        }
+        reviewing = null;
+        failed = false;
+        message = result.Message;
+        await LoadAsync();
+    }
+
+    private static string ShiftLabel(ScheduledShiftDto shift) =>
+        $"{shift.Date.ToString("ddd dd-MM", CultureInfo.InvariantCulture)} {shift.StartTime:HH\\:mm}–{shift.EndTime:HH\\:mm}";
+
+    private static string StatusClass(ScheduleRequestStatusDto status) => status switch
+    {
+        ScheduleRequestStatusDto.Pending => "status-update",
+        ScheduleRequestStatusDto.Approved => "status-ok",
+        ScheduleRequestStatusDto.Rejected => "status-danger",
+        _ => "status-ended",
+    };
+}

@@ -28,11 +28,11 @@ namespace StockFlow.API.Controllers
 
         [Authorize(Roles = Permissions.StockLogs)]
         [HttpGet("ProductHistory/{barcode:int}")]
-        public async Task<IActionResult> GetProductHistoryAsync(int barcode)
+        public async Task<IActionResult> GetProductHistoryAsync(int barcode, [FromQuery] ProductHistoryPaginationDto pagination)
         {
             try
             {
-                ProductStockHistoryDto history = await stockLogsService.GetProductStockHistoryAsync(barcode);
+                ProductStockHistoryDto history = await stockLogsService.GetProductStockHistoryAsync(barcode, pagination);
                 return Ok(ApiResponse<ProductStockHistoryDto>.Ok(history));
             }
             catch (ArgumentException exception)

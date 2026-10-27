@@ -64,7 +64,7 @@ namespace StockFlow.Infrastructure.Data.Seeders
             {
                 foreach (var line in receipt.ProductsSold)
                     if (line.ProductId is Guid productId && products.TryGetValue(productId, out var product))
-                        events.Add(new StockEvent(product, receipt.CreatedAt, -line.Amount, receipt.EmployeeId, LogType.Sold, []));
+                        events.Add(new StockEvent(product, receipt.CreatedAt, -line.Amount, receipt.EmployeeId, LogType.Sold, [$"Receipt: {receipt.ReceiptId}"]));
 
                 int earnedAtSale = receipt.PointsEarned;
                 if (receipt.CustomerId is Guid buyer && earnedAtSale > 0)
